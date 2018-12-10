@@ -1,6 +1,6 @@
 <%--
-    @(#)imagecci.jsp 0.02 26/01/2017
-    Copyright (C) 2011 - 2017 MER-C
+    @(#)imagecci.jsp 0.03 07/02/2018
+    Copyright (C) 2011 - 2018 MER-C
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU Affero General Public License as
@@ -16,96 +16,67 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --%>
 
-<%@ include file="header.jsp" %>
-<%@ page pageEncoding="UTF-8" trimDirectiveWhitespaces="true"%>
-<%@ page import="java.net.URLEncoder" %>
-
+<%@ include file="datevalidate.jspf" %>
 <%
     request.setAttribute("toolname", "Image contribution surveyor");
 
     String user = request.getParameter("user");
-    String homewiki = request.getParameter("wiki");
-    if (homewiki == null)
-        homewiki = "en.wikipedia.org";
-    else
-        homewiki = ServletUtils.sanitizeForAttribute(homewiki);
+    String homewiki = ServletUtils.sanitizeForAttributeOrDefault(request.getParameter("wiki"), "en.wikipedia.org");
+    Wiki wiki = Wiki.createInstance(homewiki);
 
+    ContributionSurveyor surveyor = new ContributionSurveyor(wiki);
+    String[][] survey = null;
     if (user != null)
     {
-        // create download prompt
-        response.setContentType("text/plain");
-        response.setHeader("Content-Disposition", "attachment; filename=" + URLEncoder.encode(user, "UTF-8") + ".txt");
-
-        // get results
-        Wiki wiki = new Wiki(homewiki);
         Wiki.User wpuser = wiki.getUser(user);
-        String[][] survey = ContributionSurveyor.imageContributionSurvey(wiki, wpuser);
-
-        // output results
-        out.println("=== Uploads to " + wiki.getDomain() + " ===");
-        int i = 0;
-        for (String entry : survey[0])
+        if (wpuser != null)
         {
-            i++;
-            if (i % 20 == 1)
-                out.println("==== Local files " + i + " to " + Math.min(i + 19, survey[0].length) + " ====");
-            out.println("*[[:" + entry + "]]");
-        }
-
-        out.println("=== Uploads to commons.wikimedia.org ===");
-        i = 0;
-        for (String entry : survey[1])
-        {
-            i++;
-            if (i % 20 == 1)
-                out.println("==== Commons files " + i + " to " + Math.min(i + 19, survey[1].length) + " ====");
-            out.println("*[[:" + entry + "]]");
-        }
-%>
-=== Transferred files on commons.wikimedia.org ===
-WARNING: may be inaccurate, depending on username.
-
-<%
-        i = 0;
-        for (String entry : survey[2])
-        {
-            i++;
-            if (i % 20 == 1)
-                out.println("==== Transferred files " + i + " to " + Math.min(i + 19, survey[2].length) + " ====");
-            out.println("*[[:" + entry + "]]");
+            // get results
+            request.setAttribute("contenttype", "text");
+            if (!earliest.isEmpty())
+                surveyor.setEarliestDateTime(earliest_odt);
+            if (!latest.isEmpty())
+                surveyor.setLatestDateTime(latest_odt);
+            survey = surveyor.imageContributionSurvey(wpuser);
         }
     }
-    else
+%>
+<%@ include file="header.jsp" %>
+<%
+    if (survey != null)
     {
+        response.setHeader("Content-Disposition", "attachment; filename=" + URLEncoder.encode(user, "UTF-8") + ".txt");
+        out.print(Users.generateWikitextSummaryLinks(user));
+        out.println("* Survey URL: " + request.getRequestURL() + "?" + request.getQueryString());
+        out.print(surveyor.formatImageSurveyAsWikitext(null, survey));
+        out.println(surveyor.generateWikitextFooter());
+        return;
+    }
 %>
 
-<!doctype html>
-<html>
-<head>
-<link rel=stylesheet href="styles.css">
-<title><%= request.getAttribute("toolname") %></title>
-</head>
-
-<body>
 <p>
-This tool generates a listing of a user's image uploads (regardless of whether 
-they are deleted) for use at <a href="//en.wikipedia.org/wiki/WP:CCI">Contributor 
-copyright investigations.</a>
+This tool generates a listing of a user's image uploads for use at <a
+href="//en.wikipedia.org/wiki/WP:CCI">Contributor copyright investigations.</a>
 
 <p>
 <form action="./imagecci.jsp" method=GET>
 <table>
 <tr>
     <td>User to survey:
-    <td><input type=text name=user required>
+    <td><input type=text name=user value="<%= user == null ? "" : ServletUtils.sanitizeForAttribute(user) %>" required>
 <tr>
     <td>Home wiki:
     <td><input type=text name="wiki" value="<%= homewiki %>" required>
+<tr>
+    <td>Include uploads from:
+    <td><input type=date name=earliest value="<%= earliest %>"> to 
+        <input type=date name=latest value="<%= latest %>"> (inclusive)
 </table>
 <input type=submit value="Survey user">
 </form>
 
-<%@ include file="footer.jsp" %>
 <%
-    }
+    if (user != null && survey == null)
+        request.setAttribute("error", "ERROR: User " + ServletUtils.sanitizeForHTML(user) + " does not exist!");
 %>
+<%@ include file="footer.jsp" %>

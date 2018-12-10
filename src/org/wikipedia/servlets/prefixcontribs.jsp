@@ -2,46 +2,20 @@
     @(#)prefixcontribs.jsp 0.01 24/01/2017
     Copyright (C) 2013 - 2017 MER-C
   
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU Affero General Public License as
-    published by the Free Software Foundation, either version 3 of the
-    License, or (at your option) any later version.
-  
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU Affero General Public License for more details.
-
-    You should have received a copy of the GNU Affero General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+    This is free software: you are free to change and redistribute it under the 
+    Affero GNU GPL version 3 or later, see <https://www.gnu.org/licenses/agpl.html> 
+    for details. There is NO WARRANTY, to the extent permitted by law.
 -->
-
-<%@ include file="header.jsp" %>
-<%@ page contentType="text/html" pageEncoding="UTF-8" 
-    trimDirectiveWhitespaces="true" %>
 
 <%
     request.setAttribute("toolname", "Prefix contributions");
+    request.setAttribute("earliest_default", LocalDate.now(ZoneOffset.UTC).minusDays(7));
 
-    String prefix = request.getParameter("prefix");
-    if (prefix == null)
-        prefix = "";
-    else
-        prefix = ServletUtils.sanitizeForAttribute(prefix);
-
-    String temp = request.getParameter("time");
-    int time = (temp == null) ? 7 : Integer.parseInt(temp);
-    time = Math.max(time, 0);
+    String prefix = ServletUtils.sanitizeForAttribute(request.getParameter("prefix"));    
 %>
+<%@ include file="datevalidate.jspf" %>
+<%@ include file="header.jsp" %>
 
-<!doctype html>
-<html>
-<head>
-<link rel=stylesheet href="styles.css">
-<title><%= request.getAttribute("toolname") %></title>
-</head>
-
-<body>
 <p>
 This tool retrieves contributions of an IP range or username prefix. To search 
 for an IPv4 range, use a search key of (say) 111.222. for 111.222.0.0/16. /24s 
@@ -55,8 +29,9 @@ is performed on IP addresses. Timeouts are more likely for longer time spans.
     <td>Search string:
     <td><input type=text name=prefix required value="<%= prefix %>">
 <tr>
-    <td>For last:
-    <td><input type=text name=time required value="<%= time %>"> days
+    <td>Show changes from:
+    <td><input type=date name=earliest value="<%= earliest %>"> to 
+        <input type=date name=latest value="<%= latest %>"> (inclusive)
 </table>
 <input type=submit value="Search">
 </form>
@@ -64,20 +39,25 @@ is performed on IP addresses. Timeouts are more likely for longer time spans.
 <%
     if (!prefix.isEmpty())
     {
-        out.println("<hr>");
         if (prefix.length() < 4)
-            out.println("<span class=\"error\">ERROR: search key of insufficient length.</span>");
+            request.setAttribute("error", "ERROR: search key of insufficient length.");
         else
         {
-            Wiki enWiki = new Wiki("en.wikipedia.org");
+            Wiki enWiki = Wiki.createInstance("en.wikipedia.org");
             enWiki.setMaxLag(-1);
-            Calendar cutoff = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
-            cutoff.add(Calendar.DAY_OF_MONTH, -1 * time);
-            Wiki.Revision[] revisions = enWiki.contribs("", prefix, cutoff, null);
-            if (revisions.length == 0)
+            enWiki.setQueryLimit(1000);
+            Wiki.RequestHelper rh = enWiki.new RequestHelper()
+                .withinDateRange(earliest_odt, latest_odt);
+            List<Wiki.Revision> revisions = enWiki.prefixContribs(prefix, rh);
+            out.println("<hr>");
+            if (revisions.isEmpty())
                 out.println("<p>\nNo contributions found.");
             else
-                out.println(ParserUtils.revisionsToHTML(enWiki, revisions));
+                out.println(Revisions.of(enWiki).toHTML(revisions));
+            if (revisions.size() == 1000)
+                out.println("<p>\nAt least 1000 contributions found.");
+            else
+                out.println("<p>\n" + revisions.size() + " contributions found.");
         }
     }
 %>

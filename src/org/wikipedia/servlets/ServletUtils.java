@@ -20,6 +20,7 @@ package org.wikipedia.servlets;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.util.Objects;
 
 /**
  *  Common servlet code so that I can maintain it easier.
@@ -33,10 +34,12 @@ public class ServletUtils
      *  @param input an input string
      *  @see <a href="https://www.owasp.org/index.php/XSS_Prevention">OWASP XSS 
      *  Prevention Cheat Sheet Rule 1</a>
-     *  @return <tt>input</tt>, sanitized
+     *  @return the sanitized input or the empty string if input is null
      */
     public static String sanitizeForHTML(String input)
     {
+        if (input == null)
+            return "";
         return input.replaceAll("&", "&amp;")
             .replaceAll("<", "&lt;").replaceAll(">", "&gt;")
             .replaceAll("'", "&#x27;").replaceAll("\"", "&quot;")
@@ -49,10 +52,26 @@ public class ServletUtils
      *  @param input the input to be sanitized
      *  @see <a href="https://www.owasp.org/index.php/XSS_Prevention"> OWASP XSS
      *  Prevention Cheat Sheet Rule 2</a>
-     *  @return the sanitized input
+     *  @return the sanitized input or the empty string if input is null
      */
     public static String sanitizeForAttribute(String input)
+    {        
+        return sanitizeForAttributeOrDefault(input, "");
+    }
+    
+    /**
+     *  Sanitizes untrusted input for XSS destined for inclusion in boring
+     *  HTML attributes.
+     *  @param input the input to be sanitized
+     *  @param def a default value for the input
+     *  @see <a href="https://www.owasp.org/index.php/XSS_Prevention"> OWASP XSS
+     *  Prevention Cheat Sheet Rule 2</a>
+     *  @return the sanitized input or the the default string if input is null
+     */
+    public static String sanitizeForAttributeOrDefault(String input, String def)
     {
+        if (input == null)
+            return Objects.requireNonNull(def);
         return input.replaceAll("\"", "&quot;");
     }
     
@@ -75,5 +94,48 @@ public class ServletUtils
             // should never happen
             return "";
         }
+    }
+    
+    /**
+     *  Denotes the start of a collapsible section. Requires the separate 
+     *  JavaScript file collapsible.js to function (otherwise the sections will
+     *  be expanded).
+     * 
+     *  @param title the title of the collapsed section sanitized for XSS
+     *  @param collapsed whether to start off in the collapsed state
+     *  @return HTML for a collapsible section
+     *  @see #endCollapsibleSection
+     */
+    public static String beginCollapsibleSection(String title, boolean collapsed)
+    {
+        StringBuilder sb = new StringBuilder();
+        // create a container to house a border for the collapsed element and a
+        // title for the collapsed section
+        sb.append("<div class=\"collapsecontainer\">\n");
+        sb.append("<span class=\"collapseboxtop\">\n");
+        sb.append("<span class=\"collapseheader\">");
+        sb.append(title);
+        sb.append("</span>\n");
+        // show/hide link
+        sb.append("<span class=\"showhidespan\">[<a href=\"#fasfd\" class=\"showhidelink\">");
+        sb.append(collapsed ? "show" : "hide");
+        sb.append("</a>]</span>\n");
+        sb.append("</span>\n");
+        // the actual collapsible 
+        sb.append("<div class=\"");
+        sb.append(collapsed ? "tocollapse" : "notcollapsed");
+        sb.append("\">\n");
+        return sb.toString();
+    }
+    
+    /**
+     *  Denotes the end of a collapsible section.
+     *  @return HTML denoting the end of a collapsible section
+     *  @see #beginCollapsibleSection
+     */
+    public static String endCollapsibleSection()
+    {
+        // the only reason this exists is readibility 
+        return "</div>\n</div>\n\n";
     }
 }

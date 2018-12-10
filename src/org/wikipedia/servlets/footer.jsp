@@ -16,13 +16,23 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
  --%>
  
-<%@ page import="java.util.*" %>
+<%@ page import="java.time.*" %>
+<%@ page import="javax.servlet.jsp.*" %>
+
+<%
+    Object error = request.getAttribute("error"); // always a string
+    if (error != null)
+    {
+        out.println("<hr>");
+        out.println("<span class=\"error\">" + error.toString() + "</span>");
+    }
+%>
 
 <br>
 <br>
 <hr>
 <p><%= request.getAttribute("toolname") %>: Copyright &copy; MER-C 2007-
-<%= new GregorianCalendar().get(Calendar.YEAR) %>. This tool is free software: 
+<%= OffsetDateTime.now().getYear() %>. This tool is free software: 
 you can redistribute it and/or modify it under the  terms of the 
 <a href="//gnu.org/licenses/agpl.html">Affero GNU General Public License</a> as 
 published by the Free Software Foundation, either version 3 of the License, or 
@@ -36,8 +46,15 @@ the <a href="//github.com/MER-C/wiki-java/issues">Github issue tracker</a>.
 <p><b>Tools:</b>
     <a href="./linksearch.jsp">Cross-wiki linksearch</a> |
     <a href="./masslinksearch.jsp">Mass linksearch</a> |
+    <a href="./contributionsurveyor.jsp">Contribution surveyor</a> |
     <a href="./imagecci.jsp">Image contribution surveyor</a> |
+    <a href="./editorintersection.jsp">Article-editor intersection</a> |
+    <a href="./extlinkchecker.jsp">External link checker</a> |
     <a href="./spamarchivesearch.jsp">Spam blacklist archive search</a> |
     <a href="./prefixcontribs.jsp">Prefix contributions</a>
 </body>
 </html>
+
+<%
+    throw new SkipPageException(); // Exit
+%>
