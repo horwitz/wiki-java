@@ -16,7 +16,7 @@
     String prefix = ServletUtils.sanitizeForAttribute(request.getParameter("prefix"));    
 %>
 <%@ include file="datevalidate.jspf" %>
-<%@ include file="header.jspf" %>
+<% ServletUtils.renderHeader(request, response, out); %>
 
 <p>
 This tool retrieves contributions of an IP range or username prefix. To search 
@@ -61,5 +61,5 @@ is performed on IP addresses. Timeouts are more likely for longer time spans.
                 out.println("<p>\n" + revisions.size() + " contributions found.");
         }
     }
+    ServletUtils.renderFooter(request, out);
 %>
-<%@ include file="footer.jspf" %>

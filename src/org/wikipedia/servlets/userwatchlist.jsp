@@ -34,7 +34,7 @@
     Pages pageUtils = Pages.of(enWiki);
 %>
 <%@ include file="datevalidate.jspf" %>
-<%@ include file="header.jspf" %>
+<% ServletUtils.renderHeader(request, response, out); %>
 
 <p>
 This tool retrieves contributions of a list of users. There is a limit of 50
@@ -81,9 +81,8 @@ Someone # Spam
 <%
     if (inputpage == null)
     {
-        %>
-<%@ include file="footer.jspf" %>
-        <%
+        ServletUtils.renderFooter(request, out);
+        throw new SkipPageException();
     }
 
     Map<String, String> input = new LinkedHashMap<>();
@@ -100,17 +99,15 @@ Someone # Spam
         if (us2 == null || !us2.isA("sysop"))
         {
             request.setAttribute("error", "TESTING WOOP WOOP WOOP!");
-%>
-<%@ include file="footer.jspf" %>
-<%
+            ServletUtils.renderFooter(request, out);
+            throw new SkipPageException();
         }
         String text = enWiki.getPageText(List.of(inputpage)).get(0);
-        if (text == null)
+        if (text == null) // unreachable?
         {
             request.setAttribute("error", "ERROR: page &quot;" + HTMLUtils.sanitizeForHTML(inputpage) + "&quot; does not exist!");
-%>
-<%@ include file="footer.jspf" %>
-<%
+            ServletUtils.renderFooter(request, out);
+            throw new SkipPageException();
         }
         // parse input
         String[] lines = text.split("\n");
@@ -136,17 +133,15 @@ Someone # Spam
     else
     {
         request.setAttribute("error", "TESTING WOOP WOOP WOOP!");
-%>
-<%@ include file="footer.jspf" %>
-<%
+        ServletUtils.renderFooter(request, out);
+        throw new SkipPageException();
     }
 
     if (input.isEmpty())
     {
         request.setAttribute("error", "ERROR: no users found!");
-%>
-<%@ include file="footer.jspf" %>
-<%
+        ServletUtils.renderFooter(request, out);
+        throw new SkipPageException();
     }
 
     // top pagination
@@ -188,6 +183,6 @@ Someone # Spam
     }
 
     // end pagination
-    out.println(ServletUtils.generatePagination(requesturl, skip, 50, input.size()));
+    out.println(ServletUtils.generatePagination(requesturl, skip, 50, input.size()));   
+    ServletUtils.renderFooter(request, out);
 %>
-<%@ include file="footer.jspf" %>

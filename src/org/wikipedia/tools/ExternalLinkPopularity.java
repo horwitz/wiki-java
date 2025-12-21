@@ -323,11 +323,11 @@ public class ExternalLinkPopularity
                 sb.append(")\n");
                 scores.accept(numlinks);
                 dss.accept(numlinks);
-                sb.append("<ul>");
+                sb.append("<ul>\n");
                 for (String url : listoflinks)
                 {
                     sb.append("""
-                        <li><a href="%s">%s</a>"
+                        <li><a href="%s">%s</a>
                         """.formatted(url, url));
                 }
                 sb.append("</ul>\n");

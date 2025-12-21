@@ -23,8 +23,9 @@
     boolean noanon = (request.getParameter("noanon") != null);
     boolean nominor = (request.getParameter("nominor") != null);
     boolean noreverts = (request.getParameter("noreverts") != null);
+    
+    ServletUtils.renderHeader(request, response, out);
 %>
-<%@ include file="header.jspf" %>
 
 <p>
 This tool retrieves the common editors of a given set of pages. Query limits of
@@ -75,9 +76,8 @@ first in the GUI) apply.
 <%
     if (request.getAttribute("error") != null)
     {
-%>
-<%@ include file="footer.jspf" %>
-<%
+        ServletUtils.renderFooter(request, out);
+        throw new SkipPageException();
     }
 
     Wiki wiki = sessions.sharedSession(wikiparam);
@@ -90,9 +90,8 @@ first in the GUI) apply.
         case "pages" -> Arrays.stream(pages.split("\r\n")).map(String::trim);
         default ->
         {
-%>
-<%@ include file="footer.jspf" %>
-<%
+            ServletUtils.renderFooter(request, out);
+            throw new SkipPageException();
         }
     };
         
@@ -103,9 +102,8 @@ first in the GUI) apply.
     if (pagesarray.size() < 2)
     {
         request.setAttribute("error", "Need at least two distinct pages to perform an intersection!");
-%>
-<%@ include file="footer.jspf" %>
-<%
+        ServletUtils.renderFooter(request, out);
+        throw new SkipPageException();
     }
     ArticleEditorIntersector aei = new ArticleEditorIntersector(wiki);
     aei.setIgnoringMinorEdits(nominor);
@@ -115,9 +113,8 @@ first in the GUI) apply.
     if (results.isEmpty())
     {
         request.setAttribute("error", "No intersection after applying exclusions and removing non-existing pages!");
-%>
-<%@ include file="footer.jspf" %>
-<%
+        ServletUtils.renderFooter(request, out);
+        throw new SkipPageException();
     }
     Map<String, Map<String, List<Wiki.Revision>>> bypage = new HashMap<>();
     results.forEach((key, value) ->
@@ -164,5 +161,5 @@ first in the GUI) apply.
         }).collect(Collectors.joining());
     out.println("<hr>");
     out.println(blah);
+    ServletUtils.renderFooter(request, out);
 %>
-<%@ include file="footer.jspf" %>

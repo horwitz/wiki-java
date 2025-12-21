@@ -1,20 +1,11 @@
-<%--
+<!--
     @(#)contributionsurveyor.jsp 0.02 05/07/2021
     Copyright (C) 2011 - 2022 MER-C
 
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU Affero General Public License as
-    published by the Free Software Foundation, either version 3 of the
-    License, or (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU Affero General Public License for more details.
-
-    You should have received a copy of the GNU Affero General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
---%>
+    This is free software: you are free to change and redistribute it under the 
+    Affero GNU GPL version 3 or later, see <https://www.gnu.org/licenses/agpl.html> 
+    for details. There is NO WARRANTY, to the extent permitted by law.
+-->
 <%@ include file="security.jspf" %>
 <%@ include file="datevalidate.jspf" %>
 <%
@@ -67,14 +58,15 @@
         // ns 118 = draft namespace on en.wikipedia
         int[] ns = nodrafts ? new int[] { Wiki.MAIN_NAMESPACE } : new int[] { Wiki.MAIN_NAMESPACE, Wiki.USER_NAMESPACE, 118 };
         survey = surveyor.outputContributionSurvey(users, true, false, false, ns);
+        String output = "text";
         if (survey.isEmpty())
             request.setAttribute("error", "No edits found!");
         else
-            request.setAttribute("contenttype", "text");
+            request.setAttribute("contenttype", output);
     }
-%>
-<%@ include file="header.jspf" %>
-<%  
+
+    ServletUtils.renderHeader(request, response, out);
+    
     if (!survey.isEmpty())
     {
         String fname = user == null ? category : user;
@@ -130,4 +122,4 @@ and other venues. It isolates and ranks major edits by size. A query limit of
 </table>
 <input type=submit value="Survey user">
 </form>
-<%@ include file="footer.jspf" %>
+<% ServletUtils.renderFooter(request, out); %>

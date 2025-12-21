@@ -1,20 +1,11 @@
-<%--
+<!--
     @(#)imagecci.jsp 0.03 07/02/2018
     Copyright (C) 2011 - 2022 MER-C
 
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU Affero General Public License as
-    published by the Free Software Foundation, either version 3 of the
-    License, or (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU Affero General Public License for more details.
-
-    You should have received a copy of the GNU Affero General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
---%>
+    This is free software: you are free to change and redistribute it under the 
+    Affero GNU GPL version 3 or later, see <https://www.gnu.org/licenses/agpl.html> 
+    for details. There is NO WARRANTY, to the extent permitted by law.
+-->
 <%@ include file="security.jspf" %>
 <%@ include file="datevalidate.jspf" %>
 <%
@@ -24,12 +15,13 @@
     request.setAttribute("toolname", "Image contribution surveyor");
     String homewiki = ServletUtils.sanitizeForAttributeOrDefault(request.getParameter("wiki"), "en.wikipedia.org");
     String user = request.getParameter("user");
+    String output = "text";
     if (user != null)
-        request.setAttribute("contenttype", "text");
+        request.setAttribute("contenttype", output); 
     boolean transferred = (request.getParameter("transferred") != null);
-%>
-<%@ include file="header.jspf" %>
-<%
+
+    ServletUtils.renderHeader(request, response, out);
+    
     List<String> survey = null;
     if (user != null)
     {
@@ -40,11 +32,28 @@
         surveyor.setSurveyingTransferredFiles(transferred);
         survey = surveyor.outputContributionSurvey(List.of(user), false, false, true);
 
-        // TODO: output as ZIP (not straightforward: requires rewrite as Java Servlet)
-        response.setHeader("Content-Disposition", "attachment; filename=" 
-            + URLEncoder.encode(user, StandardCharsets.UTF_8) + ".txt");
-        out.print(String.join("\n", survey));
-        return;
+        if (output.equals("text"))
+        {
+            response.setHeader("Content-Disposition", "attachment; filename=" 
+                + URLEncoder.encode(user, StandardCharsets.UTF_8) + ".txt");
+            out.print(String.join("\n", survey));
+            return;
+        }
+        else if (output.equals("zip"))
+        {
+            // ERROR: out already called, so cannot use getOutputStream().
+            // therefore servlet rewrite required
+            response.setHeader("Content-Disposition", "attachment; filename=" 
+                + URLEncoder.encode(user, StandardCharsets.UTF_8) + ".zip");
+            Map<String, byte[]> zip = new LinkedHashMap<>();
+            for (int i = 0; i < survey.size(); i++)
+                zip.put(user + (i == 0 ? "" : ".%03d".formatted(i)), survey.get(i).getBytes());
+            try (ZipOutputStream zout = new ZipOutputStream(response.getOutputStream()))
+            {
+                ContributionSurveyor.outputZipFile(zout, zip);
+                return;
+            }
+        }
     }
 %>
 
@@ -73,7 +82,7 @@ href="//en.wikipedia.org/wiki/WP:CCI">Contributor copyright investigations.</a>
 </form>
 
 <%
-    if (user != null && survey.isEmpty())
+    if (user != null && survey.isEmpty()) // currently unreachable?
         request.setAttribute("error", "ERROR: User " + HTMLUtils.sanitizeForHTML(user) + " does not exist!");
+    ServletUtils.renderFooter(request, out);
 %>
-<%@ include file="footer.jspf" %>

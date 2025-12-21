@@ -25,8 +25,8 @@
     }
     else
         inputdomains = "";
+    ServletUtils.renderHeader(request, response, out);
 %>
-<%@ include file="header.jspf" %>
 
 <p>
 This tool searches a single project for a large collection of links. Enter 
@@ -91,5 +91,5 @@ links per domain.
 </textarea>
 <%
     }
+    ServletUtils.renderFooter(request, out);
 %>
-<%@ include file="footer.jspf" %>

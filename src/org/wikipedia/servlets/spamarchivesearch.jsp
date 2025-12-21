@@ -12,8 +12,9 @@
         throw new SkipPageException();
     request.setAttribute("toolname", "Spam archive search");
     String query = request.getParameter("query");
+    
+    ServletUtils.renderHeader(request, response, out);
 %>
-<%@ include file="header.jspf" %>
 
 <p>
 This tool searches various spam related noticeboards for a given query string. 
@@ -51,5 +52,5 @@ If you want to search a domain name, please enclose it in quotation marks.
 <p><%= results.size() %> results found.
 <%
     }
+    ServletUtils.renderFooter(request, out);
 %>
-<%@ include file="footer.jspf" %>

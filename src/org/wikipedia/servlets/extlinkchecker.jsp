@@ -14,8 +14,9 @@
 
     String wiki = ServletUtils.sanitizeForAttributeOrDefault(request.getParameter("wiki"), "en.wikipedia.org");
     String title = ServletUtils.sanitizeForAttribute(request.getParameter("title"));
+    
+    ServletUtils.renderHeader(request, response, out);
 %>
-<%@ include file="header.jspf" %>
 
 <p>
 This tool performs linksearches to count how many live links exist to each 
@@ -52,5 +53,5 @@ long-standing reference spam.
             out.println(elp.exportResultsAsHTML(results, popresults));
         }
     }
+    ServletUtils.renderFooter(request, out);
 %>
-<%@ include file="footer.jspf" %>

@@ -15,9 +15,10 @@
     request.setAttribute("toolname", "NPP/AFC checker");
     String username = ServletUtils.sanitizeForAttribute(request.getParameter("username"));
     NPPCheck.Mode mode = NPPCheck.Mode.fromString(request.getParameter("mode"));
-    String offsetparam = Objects.requireNonNullElse(request.getParameter("offset"), "0");  
+    String offsetparam = Objects.requireNonNullElse(request.getParameter("offset"), "0");
+    
+    ServletUtils.renderHeader(request, response, out);
 %>
-<%@ include file="header.jspf" %>
 
 <p>
 This tool retrieves recent new page patrols and moves from draft/user space to 
@@ -50,9 +51,8 @@ main space for a given user (or for all users) and page metadata. A query limit 
 <%
     if (mode == null)
     {
-%>
-<%@ include file="footer.jspf" %>
-<%
+        ServletUtils.renderFooter(request, out);
+        throw new SkipPageException();
     }
     out.println("<hr>");
 
@@ -67,10 +67,9 @@ main space for a given user (or for all users) and page metadata. A query limit 
     
     if (logs.isEmpty())
     {
-%>
-<p>No results found!
-<%@ include file="footer.jspf" %>
-<%
+        out.println("<p>No results found!");
+        ServletUtils.renderFooter(request, out);
+        throw new SkipPageException();
     }
 
     // fetch metadata
@@ -203,6 +202,6 @@ main space for a given user (or for all users) and page metadata. A query limit 
 
     // output pagination
     out.println(ServletUtils.generatePagination(requesturl, offset, 50, logs.size()));
+    ServletUtils.renderFooter(request, out);
 %>
-<%@ include file="footer.jspf" %>
 

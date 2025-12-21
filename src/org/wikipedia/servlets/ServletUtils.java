@@ -1,5 +1,5 @@
 /**
- *  @(#)ServletUtils.java 0.02 13/04/2025
+ *  @(#)ServletUtils.java 0.03 23/11/2025
  *  Copyright (C) 2011 - 2025 MER-C
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -31,7 +31,7 @@ import jakarta.servlet.http.*;
 /**
  *  Common servlet code so that I can maintain it easier.
  *  @author MER-C
- *  @since 0.02
+ *  @since 0.03
  */
 public class ServletUtils
 {
@@ -201,15 +201,14 @@ public class ServletUtils
         // captcha not attempted, show CAPTCHA screen
         if (answer == null && timestamp == null && nonce == null && reqdifficulty == null)
         {
-            out.println("""
+            out.printf("""
                     <!doctype html>
                     <html>
                     <head>
-                    <title>CAPTCHA</title>""");
-            out.println("<script nonce=\"" + req.getAttribute("scriptnonce") + "\">");
-            out.println("    window.chl = \"" + challenge + "\";");
-            out.println("    window.difficulty = " + difficulty + ";");
-            out.println("""
+                    <title>CAPTCHA</title>
+                    <script nonce="%s">
+                        window.chl = "%s";
+                        window.difficulty = %d;
                     </script>
                     <script src="captcha.js" defer></script>
                     </head>
@@ -218,7 +217,7 @@ public class ServletUtils
                     <p>You should be redirected to your results shortly. Unfortunately JavaScript is required for this to work.
                     </body>
                     </html>
-                    """);
+                    """, req.getAttribute("scriptnonce"), challenge, difficulty);
             return false;
         }
         // incomplete parameters = fail
@@ -296,5 +295,85 @@ public class ServletUtils
             i++;
         }
         return sb.toString();
+    }
+    
+    /**
+     *  Renders the top portion of the HTML page, or sets text content type.
+     *  @param request a typical HTTP servlet request
+     *  @param response a typical HTTP servlet response
+     *  @param out the Writer to servlet output
+     *  @throws IOException if a network error occurs
+     *  @since 0.03
+     */
+    public static void renderHeader(HttpServletRequest request, HttpServletResponse response, Writer out) throws IOException
+    {
+        switch ((String)request.getAttribute("contenttype"))
+        {
+            case "text" -> response.setContentType("text/plain;charset=UTF-8");
+            case "zip" -> response.setContentType("application/zip");
+            case null, default ->
+            {
+                response.setContentType("text/html");
+                out.write("""
+                    <!doctype html>
+                    <html>
+                    <head>
+                    <link rel=stylesheet href="styles.css">
+                    <title>%s</title>
+                    """.formatted(request.getAttribute("toolname")));
+
+                String[] scripts = (String[])request.getAttribute("scripts");
+                if (scripts != null)
+                    for (String script : scripts)
+                        out.write("<script src=\"" + script + "\"></script>\r\n");
+
+                out.write("</head>\r\n");
+                out.write("<body>\r\n");
+            }
+        }
+    }
+    
+    /**
+     *  Renders the bottom portion of a HTML-based servlet response.
+     *  @param request a typical HTTP servlet request
+     *  @param out the Writer to servlet output
+     *  @throws IOException if a network error occurs
+     *  @since 0.03
+     */
+    public static void renderFooter(HttpServletRequest request, Writer out) throws IOException
+    {
+        Object error = request.getAttribute("error");
+        if (error != null)
+        {
+            out.write("""
+                <hr>
+                <span class="error">%s</span>
+                """.formatted(error));
+        }
+
+        out.write("""
+            <br>
+            <br>
+            <hr>
+            <p><a href="%s">Permanent link</a> to this query.
+        
+            <p>
+            %s: Copyright &copy; MER-C 2007-%d. This tool is free software: you can redistribute it 
+            and/or modify it under the terms of the <a href="//gnu.org/licenses/agpl.html">Affero 
+            GNU General Public License</a> as published by the Free Software Foundation, either version
+            3 of the License, or (at your option) any later version.
+
+            <p>
+            Source code is available <a href="//github.com/MER-C/wiki-java">here</a>. Report bugs at 
+            <a href="//en.wikipedia.org/wiki/User_talk:MER-C">my talk page</a> or the 
+            <a href="//github.com/MER-C/wiki-java/issues">Github issue tracker</a>.
+
+            <p>
+            <b>Navigate to:</b>
+                <a href="./index.html">Tool directory</a> |
+                <a href="./doc/index.html">Javadoc</a>
+            </body>
+            </html>""".formatted(getRequestURL(request), request.getAttribute("toolname"), OffsetDateTime.now().getYear()));
+        out.flush();
     }
 }

@@ -25,8 +25,9 @@
     String temp = request.getParameter("ns");
     boolean mainns = temp != null && temp.equals("0");
     int[] ns = mainns ? new int[] { Wiki.MAIN_NAMESPACE } : new int[0];
+    
+    ServletUtils.renderHeader(request, response, out);
 %>
-<%@ include file="header.jspf" %>
 
 <p>
 This tool searches various Wikimedia projects for a specific link. Enter a 
@@ -75,9 +76,8 @@ reasons, results are limited to <%= limit %> links per wiki.
     // state with no input parameters
     if (domain.isEmpty())
     {
-%>
-<%@ include file="footer.jspf" %>
-<%
+        ServletUtils.renderFooter(request, out);
+        throw new SkipPageException();
     }
     Map<WMFWiki, List<String[]>> results = null;
     if (mode.equals("multi"))
@@ -93,9 +93,8 @@ reasons, results are limited to <%= limit %> links per wiki.
             default -> 
             {
                 request.setAttribute("error", "Invalid wiki set selected!");
-%>
-<%@ include file="footer.jspf" %>
-<%
+                ServletUtils.renderFooter(request, out);
+                throw new SkipPageException();
             }
         };
     }
@@ -118,5 +117,5 @@ reasons, results are limited to <%= limit %> links per wiki.
         out.print(" links found (");
         out.print(pageutils.generatePageLink("Special:Linksearch/*." + domain, "linksearch") + ").");
     }
+    ServletUtils.renderFooter(request, out);
 %>
-<%@ include file="footer.jspf" %>
