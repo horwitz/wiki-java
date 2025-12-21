@@ -45,7 +45,6 @@ public class LoggedInUnitTests
     public void login() throws Exception
     {
         // one wiki instance = one session
-        // https://github.com/MER-C/wiki-java/issues/157
         Wiki enWiki = Wiki.newSession("en.wikipedia.org");
         enWiki.getPageText(List.of("Main Page"));
         // should still be logged in (also checks whether the cookies work in

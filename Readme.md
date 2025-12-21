@@ -1,8 +1,5 @@
 # Wiki.java
 
-[![codecov.io](http://codecov.io/github/MER-C/wiki-java/coverage.svg?branch=master)](http://codecov.io/github/MER-C/wiki-java?branch=master)
-
-
 A Java wiki bot framework that is only one file -- [org/wikipedia/Wiki.java](src/org/wikipedia/Wiki.java).
 Some functionality provided by MediaWiki extensions deployed on Wikimedia sites
 is available in [org/wikipedia/WMFWiki.java](src/org/wikipedia/WMFWiki.java). 
@@ -11,7 +8,7 @@ https://wikipediatools.appspot.com and other Wikipedia-related bits and pieces.
 Requires JDK >= 21. For those using modules, only the java.base, java.net.http and 
 java.logging modules are required.
 
-Latest stable version: [0.38](https://github.com/MER-C/wiki-java/releases/tag/0.38) -- 
+Latest stable version: [0.38](https://codeberg.org/MER-C/wiki-java/releases/tag/0.38) -- 
 MediaWiki versions 1.39+
 
 ## Dependencies
@@ -48,7 +45,7 @@ isolate your development environment.
 
 * [Javadoc](https://wikipediatools.appspot.com/doc/index.html)
 * [Deploying these tools on your own server](src/org/wikipedia/servlets/package-info.java)
-* [Extended documentation](https://github.com/MER-C/wiki-java/wiki/Extended-documentation),
+* [Extended documentation](https://codeberg.org/MER-C/wiki-java/wiki/Extended-documentation),
   including an example program
 * See [the page on Wikipedia](https://en.wikipedia.org/wiki/User:MER-C/Wiki.java)
   for some old revision history.

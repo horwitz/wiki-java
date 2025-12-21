@@ -49,12 +49,12 @@ import javax.security.auth.login.*;
  *  functionality added by MediaWiki extensions.
  *  <p>
  *  Extended documentation is available
- *  <a href="https://github.com/MER-C/wiki-java/wiki/Extended-documentation">here</a>.
+ *  <a href="https://codeberg.org/MER-C/wiki-java/wiki/Extended-documentation">at Codeberg</a>.
  *  All wikilinks are relative to the English Wikipedia and all timestamps are in
  *  your wiki's time zone.
  *  <p>
  *  Please file bug reports <a href="https://en.wikipedia.org/wiki/User_talk:MER-C">here</a>
- *  or at the <a href="https://github.com/MER-C/wiki-java/issues">Github issue
+ *  or at the <a href="https://codeberg.org/MER-C/wiki-java/issues">Codeberg issue
  *  tracker</a>.
  * 
  *  <h2>Configuration variables</h2>
@@ -460,7 +460,7 @@ public class Wiki implements Comparable<Wiki>
     private int assertion = ASSERT_NONE; // assertion mode
     private int statusinterval = 100; // status check
     private int querylimit = Integer.MAX_VALUE;
-    private String useragent = "Wiki.java/" + version + " (https://github.com/MER-C/wiki-java/)";
+    private String useragent = "Wiki.java/" + version + " (https://codeberg.org/MER-C/wiki-java/)";
     private boolean markminor = false, markbot = false;
     private boolean resolveredirect = false;
     private Level loglevel = Level.ALL;
@@ -3480,7 +3480,6 @@ public class Wiki implements Comparable<Wiki>
                 pro.append('|');
 
                 // https://www.mediawiki.org/wiki/Timestamp
-                // https://github.com/MER-C/wiki-java/issues/170
                 OffsetDateTime expiry = (OffsetDateTime)protectionstate.get(key + "expiry");
                 exp.append(expiry == null ? "never" : expiry.withOffsetSameInstant(ZoneOffset.UTC)
                     .truncatedTo(ChronoUnit.MICROS)
@@ -8102,7 +8101,6 @@ public class Wiki implements Comparable<Wiki>
             if (odt != null)
                 temp.put(requestType + "start",
                     // https://www.mediawiki.org/wiki/Timestamp
-                    // https://github.com/MER-C/wiki-java/issues/170
                     odt.withOffsetSameInstant(ZoneOffset.UTC)
                         .truncatedTo(ChronoUnit.MICROS)
                         .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
@@ -8110,7 +8108,6 @@ public class Wiki implements Comparable<Wiki>
             if (odt != null)
                 temp.put(requestType + "end",
                     // https://www.mediawiki.org/wiki/Timestamp
-                    // https://github.com/MER-C/wiki-java/issues/170
                     odt.withOffsetSameInstant(ZoneOffset.UTC)
                         .truncatedTo(ChronoUnit.MICROS)
                         .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
@@ -8566,7 +8563,6 @@ public class Wiki implements Comparable<Wiki>
             case Number num -> num.toString();
             case String[] sa -> String.join("|", sa);
             // https://www.mediawiki.org/wiki/Timestamp
-            // https://github.com/MER-C/wiki-java/issues/170    
             case OffsetDateTime date -> date.atZoneSameInstant(ZoneOffset.UTC)
                 .truncatedTo(ChronoUnit.MICROS)
                 .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME); 

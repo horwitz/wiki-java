@@ -364,9 +364,9 @@ public class ServletUtils
             3 of the License, or (at your option) any later version.
 
             <p>
-            Source code is available <a href="//github.com/MER-C/wiki-java">here</a>. Report bugs at 
+            Source code is available <a href="//codeberg.org/MER-C/wiki-java">at Codeberg</a>. Report bugs at 
             <a href="//en.wikipedia.org/wiki/User_talk:MER-C">my talk page</a> or the 
-            <a href="//github.com/MER-C/wiki-java/issues">Github issue tracker</a>.
+            <a href="//codeberg.org/MER-C/wiki-java/issues">Codeberg issue tracker</a>.
 
             <p>
             <b>Navigate to:</b>
