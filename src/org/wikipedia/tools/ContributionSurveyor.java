@@ -1,6 +1,6 @@
 /**
- *  @(#)ContributionSurveyor.java 0.09 10/02/2024
- *  Copyright (C) 2011-2024 MER-C
+ *  @(#)ContributionSurveyor.java 0.09 21/12/2025
+ *  Copyright (C) 2011-2025 MER-C
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -55,6 +55,16 @@ public class ContributionSurveyor
     private final int articlespersection = 20;
 
     /**
+     *  The domain name of the foreign media repository to use for {@link
+     *  #imageContributionSurvey(java.lang.Iterable)}. Defaults to Wikimedia
+     *  Commons.
+     *  @see <a href="https://www.mediawiki.org/wiki/Manual:$wgForeignFileRepos">MediaWiki
+     *  manual</a>
+     *  @since 0.09
+     */
+    private final String mediarepo = "commons.wikimedia.org";
+    
+    /**
      *  Runs this program.
      *  @param args command line arguments (see code for documentation)
      *  @throws IOException if a network error occurs
@@ -65,7 +75,7 @@ public class ContributionSurveyor
         CommandLineParser clp = new CommandLineParser("org.wikipedia.tools.ContributionSurveyor")
             .synopsis("[options]")
             .description("Survey the contributions of a large number of wiki editors.")
-            .addVersion("ContributionSurveyor v0.08\n" + CommandLineParser.GPL_VERSION_STRING)
+            .addVersion("ContributionSurveyor v0.09\n" + CommandLineParser.GPL_VERSION_STRING)
             .addSingleArgumentFlag("--outfile", "file", "Save results to file(s). "
                 + "Shows a filechooser if not specified. If multiple files output, use this as a prefix.")
             .addBooleanFlag("--zip", "Write a zip file instead of individual file(s).")
@@ -76,8 +86,8 @@ public class ContributionSurveyor
             .addSingleArgumentFlag("--blockedafter", "date", "Only survey unblocked users or those blocked on the target wiki after a certain date.");
         clp = addSharedOptions(clp);
         Map<String, String> parsedargs = clp
-            .addBooleanFlag("--images", "Survey images both on the home wiki and Commons.")
-            .addBooleanFlag("--notransfer", "Do not include transferred files to Commons.")
+            .addBooleanFlag("--images", "Survey images both on the home wiki and the foreign media repository.")
+            .addBooleanFlag("--notransfer", "Do not include transferred files to the foreign media repository.")
             .addBooleanFlag("--deleted", "Survey deleted edits (requires admin privileges)")
             .addBooleanFlag("--skiplive", "Don't survey live edits (for image/deleted only surveys)")
             .parse(args);
@@ -529,15 +539,14 @@ public class ContributionSurveyor
      *  limits do not apply to, nor do they make sense for transferred images.)
      *  @param users a list of users on the wiki
      *  @return for each user: first element = local uploads, second element = 
-     *  uploads on Wikimedia Commons by the user, third element = images 
-     *  transferred to Commons (may be inaccurate depending on username or empty
-     *  if disabled).
+     *  uploads on the foreign media repository wiki (default: Wikimedia Commons)
+     *  by the user, third element = images transferred to the repository wiki
+     *  (may be inaccurate depending on username or empty if disabled).
      *  @throws IOException if a network error occurs
      */
     public Map<String, Map<String, List<String>>> imageContributionSurvey(Iterable<String> users) throws IOException
     {
-        // TODO: expose common repository somewhere
-        Wiki commons = Wiki.newSession("commons.wikimedia.org");
+        Wiki repowiki = Wiki.newSession(mediarepo);
         Wiki.RequestHelper rh = wiki.new RequestHelper().withinDateRange(earliestdate, latestdate);
         Map<String, Map<String, List<String>>> ret = new HashMap<>();
         
@@ -548,45 +557,45 @@ public class ContributionSurveyor
             for (Wiki.LogEntry upload : wiki.getUploads(user, rh))
                 localuploads.add(upload.getTitle());
 
-            // fetch commons uploads
-            HashSet<String> comuploads = new HashSet<>(10000);
-            for (Wiki.LogEntry upload : commons.getUploads(user, rh))
-                comuploads.add(upload.getTitle());
+            // fetch image repository uploads
+            HashSet<String> repouploads = new HashSet<>(10000);
+            for (Wiki.LogEntry upload : repowiki.getUploads(user, rh))
+                repouploads.add(upload.getTitle());
 
-            // fetch transferred commons uploads
-            HashSet<String> commonsTransfer = new HashSet<>(10000);
+            // fetch uploads transferred to image repo
+            HashSet<String> repoTransfer = new HashSet<>(10000);
             if (transferredfiles)
             {
-                List<Map<String, Object>> temp = commons.search("\"" + user + "\"", Wiki.FILE_NAMESPACE);
+                List<Map<String, Object>> temp = repowiki.search("\"" + user + "\"", Wiki.FILE_NAMESPACE);
                 for (Map<String, Object> x : temp)
-                    commonsTransfer.add((String)x.get("title"));
+                    repoTransfer.add((String)x.get("title"));
             }
 
-            // remove all files that have been reuploaded to Commons
-            localuploads.removeAll(comuploads);
-            localuploads.removeAll(commonsTransfer);
-            commonsTransfer.removeAll(comuploads);
+            // remove all files that have been reuploaded to the foreign repository
+            localuploads.removeAll(repouploads);
+            localuploads.removeAll(repoTransfer);
+            repoTransfer.removeAll(repouploads);
             
             if (comingle)
             {
                 if (ret.isEmpty())
                     ret.put("", Map.of(
                         "local", new ArrayList<>(localuploads), 
-                        "commons", new ArrayList<>(comuploads),
-                        "transferred", new ArrayList<>(commonsTransfer)));
+                        "mediarepo", new ArrayList<>(repouploads),
+                        "transferred", new ArrayList<>(repoTransfer)));
                 else
                 {
                     var comingled = ret.get("");
                     comingled.get("local").addAll(localuploads);
-                    comingled.get("commons").addAll(comuploads);
-                    comingled.get("transferred").addAll(commonsTransfer);
+                    comingled.get("mediarepo").addAll(repouploads);
+                    comingled.get("transferred").addAll(repoTransfer);
                 }
             }
             else
                 ret.put(user, Map.of(
                     "local", new ArrayList<>(localuploads), 
-                    "commons", new ArrayList<>(comuploads),
-                    "transferred", new ArrayList<>(commonsTransfer)));
+                    "mediarepo", new ArrayList<>(repouploads),
+                    "transferred", new ArrayList<>(repoTransfer)));
         }
         return ret;
     }
@@ -638,7 +647,8 @@ public class ContributionSurveyor
      *  @param ns the namespaces to survey
      *  @param contribs include live edits
      *  @param deleted include deleted edits (requires admin login)
-     *  @param images whether to survey images (searches Commons as well)
+     *  @param images whether to survey images (searches the foreign media 
+     *  repository as well)
      *  @return the survey results as wikitext
      *  @throws IOException if a network error occurs
      *  @throws SecurityException if fetching deleted edits without admin
@@ -703,8 +713,8 @@ public class ContributionSurveyor
                 sections.addAll(Pages.toWikitextPaginatedList(imagesurvey2.get("local"), Pages.LIST_OF_LINKS, 
                     (start, end) -> "===" + username_hdr + " Local files " + start + " to " + end + "===", 
                     articlespersection, false));
-                sections.addAll(Pages.toWikitextPaginatedList(imagesurvey2.get("commons"), Pages.LIST_OF_LINKS, 
-                    (start, end) -> "===" + username_hdr + " Commons files " + start + " to " + end + "===", 
+                sections.addAll(Pages.toWikitextPaginatedList(imagesurvey2.get("mediarepo"), Pages.LIST_OF_LINKS, 
+                    (start, end) -> "===" + username_hdr + " Foreign repo files " + start + " to " + end + "===", 
                     articlespersection, false));
                 sections.addAll(Pages.toWikitextPaginatedList(imagesurvey2.get("transferred"), Pages.LIST_OF_LINKS, 
                     (start, end) -> "===" + username_hdr + " Transferred files " + start + " to " + end + "===", 

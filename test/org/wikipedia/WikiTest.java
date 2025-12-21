@@ -418,13 +418,14 @@ public class WikiTest
     {
         List<String> pages = List.of("sdkf&hsdklj", "User:MER-C/monobook.js",
             "Category:Wikipedia articles with undisclosed paid content");
-        List<String> expected2 = List.of("Category:Hidden categories",            
+        List<String> expected2 = List.of("Category:Hidden categories",
+            "Category:Noindexed pages",
             "Category:Wikipedia articles with paid content",
             "Category:Wikipedia maintenance categories sorted by month");
         List<List<String>> actual = enWiki.getCategories(pages, null, false);
         assertTrue(actual.get(0).isEmpty(), "non-existent page");
         assertTrue(actual.get(1).isEmpty(), "page with no categories");
-        assertEquals(expected2, actual.get(2), "page with three categories");
+        assertEquals(expected2, actual.get(2), "page with four categories");
 
         Wiki.RequestHelper rh = enWiki.new RequestHelper()
             .filterBy(Map.of("hidden", Boolean.FALSE));

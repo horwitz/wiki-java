@@ -94,9 +94,9 @@ public class ContributionSurveyorTest
         List<String> users = List.of("Helga The Great Kyiv", "Lozouhg");
         var results = surveyor.imageContributionSurvey(users);
         assertTrue(results.get(users.get(0)).get("local").isEmpty(), "User with no uploads (local)");
-        assertTrue(results.get(users.get(0)).get("commons").isEmpty(), "User with no uploads (commons)");
+        assertTrue(results.get(users.get(0)).get("mediarepo").isEmpty(), "User with no uploads (commons)");
         assertTrue(results.get(users.get(1)).get("local").isEmpty(), "User with only commons uploads");
-        assertEquals(List.of("File:Infinum logo.jpg"), results.get(users.get(1)).get("commons"));
+        assertEquals(List.of("File:Infinum logo.jpg"), results.get(users.get(1)).get("mediarepo"));
     }
     
     @Test
@@ -131,7 +131,7 @@ public class ContributionSurveyorTest
         // images
         users = List.of("Lozouhg");
         var results2 = surveyor.imageContributionSurvey(users);
-        assertTrue(results2.get(users.get(0)).get("commons").isEmpty(), "Check date range functionality (images)");
+        assertTrue(results2.get(users.get(0)).get("mediarepo").isEmpty(), "Check date range functionality (images)");
     }
     
     @Test
