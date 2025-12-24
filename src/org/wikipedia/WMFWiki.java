@@ -214,6 +214,7 @@ public class WMFWiki extends Wiki
         Map<String, String> getparams = new HashMap<>();
         getparams.put("action", "query");
         getparams.put("prop", "cirrusbuilddoc"); // slightly shorter output than cirrusdoc
+        getparams.put("cbbuilders", "content");
         
         List<List<String>> temp = makeVectorizedQuery("cb", getparams, titles, 
             "getLedeAsPlainText", -1, (text, result) -> 
@@ -253,6 +254,7 @@ public class WMFWiki extends Wiki
         Map<String, String> getparams = new HashMap<>();
         getparams.put("action", "query");
         getparams.put("prop", "cirrusbuilddoc"); // slightly shorter output than cirrusdoc
+        getparams.put("cbbuilders", "content");
         
         List<List<String>> temp = makeVectorizedQuery("cb", getparams, titles, 
             "getPlainText", -1, (text, result) -> 

@@ -24,7 +24,7 @@ import java.nio.file.*;
 import java.util.*;
 import java.util.regex.*;
 
-import org.wikipedia.HTMLUtils;
+import org.wikipedia.*;
 
 /**
  *  Finds similarities between two strings and generates an HTML report 
@@ -387,13 +387,39 @@ public class StringSimilarityFinder
             .addVersion("0.01")
             .addSingleArgumentFlag("--file1", "file.txt", "A text file containing plain text to compare, going to slot 1.")
             .addSingleArgumentFlag("--file2", "file.txt", "A text file containing plain text to compare, going to slot 2.")
+            .addSingleArgumentFlag("--wiki1", "en.wikipedia.org", "The wiki to fetch content from, going to slot 1 (default: en.wikipedia.org).")
+            .addSingleArgumentFlag("--wiki2", "en.wikipedia.org", "The wiki to fetch content from, going to slot 2 (default: en.wikipedia.org).")
+            .addSingleArgumentFlag("--page1", "Example", "The wiki page on wiki1 to fetch content from, going to slot 1.")
+            .addSingleArgumentFlag("--page2", "Example", "The wiki page on wiki2 to fetch content from, going to slot 2.")
+            // these aren't possible without an external parsing library
+            // .addSingleArgumentFlag("--revid1", "Example", "The revision ID on wiki1 to fetch content from, going to slot 1.")
+            // .addSingleArgumentFlag("--revid2", "Example", "The revision ID on wiki2 to fetch content from, going to slot 2.")
+            // same as for deleted content
             .addSingleArgumentFlag("--numwords", "3", "The number of words that comprise a match.");
         Map<String, String> parsedargs = clp.parse(args);
         
-        Path pathA = CommandLineParser.parseFileOption(parsedargs, "--file1", "Select text file 1 to compare", "File 1 not selected", false);
-        Path pathB = CommandLineParser.parseFileOption(parsedargs, "--file2", "Select text file 2 to compare", "File 2 not selected", false);
-        String textA = Files.readString(pathA);
-        String textB = Files.readString(pathB);
+        String textA = null, textB = null;
+        WMFWikiFarm wmf = WMFWikiFarm.instance();
+        if (parsedargs.containsKey("--page1"))
+        {
+            WMFWiki wiki = wmf.sharedSession(parsedargs.getOrDefault("--wiki1", "en.wikipedia.org"));
+            textA = wiki.getPlainText(List.of(parsedargs.get("--page1"))).get(0);
+        }
+        else
+        {
+            Path pathA = CommandLineParser.parseFileOption(parsedargs, "--file1", "Select text file 1 to compare", "File 1 not selected", false);
+            textA = Files.readString(pathA);
+        }
+        if (parsedargs.containsKey("--page2"))
+        {
+            WMFWiki wiki = wmf.sharedSession(parsedargs.getOrDefault("--wiki2", "en.wikipedia.org"));
+            textB = wiki.getPlainText(List.of(parsedargs.get("--page2"))).get(0);
+        }
+        else
+        {
+            Path pathB = CommandLineParser.parseFileOption(parsedargs, "--file2", "Select text file 2 to compare", "File 2 not selected", false);
+            textB = Files.readString(pathB);
+        }
         int numwords = Integer.parseInt(parsedargs.getOrDefault("--numwords", "3"));
 
         System.out.println("Comparing Text A and Text B:\n");
