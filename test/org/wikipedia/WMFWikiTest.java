@@ -76,7 +76,7 @@ public class WMFWikiTest
     {
         // https://en.wikipedia.org/wiki/Special:AbuseLog?wpSearchUser=Miniapolis&wpSearchTitle=Catopsbaatar&wpSearchFilter=1
         Wiki.RequestHelper helper = enWiki.new RequestHelper()
-            .withinDateRange(OffsetDateTime.parse("2018-04-05T00:00:00Z"), OffsetDateTime.parse("2018-04-06T01:00:00Z"))
+            .withinInterval(Wiki.Interval.parse("2018-04-05T00:00:00Z", "2018-04-06T01:00:00Z"))
             .byUser("Miniapolis")
             .byTitle("Catopsbaatar");
         List<Wiki.LogEntry> afl = enWiki.getAbuseLogEntries(new int[] { 1 }, helper);

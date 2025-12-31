@@ -108,7 +108,7 @@ first in the GUI) apply.
     ArticleEditorIntersector aei = new ArticleEditorIntersector(wiki);
     aei.setIgnoringMinorEdits(nominor);
     aei.setIgnoringReverts(noreverts);
-    aei.setDateRange(earliest_odt, latest_odt);
+    aei.setInterval(interval);
     Map<String, List<Wiki.Revision>> results = aei.intersectArticles(pagesarray, noadmin, nobot, noanon);
     if (results.isEmpty())
     {

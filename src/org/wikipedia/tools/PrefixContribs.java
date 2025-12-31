@@ -44,7 +44,7 @@ public class PrefixContribs
         if (prefix == null)
             System.exit(0);
         Wiki.RequestHelper rh = enWiki.new RequestHelper()
-            .withinDateRange(OffsetDateTime.now(ZoneOffset.UTC).minusDays(7), null);
+            .withinInterval(new Wiki.Interval(OffsetDateTime.now(ZoneOffset.UTC).minusDays(7), null));
         List<Wiki.Revision> revisions = enWiki.prefixContribs(prefix, rh);
         if (revisions.isEmpty())
             System.out.println("No contributions found.");

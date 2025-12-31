@@ -73,7 +73,7 @@ public class AdminUnitTests
     public void getDeletedHistory() throws Exception
     {
         Wiki.RequestHelper rh = testWiki.new RequestHelper()
-            .withinDateRange(OffsetDateTime.parse("2019-05-03T00:00:00Z"), OffsetDateTime.parse("2019-05-04T00:00:00Z"));
+            .withinInterval(Wiki.Interval.parse("2019-05-03T00:00:00Z", "2019-05-04T00:00:00Z"));
         List<Wiki.Revision> revisions = testWiki.getDeletedHistory("User:MER-C/UnitTests/Delete2", rh);
         assertEquals(3, revisions.size());
         Wiki.Revision first = revisions.get(0);
@@ -193,7 +193,7 @@ public class AdminUnitTests
         Wiki.RequestHelper rh = testWiki.new RequestHelper()
             .byUser("MER-C")
             .byTitle("File:Wiki.java test5.jpg")
-            .withinDateRange(OffsetDateTime.parse("2018-03-16T00:00:00Z"), OffsetDateTime.parse("2018-03-18T00:00:00Z"));
+            .withinInterval(Wiki.Interval.parse("2018-03-16T00:00:00Z", "2018-03-18T00:00:00Z"));
         List<Wiki.LogEntry> le = testWiki.getLogEntries(Wiki.DELETION_LOG, "delete", rh);
         testWiki.revisionDelete(Boolean.TRUE, Boolean.TRUE, Boolean.TRUE, 
             "Unit testing WOOP WOOP WOOP", Boolean.FALSE, le.subList(0, 1));
@@ -217,7 +217,7 @@ public class AdminUnitTests
         Wiki.RequestHelper rh = testWiki.new RequestHelper()
             .byUser("MER-C")
             .byTitle("File:Wiki.java test5.jpg")
-            .withinDateRange(OffsetDateTime.parse("2018-03-16T00:00:00Z"), OffsetDateTime.parse("2018-03-18T00:00:00Z"));
+            .withinInterval(Wiki.Interval.parse("2018-03-16T00:00:00Z", "2018-03-18T00:00:00Z"));
         List<Wiki.LogEntry> le = testWiki.getLogEntries(Wiki.DELETION_LOG, "delete", rh);
         
         testWiki.revisionDelete(Boolean.FALSE, Boolean.FALSE, Boolean.FALSE, "reset test", 

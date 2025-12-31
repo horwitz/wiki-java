@@ -130,7 +130,7 @@ public class NPPCheck
             .addHelp()
             .parse(args);
         String user = parsedargs.get("--user");
-        List<OffsetDateTime> dt = CommandLineParser.parseDateRange(parsedargs, "--start", "--end");
+        Wiki.Interval dt = CommandLineParser.parseInterval(parsedargs, "--start", "--end");
         
         WMFWikiFarm sessions = WMFWikiFarm.instance();
         WMFWiki enWiki = sessions.sharedSession("en.wikipedia.org");
@@ -143,7 +143,7 @@ public class NPPCheck
             check.setMode(Mode.UNPATROLLED);
             check.setReviewer(null);
             
-            List<? extends Wiki.Event> le = check.fetchLogs(dt.get(0), dt.get(1));
+            List<? extends Wiki.Event> le = check.fetchLogs(dt);
             System.out.println(check.outputTable(le));
         }
         
@@ -153,7 +153,7 @@ public class NPPCheck
             check.setMode(Mode.PATROLS);
             check.setReviewer(user);
         
-            List<? extends Wiki.Event> le = check.fetchLogs(dt.get(0), dt.get(1));
+            List<? extends Wiki.Event> le = check.fetchLogs(dt);
             System.out.println("==NPP patrols ==");        
             if (le.isEmpty())
                 System.out.println("No new pages patrolled.");
@@ -167,7 +167,7 @@ public class NPPCheck
             check.setMode(Mode.DRAFTS);
             check.setReviewer(user);
             
-            List<? extends Wiki.Event> le = check.fetchLogs(dt.get(0), dt.get(1));
+            List<? extends Wiki.Event> le = check.fetchLogs(dt);
             System.out.println("==Pages moved from draft to main ==");
             if (le.isEmpty())
                 System.out.println("No pages moved from draft to main.");
@@ -181,7 +181,7 @@ public class NPPCheck
             check.setMode(Mode.USERSPACE);
             check.setReviewer(user);
             
-            List<? extends Wiki.Event> le = check.fetchLogs(dt.get(0), dt.get(1));
+            List<? extends Wiki.Event> le = check.fetchLogs(dt);
             System.out.println("==Pages moved from user to main ==");
             if (le.isEmpty())
                 System.out.println("No pages moved from user to main.");
@@ -195,7 +195,7 @@ public class NPPCheck
             check.setMode(Mode.REDIRECTS);
             check.setReviewer(null);
             
-            List<? extends Wiki.Event> le = check.fetchLogs(dt.get(0), dt.get(1));
+            List<? extends Wiki.Event> le = check.fetchLogs(dt);
             System.out.println("==Expanded redirects ==");
             if (le.isEmpty())
                 System.out.println("No expanded redirects.");
@@ -331,15 +331,13 @@ public class NPPCheck
      *  rights. Otherwise the result is a list of {@link Wiki#MOVE_LOG} or 
      *  {@link Wiki#PATROL_LOG} {@link Wiki.LogEntry}.
      * 
-     *  @param earliest fetch events no earlier than this date
-     *  @param latest fetch events no later than this date
+     *  @param interval fetch events only between these timestamps
      *  @return (see above)
      *  @throws IOException if a network error occurs
      */
-    public List<? extends Wiki.Event> fetchLogs(OffsetDateTime earliest, OffsetDateTime latest) throws IOException
+    public List<? extends Wiki.Event> fetchLogs(Wiki.Interval interval) throws IOException
     {
-        Wiki.RequestHelper rh = wiki.new RequestHelper()
-            .withinDateRange(earliest, latest);
+        Wiki.RequestHelper rh = wiki.new RequestHelper().withinInterval(interval);
         if (reviewer != null)
             rh = rh.byUser(reviewer);
         List<Wiki.LogEntry> le = Collections.emptyList();

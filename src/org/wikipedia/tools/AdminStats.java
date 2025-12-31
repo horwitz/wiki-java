@@ -22,7 +22,6 @@ package org.wikipedia.tools;
 
 import java.io.IOException;
 import java.nio.file.*;
-import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import org.wikipedia.*;
@@ -37,7 +36,7 @@ public class AdminStats
 {
     private static final Wiki metaWiki;
     private final Wiki wiki;
-    private OffsetDateTime start, end;
+    private Wiki.Interval interval;
     private List<Wiki.LogEntry> deletions, blocks, locks, protections, gblocks;
 
     static
@@ -66,7 +65,7 @@ public class AdminStats
             .addBooleanFlag("--login", "Adds a login prompt to access high limits")
             .requireAll("--start", "--end")
             .parse(args);
-        List<OffsetDateTime> daterange = CommandLineParser.parseDateRange(options, "--start", "--end");
+        Wiki.Interval interval = CommandLineParser.parseInterval(options, "--start", "--end");
         boolean printfull = options.containsKey("--printfull");
 
         Wiki enWiki = Wiki.newSession("en.wikipedia.org");
@@ -74,7 +73,7 @@ public class AdminStats
             Users.of(enWiki).cliLogin();
         
         AdminStats stats = new AdminStats(enWiki);
-        stats.setDateRange(daterange.get(0), daterange.get(1));
+        stats.setInterval(interval);
 
         if (options.containsKey("--locks"))
         {
@@ -83,7 +82,7 @@ public class AdminStats
             if (!printfull)
                 lockhist = stats.groupLockReasons(lockhist);
             System.out.println("==Lock stats==");
-            System.out.println("" + total + " locks between " + daterange.get(0) + " and " + daterange.get(1));
+            System.out.println("" + total + " locks between " + interval.start() + " and " + interval.end());
             export(lockhist, "locks.csv");
         }
 
@@ -99,7 +98,7 @@ public class AdminStats
             if (!printfull)
                 blockhist = stats.groupBlockReasons(blockhist);
             System.out.println("==Block stats==");
-            System.out.println("" + total + " blocks between " + daterange.get(0) + " and " + daterange.get(1));
+            System.out.println("" + total + " blocks between " + interval.start() + " and " + interval.end());
             export(blockhist, "blocks.csv");
         }
 
@@ -110,7 +109,7 @@ public class AdminStats
             if (!printfull)
                 deletehist = stats.groupDeleteReasons(deletehist);
             System.out.println("==Deletion stats==");
-            System.out.println("" + total + " deletions between " + daterange.get(0) + " and " + daterange.get(1));
+            System.out.println("" + total + " deletions between " + interval.start() + " and " + interval.end());
             export(deletehist, "deletions-all.csv");
 
             deletehist = stats.deleteStats(Wiki.MAIN_NAMESPACE);
@@ -118,7 +117,7 @@ public class AdminStats
             if (!printfull)
                 deletehist = stats.groupDeleteReasons(deletehist);
             System.out.println("===Main namespace===");
-            System.out.println("" + total + " deletions between " + daterange.get(0) + " and " + daterange.get(1));
+            System.out.println("" + total + " deletions between " + interval.start() + " and " + interval.end());
             export(deletehist, "deletions-main.csv");
 
             deletehist = stats.deleteStats(Wiki.USER_NAMESPACE);
@@ -126,7 +125,7 @@ public class AdminStats
             if (!printfull)
                 deletehist = stats.groupDeleteReasons(deletehist);
             System.out.println("===User namespace===");
-            System.out.println("" + total + " deletions between " + daterange.get(0) + " and " + daterange.get(1));
+            System.out.println("" + total + " deletions between " + interval.start() + " and " + interval.end());
             export(deletehist, "deletions-user.csv");
 
             deletehist = stats.deleteStats(118); // draft namespace
@@ -134,7 +133,7 @@ public class AdminStats
             if (!printfull)
                 deletehist = stats.groupDeleteReasons(deletehist);
             System.out.println("===Draft namespace===");
-            System.out.println("" + total + " deletions between " + daterange.get(0) + " and " + daterange.get(1));
+            System.out.println("" + total + " deletions between " + interval.start() + " and " + interval.end());
             export(deletehist, "deletions-draft.csv");
         }
         
@@ -145,7 +144,7 @@ public class AdminStats
             if (!printfull)
                 prothist = stats.groupProtectionReasons(prothist);
             System.out.println("==Protection stats==");
-            System.out.println("" + total + " protections between " + daterange.get(0) + " and " + daterange.get(1));
+            System.out.println("" + total + " protections between " + interval.start() + " and " + interval.end());
             export(prothist, "protections-all.csv");
             
             prothist.clear();
@@ -154,7 +153,7 @@ public class AdminStats
             if (!printfull)
                 prothist = stats.groupProtectionReasons(prothist);
             System.out.println("===Main namespace===");
-            System.out.println("" + total + " protections between " + daterange.get(0) + " and " + daterange.get(1));
+            System.out.println("" + total + " protections between " + interval.start() + " and " + interval.end());
             export(prothist, "protections-main.csv");
         }
         
@@ -165,7 +164,7 @@ public class AdminStats
             if (!printfull)
                 blockhist = stats.groupGlobalBlockReasons(blockhist);
             System.out.println("==Global block stats==");
-            System.out.println("" + total + " global blocks between " + daterange.get(0) + " and " + daterange.get(1));
+            System.out.println("" + total + " global blocks between " + interval.start() + " and " + interval.end());
             export(blockhist, "gblocks.csv");
         }
     }
@@ -181,15 +180,13 @@ public class AdminStats
     }
 
     /**
-     *  Restricts statistics to this date range. Soft required, because you
+     *  Restricts statistics to this interval. Soft required, because you
      *  will be fetching millions of entries otherwise.
-     *  @param start date to start statistics
-     *  @param end date to end statistics
+     *  @param interval the interval to run statistics for
      */
-    public void setDateRange(OffsetDateTime start, OffsetDateTime end)
+    public void setInterval(Wiki.Interval interval)
     {
-        this.start = start;
-        this.end = end;
+        this.interval = interval;
         deletions.clear();
         blocks.clear();
         locks.clear();
@@ -209,7 +206,7 @@ public class AdminStats
         if (deletions.isEmpty())
         {
             Wiki.RequestHelper rh = wiki.new RequestHelper()
-                .withinDateRange(start, end);
+                .withinInterval(interval);
             List<Wiki.LogEntry> temp = wiki.getLogEntries(Wiki.DELETION_LOG, "delete", rh);
             for (Wiki.LogEntry log : temp)
                 if (log.getTitle() != null && log.getComment() != null)
@@ -380,8 +377,7 @@ public class AdminStats
     {
         if (locks.isEmpty())
         {
-            Wiki.RequestHelper rh = metaWiki.new RequestHelper()
-                .withinDateRange(start, end);
+            Wiki.RequestHelper rh = metaWiki.new RequestHelper().withinInterval(interval);
             locks = metaWiki.getLogEntries(WMFWiki.GLOBAL_AUTH_LOG, null, rh);
             locks.removeIf(log -> log.getTitle() == null || log.getComment() == null);
         }
@@ -445,8 +441,7 @@ public class AdminStats
     {
         if (blocks.isEmpty())
         {
-            Wiki.RequestHelper rh = wiki.new RequestHelper()
-                .withinDateRange(start, end);
+            Wiki.RequestHelper rh = wiki.new RequestHelper().withinInterval(interval);
             // Special:Blocklist contains current blocks only
             List<Wiki.LogEntry> lelocal = wiki.getLogEntries(Wiki.BLOCK_LOG, "block", rh);
             for (Wiki.LogEntry log : lelocal)
@@ -590,8 +585,7 @@ public class AdminStats
     {
         if (protections.isEmpty())
         {
-            Wiki.RequestHelper rh = wiki.new RequestHelper()
-                .withinDateRange(start, end);
+            Wiki.RequestHelper rh = wiki.new RequestHelper().withinInterval(interval);
             List<Wiki.LogEntry> lelocal = wiki.getLogEntries(Wiki.PROTECTION_LOG, "protect", rh);
             for (Wiki.LogEntry log : lelocal)
                 if (log.getTitle() != null && log.getComment() != null)
@@ -691,8 +685,7 @@ public class AdminStats
     {
         if (gblocks.isEmpty())
         {
-            Wiki.RequestHelper rh = metaWiki.new RequestHelper()
-                .withinDateRange(start, end);
+            Wiki.RequestHelper rh = metaWiki.new RequestHelper().withinInterval(interval);
             gblocks = metaWiki.getLogEntries(WMFWiki.GLOBAL_BLOCK_LOG, "gblock2", rh);
             gblocks.removeIf(log -> log.getTitle() == null || log.getComment() == null);
         }

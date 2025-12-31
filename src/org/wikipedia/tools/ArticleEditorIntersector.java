@@ -22,7 +22,6 @@ package org.wikipedia.tools;
 
 import java.io.*;
 import java.nio.file.*;
-import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.stream.*;
 import org.wikipedia.*;
@@ -50,7 +49,7 @@ public class ArticleEditorIntersector
     
     private final Wiki wiki;
     private boolean adminmode, nominor, noreverts;
-    private OffsetDateTime earliestdate, latestdate;
+    private Wiki.Interval interval;
     
     /**
      *  Runs this program.
@@ -96,7 +95,7 @@ public class ArticleEditorIntersector
         String defaultstring = parsedargs.get("default");
         String filename = parsedargs.get("--file");
         
-        List<OffsetDateTime> daterange = CommandLineParser.parseDateRange(parsedargs, "--editsafter", "--editsbefore");
+        Wiki.Interval interval = CommandLineParser.parseInterval(parsedargs, "--editsafter", "--editsbefore");
         List<String> articles = null;
         if (defaultstring != null)
             articles = List.of(defaultstring.split("\\s"));
@@ -105,7 +104,7 @@ public class ArticleEditorIntersector
         
         ArticleEditorIntersector aei = new ArticleEditorIntersector(wiki);
         aei.setIgnoringMinorEdits(nominor);
-        aei.setDateRange(daterange.get(0), daterange.get(1));
+        aei.setInterval(interval);
         aei.setIgnoringReverts(noreverts);
         if (adminmode)
         {
@@ -116,8 +115,7 @@ public class ArticleEditorIntersector
         // grab user contributions
         if (user != null)
         {
-            Wiki.RequestHelper rh = wiki.new RequestHelper()
-                .withinDateRange(daterange.get(0), daterange.get(1));
+            Wiki.RequestHelper rh = wiki.new RequestHelper().withinInterval(interval);
             Stream<Wiki.Revision> stuff = wiki.contribs(user, rh).stream();
             if (adminmode)
             {
@@ -254,54 +252,34 @@ public class ArticleEditorIntersector
     }
     
     /**
+     *  Sets the interval at which surveys start and finish; no edits will be 
+     *  returned outside it. 
+     *  @param interval the timestamps at which surveys start and finish
+     *  @see #getInterval() 
+     *  @since 0.02
+     */
+    public void setInterval(Wiki.Interval interval)
+    {
+        this.interval = interval;
+    }
+    
+    /**
      *  Sets the dates/times at which surveys start and finish; no edits will be 
-     *  returned outside this range. The default, {@code null}, indicates no
-     *  bound.
-     *  @param earliest the desired start date/time
-     *  @param latest the desired end date/time
-     *  @throws IllegalArgumentException if <var>earliest</var> is after
-     *  <var>latest</var>
-     *  @see #getEarliestDateTime() 
-     *  @see #getLatestDateTime() 
-     *  @since 0.02
-     */
-    public void setDateRange(OffsetDateTime earliest, OffsetDateTime latest)
-    {
-        if (earliest != null && latest != null && earliest.isAfter(latest))
-            throw new IllegalArgumentException("Date range is reversed.");
-        earliestdate = earliest;
-        latestdate = latest;
-    }
-    
-    /**
-     *  Gets the date/time at which surveys start; no edits will be returned 
-     *  before then.
+     *  returned outside this interval. 
      *  @return (see above)
-     *  @see #setDateRange(OffsetDateTime, OffsetDateTime)  
+     *  @see #setInterval(Wiki.Interval)  
      *  @since 0.02
      */
-    public OffsetDateTime getEarliestDateTime()
+    public Wiki.Interval getInterval()
     {
-        return earliestdate;
-    }
-    
-    /**
-     *  Gets the date at which surveys finish. 
-     *  @return (see above)
-     *  @see #setDateRange(OffsetDateTime, OffsetDateTime)  
-     *  @since 0.02
-     */
-    public OffsetDateTime getLatestDateTime()
-    {
-        return latestdate;
+        return interval;
     }
     
     /**
      *  Finds the set of common editors for a given set of <var>articles</var>
-     *  between {@link #getEarliestDateTime()} and {@link #getLatestDateTime()}.
-     *  Includes deleted edits if {@link #isUsingAdminPrivileges()} is 
-     *  {@code true} and ignores minor edits if {@link #isIgnoringMinorEdits()}
-     *  is {@code true}.
+     *  between the bounds of {@link #getInterval()}. Includes deleted edits if
+     *  {@link #isUsingAdminPrivileges()} is {@code true} and ignores minor 
+     *  edits if {@link #isIgnoringMinorEdits()} is {@code true}.
      * 
      *  @param articles a list of at least two unique pages to analyze for 
      *  common editors
@@ -319,8 +297,7 @@ public class ArticleEditorIntersector
     public Map<String, List<Wiki.Revision>> intersectArticles(Iterable<String> articles, 
         boolean noadmin, boolean nobot, boolean noanon) throws IOException
     {
-        Wiki.RequestHelper rh = wiki.new RequestHelper()
-            .withinDateRange(earliestdate, latestdate);
+        Wiki.RequestHelper rh = wiki.new RequestHelper().withinInterval(interval);
                 
         // remove duplicates and fail quickly if less than two pages
         Set<String> pageset = new HashSet<>();
@@ -409,10 +386,9 @@ public class ArticleEditorIntersector
     
     /**
      *  Given a set of <var>users</var>, find the list of articles they have 
-     *  edited between {@link #getEarliestDateTime()} and {@link #getLatestDateTime()}.
-     *  Includes deleted contributions if {@link #isUsingAdminPrivileges()} is 
-     *  {@code true} and ignores minor edits if {@link #isIgnoringMinorEdits()}
-     *  is {@code true}.
+     *  edited between the bounds of {@link #getInterval()}. Includes deleted 
+     *  contributions if {@link #isUsingAdminPrivileges()} is {@code true} and 
+     *  ignores minor edits if {@link #isIgnoringMinorEdits()} is {@code true}.
      * 
      *  @param users the list of users to fetch contributions for
      *  @return a map with page &#8594; list of revisions made
@@ -424,7 +400,7 @@ public class ArticleEditorIntersector
         if (nominor)
             options.put("minor", Boolean.FALSE);
         Wiki.RequestHelper rh = wiki.new RequestHelper()
-            .withinDateRange(earliestdate, latestdate)
+            .withinInterval(interval)
             .filterBy(options);
                 
         // fetch the list of (deleted) edits

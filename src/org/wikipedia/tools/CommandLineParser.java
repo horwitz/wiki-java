@@ -371,9 +371,6 @@ public class CommandLineParser
         return users;
     }
 
-    
-
-    
     /**
      *  Parses and validates an interval between two dates specified on the 
      *  command line. Exits if the start of the interval is after the end of 
@@ -381,26 +378,25 @@ public class CommandLineParser
      *  @param parsedargs parsed arguments from {@link #parse}
      *  @param startflag the flag for the start date
      *  @param endflag the flag for the end date
-     *  @return a list: position 0 is the start date, position 1 is the end date
-     *  (either or both may be null)
+     *  @return the parsed interval
      *  @since 0.02
      */
-    public static List<OffsetDateTime> parseDateRange(Map<String, String> parsedargs, String startflag, String endflag)
+    public static Wiki.Interval parseInterval(Map<String, String> parsedargs, String startflag, String endflag)
     {
-        String startstring = parsedargs.get(startflag);
-        String endstring = parsedargs.get(endflag);
-        OffsetDateTime startdate = (startstring == null) ? null : OffsetDateTime.parse(startstring);
-        OffsetDateTime enddate = (endstring == null) ? null : OffsetDateTime.parse(endstring);
-        if (enddate != null && startdate != null && enddate.isBefore(startdate))
+        String startstr = parsedargs.get(startflag);
+        String endstr = parsedargs.get(endflag);
+
+        try
         {
-            System.err.println("End date " + endstring + " specified in " + endflag + " is before the start date " +
-                startstring + " specified in " + startflag + ".");
-            System.exit(2);
+            return Wiki.Interval.parse(startstr, endstr);
         }
-        List<OffsetDateTime> ret = new ArrayList<>(); // needed because List.of doesn't like null
-        ret.add(startdate);
-        ret.add(enddate);
-        return ret;
+        catch (IllegalArgumentException ex)
+        {
+            System.err.println("End date " + endstr + " specified in " + endflag + " is before the start date " +
+                startstr + " specified in " + startflag + ".");
+            System.exit(2);
+            return null; // unreachable, to satisfy compiler
+        }
     }
     
     /**

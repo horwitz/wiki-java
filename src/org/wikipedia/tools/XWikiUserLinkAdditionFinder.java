@@ -19,7 +19,6 @@
  */
 package org.wikipedia.tools;
 
-import java.time.OffsetDateTime;
 import java.util.*;
 import org.wikipedia.*;
 
@@ -49,7 +48,7 @@ public class XWikiUserLinkAdditionFinder
             .addSingleArgumentFlag("--ignorebelow", "X", "Don't return domains added less than X times")
             .addUserInputOptions("Get links for");
         Map<String, String> parsedargs = clp.parse(args);
-        List<OffsetDateTime> dates = CommandLineParser.parseDateRange(parsedargs, "--fetchafter", "--fetchbefore");
+        Wiki.Interval dates = CommandLineParser.parseInterval(parsedargs, "--fetchafter", "--fetchbefore");
         int ignorebelow = Integer.parseInt(parsedargs.getOrDefault("--ignorebelow", "-1"));
         var rm = parsedargs.containsKey("--removeblacklisted") ? UserLinkAdditionFinder.RemovalMode.GLOBAL_BLACKLIST : UserLinkAdditionFinder.RemovalMode.NO_BLACKLISTS;
         
@@ -79,7 +78,7 @@ public class XWikiUserLinkAdditionFinder
         for (WMFWiki wiki : wikisedited)
         {
             UserLinkAdditionFinder finder = new UserLinkAdditionFinder(wiki);
-            Map<Wiki.Revision, List<String>> results = finder.getLinksAdded(users, dates.get(0), dates.get(1));
+            Map<Wiki.Revision, List<String>> results = finder.getLinksAdded(users, dates);
             if (results.isEmpty())
                 continue;
 

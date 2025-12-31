@@ -48,7 +48,7 @@ is performed on IP addresses. Timeouts are more likely for longer time spans.
             Wiki enWiki = sessions.sharedSession("en.wikipedia.org");
             enWiki.setQueryLimit(1000);
             Wiki.RequestHelper rh = enWiki.new RequestHelper()
-                .withinDateRange(earliest_odt, latest_odt);
+                .withinInterval(interval);
             List<Wiki.Revision> revisions = enWiki.prefixContribs(prefix, rh);
             out.println("<hr>");
             if (revisions.isEmpty())

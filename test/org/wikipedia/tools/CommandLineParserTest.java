@@ -219,7 +219,7 @@ public class CommandLineParserTest
     }
     
     @Test
-    public void parseDateRange()
+    public void parseInterval()
     {
         String sstr = "2018-11-17T17:30:54.101Z";
         String estr = "2021-01-24T09:55:10.023Z";
@@ -227,24 +227,24 @@ public class CommandLineParserTest
         OffsetDateTime edate = OffsetDateTime.parse(estr);
         Map<String, String> args = new HashMap<>();
         
-        List<OffsetDateTime> dates = CommandLineParser.parseDateRange(args, "--start", "--end");
-        assertNull(dates.get(0));
-        assertNull(dates.get(1));
+        Wiki.Interval interval = CommandLineParser.parseInterval(args, "--start", "--end");
+        assertNull(interval.start());
+        assertNull(interval.end());
         
         args.put("--start", sstr);
-        dates = CommandLineParser.parseDateRange(args, "--start", "--end");
-        assertEquals(sdate, dates.get(0));
-        assertNull(dates.get(1));
+        interval = CommandLineParser.parseInterval(args, "--start", "--end");
+        assertEquals(sdate, interval.start());
+        assertNull(interval.end());
         
         args.put("--end", estr);
-        dates = CommandLineParser.parseDateRange(args, "--start", "--end");
-        assertEquals(sdate, dates.get(0));
-        assertEquals(edate, dates.get(1));
+        interval = CommandLineParser.parseInterval(args, "--start", "--end");
+        assertEquals(sdate, interval.start());
+        assertEquals(edate, interval.end());
         
         args.remove("--start");
-        dates = CommandLineParser.parseDateRange(args, "--start", "--end");
-        assertNull(dates.get(0));
-        assertEquals(edate, dates.get(1));
+        interval = CommandLineParser.parseInterval(args, "--start", "--end");
+        assertNull(interval.start());
+        assertEquals(edate, interval.end());
         
         // can't test for wrong way round because it will exit
     }

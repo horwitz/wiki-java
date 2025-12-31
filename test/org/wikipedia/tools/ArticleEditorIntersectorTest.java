@@ -19,7 +19,6 @@
  */
 package org.wikipedia.tools;
 
-import java.time.OffsetDateTime;
 import java.util.*;
 import org.wikipedia.Wiki;
 
@@ -105,25 +104,19 @@ public class ArticleEditorIntersectorTest
     }
 
     @Test
-    public void setDateRange() throws Exception
+    public void setInterval() throws Exception
     {
         // first, verify get/set works
-        assertThrows(IllegalArgumentException.class,
-            () -> intersector_enWiki.setDateRange(OffsetDateTime.now(), OffsetDateTime.MIN));
-        assertThrows(IllegalArgumentException.class,
-            () -> intersector_enWiki.setDateRange(OffsetDateTime.MAX, OffsetDateTime.now()));
-        OffsetDateTime earliest = OffsetDateTime.parse("2010-01-01T00:00:00Z");
-        OffsetDateTime latest = OffsetDateTime.parse("2013-03-01T00:00:00Z");
-        intersector_enWiki.setDateRange(earliest, latest);
-        assertEquals(earliest, intersector_enWiki.getEarliestDateTime());
-        assertEquals(latest, intersector_enWiki.getLatestDateTime());
+        Wiki.Interval interval = Wiki.Interval.parse("2010-01-01T00:00:00Z", "2013-03-01T00:00:00Z");
+        intersector_enWiki.setInterval(interval);
+        assertEquals(interval, intersector_enWiki.getInterval());
 
-        // These articles have an intersection, but if we restrict the date range
+        // These articles have an intersection, but if we restrict the interval
         // we can get zero results.
         // https://en.wikipedia.org/w/index.php?title=Sainpasela&action=history
         // https://en.wikipedia.org/w/index.php?title=Qihe_County&action=history
         List<String> articles = List.of("Sainpasela", "Qihe County");
         Map<String, List<Wiki.Revision>> results = intersector_enWiki.intersectArticles(articles, false, false, false);
-        assertTrue(results.isEmpty(), "check date range functionality");
+        assertTrue(results.isEmpty(), "check interval functionality");
     }
 }

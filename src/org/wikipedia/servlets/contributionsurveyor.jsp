@@ -51,7 +51,7 @@
         surveyor.setIgnoringReverts(noreverts);
         surveyor.setNewOnly(newonly);
         surveyor.setComingled(comingle);
-        surveyor.setDateRange(earliest_odt, latest_odt);
+        surveyor.setInterval(interval);
         surveyor.setMinimumSizeDiff(Integer.parseInt(bytefloor));
         surveyor.setFooter("Survey URL: " + ServletUtils.getRequestURL(request));
         

@@ -46,7 +46,7 @@ public class RevisionsTest
     {
         // https://en.wikipedia.org/w/index.php?title=Azerbaijan&offset=20180125204500&action=history
         Wiki.RequestHelper rh = enWiki.new RequestHelper()
-            .withinDateRange(OffsetDateTime.parse("2018-01-16T00:00:00Z"), OffsetDateTime.parse("2018-01-25T20:45:00Z"));
+            .withinInterval(Wiki.Interval.parse("2018-01-16T00:00:00Z", "2018-01-25T20:45:00Z"));
         List<Wiki.Revision> revisions = enWiki.getPageHistory("Azerbaijan", rh);
         long[] oldids = new long[] 
         {

@@ -45,7 +45,7 @@ import org.wikipedia.*;
 public class ContributionSurveyor
 {
     private final Wiki wiki;
-    private OffsetDateTime earliestdate, latestdate;
+    private Wiki.Interval interval;
     private String footer;
     private boolean nominor = true, noreverts = true, newonly = false;
     private boolean comingle;
@@ -195,10 +195,10 @@ public class ContributionSurveyor
      */
     static ContributionSurveyor makeContributionSurveyor(Wiki wiki, Map<String, String> parsedargs)
     {
-        List<OffsetDateTime> daterange = CommandLineParser.parseDateRange(parsedargs, "--editsafter", "--editsbefore");
+        Wiki.Interval interval = CommandLineParser.parseInterval(parsedargs, "--editsafter", "--editsbefore");
         ContributionSurveyor cs = new ContributionSurveyor(wiki);
         cs.setNewOnly(parsedargs.containsKey("--newonly"));
-        cs.setDateRange(daterange.get(0), daterange.get(1));
+        cs.setInterval(interval);
         cs.setMinimumSizeDiff(Integer.parseInt(parsedargs.getOrDefault("--minsize", "150")));
         cs.setIgnoringMinorEdits(!parsedargs.containsKey("--includeminor"));
         cs.setIgnoringReverts(!parsedargs.containsKey("--includereverts"));
@@ -279,45 +279,26 @@ public class ContributionSurveyor
     
     /**
      *  Sets the dates/times at which surveys start and finish; no edits will be 
-     *  returned outside this range. The default, {@code null}, indicates no
-     *  bound.
-     *  @param earliest the desired start date/time
-     *  @param latest the desired end date/time
-     *  @throws IllegalArgumentException if <var>earliest</var> is after
-     *  <var>latest</var>
-     *  @see #getEarliestDateTime() 
-     *  @see #getLatestDateTime() 
+     *  returned outside this interval. 
+     *  @param interval the timestamps at which surveys start and finish
+     *  @see #getInterval() 
      *  @since 0.04
      */
-    public void setDateRange(OffsetDateTime earliest, OffsetDateTime latest)
+    public void setInterval(Wiki.Interval interval)
     {
-        if (earliest != null && latest != null && earliest.isAfter(latest))
-            throw new IllegalArgumentException("Date range is reversed.");
-        earliestdate = earliest;
-        latestdate = latest;
+        this.interval = interval;
     }
 
     /**
-     *  Gets the date/time at which surveys start; no edits will be returned
-     *  before then.
+     *  Sets the dates/times at which surveys start and finish; no edits will be 
+     *  returned outside this interval. 
      *  @return (see above)
-     *  @see #setDateRange(OffsetDateTime, OffsetDateTime)
+     *  @see #setInterval(Wiki.Interval)
      *  @since 0.04
      */
-    public OffsetDateTime getEarliestDateTime()
+    public Wiki.Interval getInterval()
     {
-        return earliestdate;
-    }
-
-    /**
-     *  Gets the date at which surveys finish.
-     *  @return (see above)
-     *  @see #setDateRange(OffsetDateTime, OffsetDateTime)
-     *  @since 0.04
-     */
-    public OffsetDateTime getLatestDateTime()
-    {
-        return latestdate;
+        return interval;
     }
 
     /**
@@ -450,7 +431,7 @@ public class ContributionSurveyor
             options.put("new", Boolean.TRUE);
         Wiki.RequestHelper rh = wiki.new RequestHelper()
             .inNamespaces(ns)
-            .withinDateRange(earliestdate, latestdate)
+            .withinInterval(interval)
             .filterBy(options);
         List<List<Wiki.Revision>> edits = wiki.contribs(users, null, rh);
         List<Wiki.Revision> comingled = new ArrayList<>();
@@ -507,7 +488,7 @@ public class ContributionSurveyor
     {
         // this looks a lot like ArticleEditorIntersector.intersectEditors()...
         Wiki.RequestHelper rh = wiki.new RequestHelper()
-            .withinDateRange(earliestdate, latestdate)
+            .withinInterval(interval)
             .inNamespaces(ns);
         
         Map<String, Map<String, List<Wiki.Revision>>> ret = new LinkedHashMap<>();
@@ -547,7 +528,7 @@ public class ContributionSurveyor
     public Map<String, Map<String, List<String>>> imageContributionSurvey(Iterable<String> users) throws IOException
     {
         Wiki repowiki = Wiki.newSession(mediarepo);
-        Wiki.RequestHelper rh = wiki.new RequestHelper().withinDateRange(earliestdate, latestdate);
+        Wiki.RequestHelper rh = wiki.new RequestHelper().withinInterval(interval);
         Map<String, Map<String, List<String>>> ret = new HashMap<>();
         
         for (String user : users)

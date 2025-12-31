@@ -150,8 +150,7 @@ Someone # Spam
     out.println(ServletUtils.generatePagination(requesturl, skip, 50, input.size()));
 
     // fetch contributions
-    Wiki.RequestHelper rh = enWiki.new RequestHelper()
-        .withinDateRange(earliest_odt, latest_odt);
+    Wiki.RequestHelper rh = enWiki.new RequestHelper().withinInterval(interval);
     if (newonly)
         rh = rh.filterBy(Map.of("new", Boolean.TRUE));
     List<String> users = new ArrayList<>(input.keySet());
@@ -177,7 +176,7 @@ Someone # Spam
         // write contribs
         List<Wiki.Revision> usercontribs = contribs.get(i);
         if (usercontribs.isEmpty())
-            out.println("<p>No contributions within date range or user does not exist.");
+            out.println("<p>No contributions within interval or user does not exist.");
         else
             out.println(revisionUtils.toHTML(usercontribs));
     }

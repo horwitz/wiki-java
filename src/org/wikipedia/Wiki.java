@@ -29,7 +29,7 @@ import java.nio.file.*;
 import java.text.Normalizer;
 import java.time.*;
 import java.time.format.*;
-import java.time.temporal.ChronoUnit;
+import java.time.temporal.*;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.*;
@@ -3024,8 +3024,7 @@ public class Wiki implements Comparable<Wiki>
      *  <var>helper</var> are:
      *
      *  <ul>
-     *  <li>{@link Wiki.RequestHelper#withinDateRange(OffsetDateTime,
-     *      OffsetDateTime) date range}
+     *  <li>{@link Wiki.RequestHelper#withinInterval(Interval) interval}
      *  <li>{@link Wiki.RequestHelper#byUser(String) user}
      *  <li>{@link Wiki.RequestHelper#notByUser(String) not by user}
      *  <li>{@link Wiki.RequestHelper#reverse(boolean) reverse}
@@ -3057,7 +3056,7 @@ public class Wiki implements Comparable<Wiki>
         if (helper != null)
         {
             helper.setRequestType("rv");
-            getparams.putAll(helper.addDateRangeParameters());
+            getparams.putAll(helper.addIntervalParameters());
             getparams.putAll(helper.addReverseParameter());
             getparams.putAll(helper.addUserParameter());
             getparams.putAll(helper.addExcludeUserParameter());
@@ -3084,8 +3083,7 @@ public class Wiki implements Comparable<Wiki>
      *  <var>helper</var> are:
      *
      *  <ul>
-     *  <li>{@link Wiki.RequestHelper#withinDateRange(OffsetDateTime,
-     *      OffsetDateTime) date range}
+     *  <li>{@link Wiki.RequestHelper#withinInterval(Interval) interval}
      *  <li>{@link Wiki.RequestHelper#byUser(String) user}
      *  <li>{@link Wiki.RequestHelper#notByUser(String) not by user}
      *  <li>{@link Wiki.RequestHelper#reverse(boolean) reverse}
@@ -3118,7 +3116,7 @@ public class Wiki implements Comparable<Wiki>
         if (helper != null)
         {
             helper.setRequestType("drv");
-            getparams.putAll(helper.addDateRangeParameters());
+            getparams.putAll(helper.addIntervalParameters());
             getparams.putAll(helper.addReverseParameter());
             getparams.putAll(helper.addUserParameter());
             getparams.putAll(helper.addExcludeUserParameter());
@@ -3157,7 +3155,7 @@ public class Wiki implements Comparable<Wiki>
      *  Accepted parameters from <var>helper</var> are:
      *
      *  <ul>
-     *  <li>{@link Wiki.RequestHelper#withinDateRange(OffsetDateTime, OffsetDateTime) date range}
+     *  <li>{@link Wiki.RequestHelper#withinInterval(Interval) interval}
      *      (upload date)
      *  <li>{@link Wiki.RequestHelper#limitedTo(int) local query limit}
      *  </ul>
@@ -3185,7 +3183,7 @@ public class Wiki implements Comparable<Wiki>
         if (helper != null)
         {
             helper.setRequestType("fa");
-            getparams.putAll(helper.addDateRangeParameters());
+            getparams.putAll(helper.addIntervalParameters());
             limit = helper.limit();
         }
 
@@ -3209,7 +3207,7 @@ public class Wiki implements Comparable<Wiki>
      *  <var>helper</var> are:
      *
      *  <ul>
-     *  <li>{@link Wiki.RequestHelper#withinDateRange(OffsetDateTime, OffsetDateTime) date range}
+     *  <li>{@link Wiki.RequestHelper#withinInterval(Interval) interval}
      *  <li>{@link Wiki.RequestHelper#reverse(boolean) reverse}
      *  <li>{@link Wiki.RequestHelper#inNamespaces(int...) namespaces}
      *  <li>{@link Wiki.RequestHelper#taggedWith(String) tag}
@@ -3238,7 +3236,7 @@ public class Wiki implements Comparable<Wiki>
         if (helper != null)
         {
             helper.setRequestType("adr");
-            getparams.putAll(helper.addDateRangeParameters());
+            getparams.putAll(helper.addIntervalParameters());
             getparams.putAll(helper.addNamespaceParameter());
             getparams.putAll(helper.addReverseParameter());
             getparams.putAll(helper.addTagParameter());
@@ -4409,8 +4407,7 @@ public class Wiki implements Comparable<Wiki>
      *  <p>
      *  Accepted parameters from <var>helper</var> are:
      *  <ul>
-     *  <li>{@link Wiki.RequestHelper#withinDateRange(OffsetDateTime,
-     *      OffsetDateTime) date range}
+     *  <li>{@link Wiki.RequestHelper#withinInterval(Interval) interval}
      *  <li>{@link Wiki.RequestHelper#reverse(boolean) reverse}
      *  <li>{@link Wiki.RequestHelper#limitedTo(int) local query limit}
      *  </ul>
@@ -4433,7 +4430,7 @@ public class Wiki implements Comparable<Wiki>
         if (helper != null)
         {
             helper.setRequestType("ai");
-            getparams.putAll(helper.addDateRangeParameters());
+            getparams.putAll(helper.addIntervalParameters());
             getparams.putAll(helper.addReverseParameter());
             limit = helper.limit();
         }
@@ -5035,8 +5032,7 @@ public class Wiki implements Comparable<Wiki>
      *  <p>
      *  Accepted parameters from <var>helper</var> are:
      *  <ul>
-     *  <li>{@link Wiki.RequestHelper#withinDateRange(OffsetDateTime,
-     *      OffsetDateTime) date range}
+     *  <li>{@link Wiki.RequestHelper#withinInterval(Interval interval)}
      *  <li>{@link Wiki.RequestHelper#inNamespaces(int...) namespaces}
      *  <li>{@link Wiki.RequestHelper#reverse(boolean) reverse}
      *  <li>{@link Wiki.RequestHelper#taggedWith(String) tag}
@@ -5065,7 +5061,7 @@ public class Wiki implements Comparable<Wiki>
         if (helper != null)
         {
             helper.setRequestType("uc");
-            getparams.putAll(helper.addDateRangeParameters());
+            getparams.putAll(helper.addIntervalParameters());
             getparams.putAll(helper.addNamespaceParameter());
             getparams.putAll(helper.addReverseParameter());
             getparams.putAll(helper.addTagParameter());
@@ -5472,8 +5468,7 @@ public class Wiki implements Comparable<Wiki>
      *  <p>
      *  Accepted parameters from <var>helper</var> are:
      *  <ul>
-     *  <li>{@link Wiki.RequestHelper#withinDateRange(OffsetDateTime,
-     *      OffsetDateTime) date range}
+     *  <li>{@link Wiki.RequestHelper#withinInterval(Interval) interval}
      *  <li>{@link Wiki.RequestHelper#inNamespaces(int...) namespaces}
      *  <li>{@link Wiki.RequestHelper#byUser(String) user}
      *  <li>{@link Wiki.RequestHelper#notByUser(String) not by user}
@@ -5502,7 +5497,7 @@ public class Wiki implements Comparable<Wiki>
         if (helper != null)
         {
             helper.setRequestType("wl");
-            getparams.putAll(helper.addDateRangeParameters());
+            getparams.putAll(helper.addIntervalParameters());
             getparams.putAll(helper.addNamespaceParameter());
             getparams.putAll(helper.addUserParameter());
             getparams.putAll(helper.addExcludeUserParameter());
@@ -5997,8 +5992,7 @@ public class Wiki implements Comparable<Wiki>
      *  is autoblocked as this is non-public data (see [[wmf:Privacy policy]]).
      *  Accepted parameters from <var>helper</var> are:
      *  <ul>
-     *  <li>{@link Wiki.RequestHelper#withinDateRange(OffsetDateTime,
-     *      OffsetDateTime) date range}
+     *  <li>{@link Wiki.RequestHelper#withinInterval(Interval) interval}
      *  <li>{@link Wiki.RequestHelper#filterBy(Map) filter by}: "range" (range blocks),
      *      ip (IP blocks), "temp" (temporary blocks), "account" (account blocks)
      *  <li>{@link Wiki.RequestHelper#reverse(boolean) reverse}
@@ -6030,7 +6024,7 @@ public class Wiki implements Comparable<Wiki>
         if (helper != null)
         {
             helper.setRequestType("bk");
-            getparams.putAll(helper.addDateRangeParameters());
+            getparams.putAll(helper.addIntervalParameters());
             getparams.putAll(helper.addReverseParameter());
             getparams.putAll(helper.addShowParameter());
             limit = helper.limit();
@@ -6082,8 +6076,7 @@ public class Wiki implements Comparable<Wiki>
      *  Accepted parameters from <var>helper</var> are:
      *
      *  <ul>
-     *  <li>{@link Wiki.RequestHelper#withinDateRange(OffsetDateTime,
-     *      OffsetDateTime) date range}
+     *  <li>{@link Wiki.RequestHelper#withinInterval(Interval) interval}
      *  <li>{@link Wiki.RequestHelper#byUser(String) user}
      *  <li>{@link Wiki.RequestHelper#byTitle(String) title}
      *  <li>{@link Wiki.RequestHelper#reverse(boolean) reverse}
@@ -6121,7 +6114,7 @@ public class Wiki implements Comparable<Wiki>
         {
             helper.setRequestType("le");
             getparams.putAll(helper.addTitleParameter());
-            getparams.putAll(helper.addDateRangeParameters());
+            getparams.putAll(helper.addIntervalParameters());
             getparams.putAll(helper.addUserParameter());
             getparams.putAll(helper.addReverseParameter());
             getparams.putAll(helper.addNamespaceParameter());
@@ -6584,8 +6577,7 @@ public class Wiki implements Comparable<Wiki>
      *  <p>
      *  Accepted parameters from <var>helper</var> are:
      *  <ul>
-     *  <li>{@link Wiki.RequestHelper#withinDateRange(OffsetDateTime,
-     *      OffsetDateTime) date range}
+     *  <li>{@link Wiki.RequestHelper#withinInterval(Interval) interval}
      *  <li>{@link Wiki.RequestHelper#byUser(String) user}
      *  <li>{@link Wiki.RequestHelper#notByUser(String) not by user}
      *  <li>{@link Wiki.RequestHelper#reverse(boolean) reverse}
@@ -6633,7 +6625,7 @@ public class Wiki implements Comparable<Wiki>
             getparams.putAll(helper.addNamespaceParameter());
             getparams.putAll(helper.addUserParameter());
             getparams.putAll(helper.addExcludeUserParameter());
-            getparams.putAll(helper.addDateRangeParameters());
+            getparams.putAll(helper.addIntervalParameters());
             getparams.putAll(helper.addTagParameter());
             getparams.putAll(helper.addReverseParameter());
             getparams.putAll(helper.addShowParameter());
@@ -7890,6 +7882,48 @@ public class Wiki implements Comparable<Wiki>
             Wiki.this.rollback(this, bot, reason);
         }
     }
+    
+    /**
+     *  Represents an interval. If either parameter is null, then the interval 
+     *  is open on that side.
+     *  @param start the start timestamp
+     *  @param end the end timestamp
+     *  @since 0.39
+     */
+    public record Interval(OffsetDateTime start, OffsetDateTime end)
+    {
+        // JDK whinges: the common methods needed to validate and format the 
+        // parameters are not defined in a custom interface -> no generics.
+        // This should also be in the JDK.
+        
+        /**
+         *  Creates an interval. 
+         *  @param start the start timestamp
+         *  @param end the end timestamp
+         *  @throws IllegalArgumentException if the start date is before the end date
+         */
+        public Interval
+        {
+            if (start != null && end != null && start.isAfter(end))
+                throw new IllegalArgumentException("Start date must be before end date!");
+        }
+        
+        /**
+         *  Parses an interval from two strings. Strings must be compatible with
+         *  {@link OffsetDateTime#parse(String)}.
+         *  @param startstr the start of the interval, as a string
+         *  @param endstr the end of the interval, as a string
+         *  @return the parsed interval
+         *  @throws DateTimeParseException if the text cannot be parsed
+         *  @throws IllegalArgumentException if the start date is before the end date
+         */
+        public static Interval parse(String startstr, String endstr)
+        {
+            return new Interval( 
+                (startstr == null) ? null : OffsetDateTime.parse(startstr),
+                (endstr == null) ? null : OffsetDateTime.parse(endstr));
+        }
+    }
 
     /**
      *  Vehicle for stuffing standard optional parameters into Wiki queries.
@@ -7910,7 +7944,7 @@ public class Wiki implements Comparable<Wiki>
     {
         private String title;
         private String byuser;
-        private OffsetDateTime earliest, latest;
+        private Interval interval;
         private int[] localns = new int[0];
         private boolean reverse = false;
         private String notbyuser;
@@ -7955,20 +7989,13 @@ public class Wiki implements Comparable<Wiki>
         }
 
         /**
-         *  Limit results to be within this date range.
-         *  @param earliest the lower (earliest) date bound, use {@code null} to
-         *  not set one
-         *  @param latest the higher (latest) date bound, use {@code null} to
-         *  not set one
-         *  @throws IllegalArgumentException if {@code earliest.isAfter(latest)}
+         *  Limit results to be within this interval.
+         *  @param interval the interval to filter results by
          *  @return this RequestHelper
          */
-        public RequestHelper withinDateRange(OffsetDateTime earliest, OffsetDateTime latest)
+        public RequestHelper withinInterval(Interval interval)
         {
-            if (earliest != null && latest != null && earliest.isAfter(latest))
-                throw new IllegalArgumentException("Earliest date must be before latest date!");
-            this.earliest = earliest;
-            this.latest = latest;
+            this.interval = interval;
             return this;
         }
 
@@ -8089,22 +8116,24 @@ public class Wiki implements Comparable<Wiki>
         }
 
         /**
-         *  Returns a HTTP request parameter containing the dates to start
-         *  and end enumeration, or an empty map if not wanted.
+         *  Returns a HTTP request parameter containing the interval that
+         *  constrains enumeration, or an empty map if not wanted.
          *  @return (see above)
          */
-        protected Map<String, String> addDateRangeParameters()
+        protected Map<String, String> addIntervalParameters()
         {
+            if (interval == null)
+                return Collections.emptyMap();
             // https://phabricator.wikimedia.org/T16449
             Map<String, String> temp = new HashMap<>();
-            OffsetDateTime odt = reverse ? earliest : latest;
+            OffsetDateTime odt = reverse ? interval.start() : interval.end();
             if (odt != null)
                 temp.put(requestType + "start",
                     // https://www.mediawiki.org/wiki/Timestamp
                     odt.withOffsetSameInstant(ZoneOffset.UTC)
                         .truncatedTo(ChronoUnit.MICROS)
                         .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
-            odt = reverse ? latest : earliest;
+            odt = reverse ? interval.end() : interval.start();
             if (odt != null)
                 temp.put(requestType + "end",
                     // https://www.mediawiki.org/wiki/Timestamp

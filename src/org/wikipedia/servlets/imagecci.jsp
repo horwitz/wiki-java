@@ -27,7 +27,7 @@
     {
         WMFWiki wiki = sessions.sharedSession(homewiki);
         ContributionSurveyor surveyor = new ContributionSurveyor(wiki);
-        surveyor.setDateRange(earliest_odt, latest_odt);
+        surveyor.setInterval(interval);
         surveyor.setFooter("Survey URL: " + ServletUtils.getRequestURL(request));
         surveyor.setSurveyingTransferredFiles(transferred);
         survey = surveyor.outputContributionSurvey(List.of(user), false, false, true);

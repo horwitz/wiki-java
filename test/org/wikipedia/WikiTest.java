@@ -623,7 +623,7 @@ public class WikiTest
         Wiki.RequestHelper rh = testWiki.new RequestHelper()
             .byUser("MER-C")
             .byTitle("File:Wiki.java test5.jpg")
-            .withinDateRange(OffsetDateTime.parse("2018-03-16T00:00:00Z"), OffsetDateTime.parse("2018-03-18T00:00:00Z"));
+            .withinInterval(Wiki.Interval.parse("2018-03-16T00:00:00Z", "2018-03-18T00:00:00Z"));
         List<Wiki.LogEntry> logs = testWiki.getLogEntries(Wiki.DELETION_LOG, "delete", rh);
         List<Wiki.Event> events = List.of(revision, logs.get(0));
         assertThrows(IllegalArgumentException.class,
@@ -674,10 +674,10 @@ public class WikiTest
         // https://en.wikipedia.org/w/api.php?action=query&list=logevents&letitle=User:Nimimaan
 
         // Block log
-        OffsetDateTime c = OffsetDateTime.parse("2016-06-30T23:59:59Z");
+        Wiki.Interval interval = Wiki.Interval.parse(null, "2016-06-30T23:59:59Z");
         Wiki.RequestHelper rh = enWiki.new RequestHelper()
             .byTitle("User:Nimimaan")
-            .withinDateRange(null, c);
+            .withinInterval(interval);
         List<Wiki.LogEntry> le = enWiki.getLogEntries(Wiki.ALL_LOGS, null, rh);
         assertEquals(75695806L, le.get(0).getID());
         assertEquals("2016-06-21T13:14:54Z", le.get(0).getTimestamp().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
@@ -706,7 +706,7 @@ public class WikiTest
         // Move log
         rh = enWiki.new RequestHelper()
             .byTitle("Talk:96th Test Wing/Temp")
-            .withinDateRange(null, c);
+            .withinInterval(interval);
         le = enWiki.getLogEntries(Wiki.ALL_LOGS, null, rh);
         assertEquals(Wiki.MOVE_LOG, le.get(0).getType());
         assertEquals("move", le.get(0).getAction());
@@ -747,7 +747,7 @@ public class WikiTest
         //     &lestart=20161002050030&leend=20161002050000&letype=delete
         rh = testWiki.new RequestHelper()
             .byUser("MER-C")
-            .withinDateRange(OffsetDateTime.parse("2016-10-02T05:00:00Z"), OffsetDateTime.parse("2016-10-02T05:30:00Z"));
+            .withinInterval(Wiki.Interval.parse("2016-10-02T05:00:00Z", "2016-10-02T05:30:00Z"));
         le = testWiki.getLogEntries(Wiki.DELETION_LOG, null, rh);
         assertEquals(Wiki.Event.CONTENT_DELETED, le.get(1).getTitle(), "target hidden");
         assertTrue(le.get(1).isContentDeleted(), "target hidden");
@@ -916,7 +916,7 @@ public class WikiTest
     public void listDeletedFiles() throws Exception
     {
         List<Wiki.LogEntry> files = enWiki.listDeletedFiles("fdb4e6b0e934c02e52cd732508247b895ac6a805", null, null);
-        // test is unstable, so filter by date range to make it stable
+        // test is unstable, so filter by interval to make it stable
         OffsetDateTime start = OffsetDateTime.parse("2007-08-07T00:00:00Z");
         OffsetDateTime end = OffsetDateTime.parse("2007-08-08T00:00:00Z");
         for (Wiki.LogEntry file : files)
@@ -1126,7 +1126,7 @@ public class WikiTest
         assertTrue(commons.getUploads(users.get(2), null).isEmpty(), "no uploads for IPs");
         
         OffsetDateTime odt = OffsetDateTime.parse("2020-03-13T17:00:00Z");
-        Wiki.RequestHelper rh = commons.new RequestHelper().withinDateRange(odt, odt.plusMinutes(10));
+        Wiki.RequestHelper rh = commons.new RequestHelper().withinInterval(new Wiki.Interval(odt, odt.plusMinutes(10)));
         List<Wiki.LogEntry> results = commons.getUploads(users.get(1), rh);
         assertEquals(3, results.size());
         assertEquals("File:Vervain hummingbird (Mellisuga minima) feeding.jpg", results.get(0).getTitle());
@@ -1266,7 +1266,7 @@ public class WikiTest
         Wiki.RequestHelper rh = testWiki.new RequestHelper()
             .inNamespaces(Wiki.MAIN_NAMESPACE)
             .filterBy(Map.of("new", Boolean.TRUE, "top", Boolean.TRUE))
-            .withinDateRange(null, OffsetDateTime.parse("2020-01-01T00:00:00Z"));
+            .withinInterval(Wiki.Interval.parse(null, "2020-01-01T00:00:00Z"));
         edits = testWiki.contribs(List.of("MER-C"), null, rh);
         assertEquals(120919L, edits.get(0).get(0).getID(), "filtered");
         // not implemented in MediaWiki API
@@ -1531,7 +1531,7 @@ public class WikiTest
         // RevisionDeleted, therefore need to test for NPEs
         rev1 = testWiki.getRevision(275553L);
         Wiki.RequestHelper rh = testWiki.new RequestHelper()
-            .withinDateRange(OffsetDateTime.parse("2016-01-01T00:00:00Z"), OffsetDateTime.parse("2016-06-16T08:40:00Z"));
+            .withinInterval(Wiki.Interval.parse("2016-01-01T00:00:00Z", "2016-06-16T08:40:00Z"));
         rev2 = testWiki.getPageHistory("User:MER-C/UnitTests/Delete", rh).get(0);
         assertEquals(rev1, rev2, "NPE check - equals");
         assertEquals(rev1.hashCode(), rev2.hashCode(), "NPE check - hashcode");
@@ -1563,11 +1563,31 @@ public class WikiTest
     }
 
     @Test
-    @DisplayName("RequestHelper.withinDateRange")
-    public void requestHelperDates()
+    @DisplayName("Interval.new")
+    public void newInterval()
     {
-        OffsetDateTime odt = OffsetDateTime.parse("2017-03-05T17:59:00Z");
         assertThrows(IllegalArgumentException.class,
-            () -> enWiki.new RequestHelper().withinDateRange(odt, odt.minusMinutes(20)));
+            () -> new Wiki.Interval(OffsetDateTime.now(), OffsetDateTime.MIN));
+        assertThrows(IllegalArgumentException.class,
+            () -> new Wiki.Interval(OffsetDateTime.MAX, OffsetDateTime.now()));
+
+        OffsetDateTime start = OffsetDateTime.parse("2016-01-01T00:00:00Z");
+        OffsetDateTime end   = OffsetDateTime.parse("2016-06-16T08:40:00Z");
+        Wiki.Interval interval = new Wiki.Interval(start, end);
+        assertEquals(start, interval.start());
+        assertEquals(end, interval.end());
+    }
+    
+    @Test
+    @DisplayName("Interval.parse")
+    public void parseInterval()
+    {
+        String start = "2016-01-01T00:00:00Z";
+        String end   = "2016-06-16T08:40:00Z";
+        assertThrows(IllegalArgumentException.class,
+            () -> Wiki.Interval.parse(end, start));
+        Wiki.Interval interval = Wiki.Interval.parse(start, end);
+        assertEquals(OffsetDateTime.parse(start), interval.start());
+        assertEquals(OffsetDateTime.parse(end), interval.end());
     }
 }

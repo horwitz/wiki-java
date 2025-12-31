@@ -63,7 +63,7 @@ main space for a given user (or for all users) and page metadata. A query limit 
     NPPCheck check = new NPPCheck(enWiki);
     check.setReviewer(username);
     check.setMode(mode);
-    List<? extends Wiki.Event> logs = check.fetchLogs(earliest_odt, latest_odt);
+    List<? extends Wiki.Event> logs = check.fetchLogs(interval);
     
     if (logs.isEmpty())
     {

@@ -128,8 +128,7 @@ public class WMFWiki extends Wiki
      *  <p>
      *  Accepted parameters from <var>helper</var> are:
      *  <ul>
-     *  <li>{@link Wiki.RequestHelper#withinDateRange(OffsetDateTime, 
-     *      OffsetDateTime) date range}
+     *  <li>{@link Wiki.RequestHelper#withinInterval(Wiki.Interval) interval}
      *  <li>{@link Wiki.RequestHelper#byUser(String) user}
      *  <li>{@link Wiki.RequestHelper#byTitle(String) title}
      *  <li>{@link Wiki.RequestHelper#reverse(boolean) reverse}
@@ -160,7 +159,7 @@ public class WMFWiki extends Wiki
             getparams.putAll(helper.addUserParameter());
             getparams.putAll(helper.addTitleParameter());
             getparams.putAll(helper.addReverseParameter());
-            getparams.putAll(helper.addDateRangeParameters());
+            getparams.putAll(helper.addIntervalParameters());
             limit = helper.limit();
         }
         

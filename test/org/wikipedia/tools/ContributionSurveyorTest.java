@@ -18,7 +18,6 @@
 package org.wikipedia.tools;
 
 import java.util.*;
-import java.time.OffsetDateTime;
 import org.junit.jupiter.api.*;
 import static org.junit.jupiter.api.Assertions.*;
 import org.wikipedia.Wiki;
@@ -57,8 +56,7 @@ public class ContributionSurveyorTest
         
         ContributionSurveyor cs = ContributionSurveyor.makeContributionSurveyor(enWiki, args);
         assertEquals(enWiki.getDomain(), cs.getWiki().getDomain());
-        assertEquals(OffsetDateTime.parse("1970-01-01T00:00:03Z"), cs.getEarliestDateTime());
-        assertEquals(OffsetDateTime.parse("2020-01-01T00:00:04Z"), cs.getLatestDateTime());
+        assertEquals(Wiki.Interval.parse("1970-01-01T00:00:03Z", "2020-01-01T00:00:04Z"), cs.getInterval());
         assertTrue(cs.newOnly());
         assertEquals(159, cs.getMinimumSizeDiff());
         assertFalse(cs.isIgnoringMinorEdits());
@@ -109,29 +107,23 @@ public class ContributionSurveyorTest
     }
     
     @Test
-    public void setDateRange() throws Exception
+    public void setInterval() throws Exception
     {        
         // verify get/set works
-        assertThrows(IllegalArgumentException.class,
-            () -> surveyor.setDateRange(OffsetDateTime.now(), OffsetDateTime.MIN));
-        assertThrows(IllegalArgumentException.class,
-            () -> surveyor.setDateRange(OffsetDateTime.MAX, OffsetDateTime.now()));
-        OffsetDateTime earliest = OffsetDateTime.parse("2017-12-07T00:00:00Z");
-        OffsetDateTime latest = OffsetDateTime.parse("2018-01-23T00:00:00Z");
-        surveyor.setDateRange(earliest, latest);
-        assertEquals(earliest, surveyor.getEarliestDateTime());
-        assertEquals(latest, surveyor.getLatestDateTime());
+        Wiki.Interval interval = Wiki.Interval.parse("2017-12-07T00:00:00Z", "2018-01-23T00:00:00Z");
+        surveyor.setInterval(interval);
+        assertEquals(interval, surveyor.getInterval());
         
         // https://en.wikipedia.org/w/index.php?title=Special%3AContributions&contribs=user&target=Jimbo+Wales&namespace=0&start=2017-12-01&end=2018-01-24
         // https://en.wikipedia.org/w/index.php?title=Special%3AContributions&contribs=user&target=Jimbo+Wales&namespace=0&start=2017-12-07&end=2018-01-17
         List<String> users = List.of("Jimbo Wales");
         var results = surveyor.contributionSurvey(users, Wiki.MAIN_NAMESPACE);
-        assertTrue(results.get(users.get(0)).isEmpty(), "Check date range functionality (text)");
+        assertTrue(results.get(users.get(0)).isEmpty(), "Check interval functionality (text)");
         
         // images
         users = List.of("Lozouhg");
         var results2 = surveyor.imageContributionSurvey(users);
-        assertTrue(results2.get(users.get(0)).get("mediarepo").isEmpty(), "Check date range functionality (images)");
+        assertTrue(results2.get(users.get(0)).get("mediarepo").isEmpty(), "Check interval functionality (images)");
     }
     
     @Test
@@ -164,7 +156,7 @@ public class ContributionSurveyorTest
         // https://en.wikipedia.org/w/index.php?title=Special:Contributions&dir=prev&offset=20191109040135&target=Dl2000
         List<String> users = List.of("Dl2000");
         surveyor.setIgnoringMinorEdits(false);
-        surveyor.setDateRange(OffsetDateTime.parse("2019-11-09T16:00:00Z"), OffsetDateTime.parse("2019-11-09T16:21:00Z"));
+        surveyor.setInterval(Wiki.Interval.parse("2019-11-09T16:00:00Z", "2019-11-09T16:21:00Z"));
         var results = surveyor.contributionSurvey(users, Wiki.MAIN_NAMESPACE);
         assertTrue(results.get(users.get(0)).isEmpty());
         
@@ -180,7 +172,7 @@ public class ContributionSurveyorTest
         // https://en.wikipedia.org/w/index.php?title=Special:Contributions&offset=20200808093000&target=SouthAfricanCitizen
         users = List.of("SouthAfricanCitizen");
         surveyor.setMinimumSizeDiff(0);
-        surveyor.setDateRange(OffsetDateTime.parse("2020-08-08T09:00:00Z"), OffsetDateTime.parse("2020-08-08T09:30:00Z"));
+        surveyor.setInterval(Wiki.Interval.parse("2020-08-08T09:00:00Z", "2020-08-08T09:30:00Z"));
         results = surveyor.contributionSurvey(users, Wiki.MAIN_NAMESPACE);
         assertEquals(1, results.get(users.get(0)).size());
         surveyor.setIgnoringReverts(true);
@@ -196,7 +188,7 @@ public class ContributionSurveyorTest
         
         // https://en.wikipedia.org/wiki/Special:Contributions/Cyprumande
         List<String> users = List.of("Cyprumande");
-        surveyor.setDateRange(OffsetDateTime.parse("2019-01-01T00:00:00Z"), null);
+        surveyor.setInterval(Wiki.Interval.parse("2019-01-01T00:00:00Z", null));
         var results = surveyor.contributionSurvey(users, Wiki.MAIN_NAMESPACE);
         assertTrue(results.get(users.get(0)).isEmpty());
         
@@ -217,7 +209,7 @@ public class ContributionSurveyorTest
         
         // https://en.wikipedia.org/w/index.php?title=Special%3AContributions&target=GarciaB&start=2005-03-14&end=2005-03-15
         List<String> users = List.of("GarciaB");
-        surveyor.setDateRange(OffsetDateTime.parse("2005-03-14T00:00:00Z"), OffsetDateTime.parse("2005-03-15T00:00:00Z"));
+        surveyor.setInterval(Wiki.Interval.parse("2005-03-14T00:00:00Z", "2005-03-15T00:00:00Z"));
         var results = surveyor.contributionSurvey(users, Wiki.MAIN_NAMESPACE);
         Map<String, List<Wiki.Revision>> results2 = results.get(users.get(0));
         assertEquals(2, results2.size());
@@ -243,7 +235,7 @@ public class ContributionSurveyorTest
         // https://en.wikipedia.org/w/index.php?title=Special%3AContributions&target=Dhouston45&start=2022-07-06&end=2022-07-07
         // https://en.wikipedia.org/w/index.php?title=Special%3AContributions&target=Dhouston17&start=2022-07-06&end=2022-07-07
         List<String> users = List.of("Dhouston17", "Dhouston45");
-        surveyor.setDateRange(OffsetDateTime.parse("2022-07-06T00:00:00Z"), OffsetDateTime.parse("2022-07-07T00:00:00Z"));
+        surveyor.setInterval(Wiki.Interval.parse("2022-07-06T00:00:00Z", "2022-07-07T00:00:00Z"));
         var results = surveyor.contributionSurvey(users, Wiki.MAIN_NAMESPACE);
         assertEquals(2, results.size());
         assertTrue(results.keySet().containsAll(users));

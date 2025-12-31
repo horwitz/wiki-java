@@ -94,7 +94,7 @@ public class UserLinkAdditionFinder
         WMFWiki thiswiki = sessions.sharedSession(parsedargs.getOrDefault("--wiki", "en.wikipedia.org"));
         boolean linksearch = parsedargs.containsKey("--linksearch");
         boolean removeblacklisted = parsedargs.containsKey("--removeblacklisted");
-        List<OffsetDateTime> dates = CommandLineParser.parseDateRange(parsedargs, "--fetchafter", "--fetchbefore");
+        Wiki.Interval dates = CommandLineParser.parseInterval(parsedargs, "--fetchafter", "--fetchbefore");
         int threshold = Integer.parseInt(parsedargs.getOrDefault("--threshold", "50"));
         List<String> users = CommandLineParser.parseUserOptions(parsedargs, thiswiki);
         int ignorebelow = Integer.parseInt(parsedargs.getOrDefault("--ignorebelow", "-1"));
@@ -108,7 +108,7 @@ public class UserLinkAdditionFinder
         // * linkdomains: link -> domain
         // * linkcounts: domain -> count of links
         // * stillthere: page name -> link -> whether it is still there
-        Map<Wiki.Revision, List<String>> results = finder.getLinksAdded(users, dates.get(0), dates.get(1));
+        Map<Wiki.Revision, List<String>> results = finder.getLinksAdded(users, dates);
         if (results.isEmpty())
         {
             System.out.println("No links found.");
@@ -191,17 +191,15 @@ public class UserLinkAdditionFinder
      *  Fetches the list of links added by a list of users. The list of users
      *  must be a list of usernames only, no User: prefix or wikilinks allowed.
      *  @param users the list of users to get link additions for
-     *  @param earliest return edits no earlier than this date
-     *  @param latest return edits no later than this date
+     *  @param interval return edits only between these timestamps
      *  @return a Map: revision &#8594; added links
      *  @throws IOException if a network error occurs
      */
-    public Map<Wiki.Revision, List<String>> getLinksAdded(List<String> users, OffsetDateTime earliest, 
-        OffsetDateTime latest) throws IOException
+    public Map<Wiki.Revision, List<String>> getLinksAdded(List<String> users, Wiki.Interval interval) throws IOException
     {
         Wiki.RequestHelper rh = wiki.new RequestHelper()
             .inNamespaces(Wiki.MAIN_NAMESPACE)
-            .withinDateRange(earliest, latest);
+            .withinInterval(interval);
         Map<Wiki.Revision, List<String>> results = new HashMap<>();
         List<List<Wiki.Revision>> contribs = wiki.contribs(users, null, rh);
         List<Wiki.Revision> revisions = contribs.stream()
@@ -252,7 +250,7 @@ public class UserLinkAdditionFinder
      *  For a map that contains revision data &#8594; links added in that 
      *  revision, check whether the links still exist in the current version of
      *  the article. Such a map can be obtained by calling {@link 
-     *  #getLinksAdded(List, OffsetDateTime, OffsetDateTime)}.
+     *  #getLinksAdded(List, Wiki.Interval)}.
      *  @param data a map containing revision data &#8594; links added in that 
      *  revision
      *  @return a map containing page &#8594; link &#8594; whether it is still 

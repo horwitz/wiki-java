@@ -17,17 +17,16 @@
 -->
 
 <%--
-    Fetches and validates date ranges. Defaults may be supplied as the earliest_default
+    Fetches and validates interval inputs. Defaults may be supplied as the earliest_default
     and latest_default request attributes. Adds the following local variables:
 
         * earliest: the earliest date as a String, or the appropriate default value (pass to HTML)
         * latest: the latest date as a String, or the appropriate default value (pass to HTML)
         * earliest_ldate: the earliest date as a LocalDate, or the default value
         * latest_ldate: the latest date as a LocalDate, or the default value
-        * earliest_odt: the earliest date as a OffsetDateTime, or the default value (pass to Wiki.RequestHelper)
-        * latest_odt: the latest date as an OffsetDateTime, or the default value (pass to Wiki.RequestHelper)
+        * interval: the interval from the earliest timestamp to the latest (pass to Wiki.RequestHelper)
 
-    If the date range is invalid, an "error" attribute is added to the request.
+    If the interval is invalid, an "error" attribute is added to the request.
 --%>
 
 <%
@@ -52,9 +51,7 @@
         request.setAttribute("error", "Earliest date is after latest date!");
 
     // cleanup
-    OffsetDateTime earliest_odt = null, latest_odt = null;
-    if (earliest_ldate != null)
-        earliest_odt = earliest_ldate.atTime(OffsetTime.of(0, 0, 0, 0, ZoneOffset.UTC));
-    if (latest_ldate != null)
-        latest_odt = latest_ldate.atTime(OffsetTime.of(23, 59, 59, 0, ZoneOffset.UTC));
+    Wiki.Interval interval = new Wiki.Interval(
+        earliest_ldate == null ? null : earliest_ldate.atTime(OffsetTime.of(0, 0, 0, 0, ZoneOffset.UTC)),
+        latest_ldate == null ? null : latest_ldate.atTime(OffsetTime.of(23, 59, 59, 0, ZoneOffset.UTC)));
 %>
