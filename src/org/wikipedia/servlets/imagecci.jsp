@@ -72,8 +72,7 @@ href="//en.wikipedia.org/wiki/WP:CCI">Contributor copyright investigations.</a>
     <td><input type=text name="wiki" value="<%= homewiki %>" required>
 <tr>
     <td>Include uploads from:
-    <td><input type=date name=earliest value="<%= earliest %>"> to 
-        <input type=date name=latest value="<%= latest %>"> (inclusive)
+    <td><%= ServletUtils.addIntervalInputs(request, null, null) %>
 </table>
 <input type=checkbox name=transferred value="<%= transferred ? " checked" : "" %>">Include transferred files 
     (may be inaccurate depending on username)

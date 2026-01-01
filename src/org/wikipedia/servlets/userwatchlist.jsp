@@ -11,7 +11,6 @@
     if (!ServletUtils.showCaptcha(request, response, List.of("page"), difficulty))
         throw new SkipPageException();
     request.setAttribute("toolname", "User watchlist");
-    request.setAttribute("earliest_default", LocalDate.now(ZoneOffset.UTC).minusDays(30));
 
     String inputpage = request.getParameter("page");
     String inputpage_url = "";
@@ -66,8 +65,7 @@ Someone # Spam
         %>
 
 <tr><td>Show changes from:
-    <td><input type=date name=earliest value="<%= earliest %>"> to
-        <input type=date name=latest value="<%= latest %>"> (inclusive)
+    <td><%= ServletUtils.addIntervalInputs(request, LocalDate.now(ZoneOffset.UTC).minusDays(30), null) %>
 <tr><td>Show:
     <td><input type=checkbox name=newonly id="newonly" value=1<%= newonly ? " checked" : 
         "" %>>

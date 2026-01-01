@@ -11,7 +11,6 @@
     if (!ServletUtils.showCaptcha(request, response, List.of("prefix"), difficulty))
         throw new SkipPageException();
     request.setAttribute("toolname", "Prefix contributions");
-    request.setAttribute("earliest_default", LocalDate.now(ZoneOffset.UTC).minusDays(7));
 
     String prefix = ServletUtils.sanitizeForAttribute(request.getParameter("prefix"));    
 %>
@@ -32,8 +31,7 @@ is performed on IP addresses. Timeouts are more likely for longer time spans.
     <td><input type=text name=prefix required value="<%= prefix %>">
 <tr>
     <td>Show changes from:
-    <td><input type=date name=earliest value="<%= earliest %>"> to 
-        <input type=date name=latest value="<%= latest %>"> (inclusive)
+    <td><%= ServletUtils.addIntervalInputs(request, LocalDate.now(ZoneOffset.UTC).minusDays(7), null) %>
 </table>
 <input type=submit value="Search">
 </form>

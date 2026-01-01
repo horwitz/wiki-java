@@ -23,7 +23,8 @@ import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.net.URLEncoder;
 import java.security.*;
-import java.time.OffsetDateTime;
+import java.time.*;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 import jakarta.servlet.http.*;
@@ -375,5 +376,27 @@ public class ServletUtils
             </body>
             </html>""".formatted(getRequestURL(request), request.getAttribute("toolname"), OffsetDateTime.now().getYear()));
         out.flush();
+    }
+    
+    /**
+     *  Adds two date form controls that represent a date interval. Values are
+     *  populated from HTTP parameters or the supplied defaults.
+     *  @param request the request to extract HTTP parameters from
+     *  @param default_start the default start of the date interval
+     *  @param default_end the default end of the date interval
+     *  @return HTML string representing the form controls
+     *  @since 0.03
+     */
+    public static String addIntervalInputs(HttpServletRequest request, LocalDate default_start, LocalDate default_end)
+    {
+        String earliest = sanitizeForAttributeOrDefault(request.getParameter("earliest"), 
+            default_start == null ? "" : default_start.format(DateTimeFormatter.ISO_LOCAL_DATE));
+        String latest = sanitizeForAttributeOrDefault(request.getParameter("latest"), 
+            default_end == null ? "" : default_end.format(DateTimeFormatter.ISO_LOCAL_DATE));
+
+        return """
+            <input type=date name=earliest value="%s"> to 
+            <input type=date name=latest value="%s"> (inclusive)
+               """.formatted(earliest, latest);
     }
 }

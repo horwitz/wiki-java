@@ -41,8 +41,7 @@ main space for a given user (or for all users) and page metadata. A query limit 
         <label for="redirects">Redirects converted to articles</label>
 <tr>
     <td>Show patrols from:
-    <td><input type=date name=earliest value="<%= earliest %>"> to 
-        <input type=date name=latest value="<%= latest %>"> (inclusive)
+    <td><%= ServletUtils.addIntervalInputs(request, null, null) %>
 </table>
 <input type=hidden name=offset value="<%= offsetparam %>">
 <input type=submit value="Search">

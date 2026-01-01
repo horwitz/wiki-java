@@ -66,8 +66,7 @@ first in the GUI) apply.
         <label for="noreverts">reverts</label>
 <tr>
     <td colspan=2>Show changes from:
-    <td><input type=date name=earliest value="<%= earliest %>"> to 
-        <input type=date name=latest value="<%= latest %>"> (inclusive)
+    <td><%= ServletUtils.addIntervalInputs(request, null, null) %>
 </table>
 <br>
 <input type=submit value=Search>

@@ -110,8 +110,7 @@ and other venues. It isolates and ranks major edits by size. A query limit of
         <label for=newonly>all except new pages</label>
 <tr>
     <td colspan=2>Show changes from:
-    <td><input type=date name=earliest value="<%= earliest %>"> to 
-        <input type=date name=latest value="<%= latest %>"> (inclusive)
+    <td><%= ServletUtils.addIntervalInputs(request, null, null) %>
 <tr>
     <td colspan=2>Show changes that added at least:
     <td><input type=number name=bytefloor value="<%= bytefloor %>"> bytes
