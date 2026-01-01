@@ -1,13 +1,12 @@
-<!--
+<%--
     @(#)imagecci.jsp 0.03 07/02/2018
     Copyright (C) 2011 - 2022 MER-C
 
     This is free software: you are free to change and redistribute it under the 
     Affero GNU GPL version 3 or later, see <https://www.gnu.org/licenses/agpl.html> 
     for details. There is NO WARRANTY, to the extent permitted by law.
--->
+--%>
 <%@ include file="security.jspf" %>
-<%@ include file="datevalidate.jspf" %>
 <%
     if (!ServletUtils.showCaptcha(request, response, List.of("user"), difficulty))
         throw new SkipPageException();
@@ -15,15 +14,11 @@
     request.setAttribute("toolname", "Image contribution surveyor");
     String homewiki = ServletUtils.sanitizeForAttributeOrDefault(request.getParameter("wiki"), "en.wikipedia.org");
     String user = request.getParameter("user");
-    String output = "text";
-    if (user != null)
-        request.setAttribute("contenttype", output); 
     boolean transferred = (request.getParameter("transferred") != null);
-
-    ServletUtils.renderHeader(request, response, out);
+    Wiki.Interval interval = ServletUtils.parseIntervalParams(request);
     
     List<String> survey = null;
-    if (user != null)
+    if (user != null && request.getAttribute("error") == null)
     {
         WMFWiki wiki = sessions.sharedSession(homewiki);
         ContributionSurveyor surveyor = new ContributionSurveyor(wiki);
@@ -32,6 +27,8 @@
         surveyor.setSurveyingTransferredFiles(transferred);
         survey = surveyor.outputContributionSurvey(List.of(user), false, false, true);
 
+        String output = "text";
+        request.setAttribute("contenttype", output); 
         if (output.equals("text"))
         {
             response.setHeader("Content-Disposition", "attachment; filename=" 
@@ -55,6 +52,7 @@
             }
         }
     }
+    ServletUtils.renderHeader(request, response, out);
 %>
 
 <p>
@@ -81,7 +79,7 @@ href="//en.wikipedia.org/wiki/WP:CCI">Contributor copyright investigations.</a>
 </form>
 
 <%
-    if (user != null && survey.isEmpty()) // currently unreachable?
+    if (user != null && survey != null && survey.isEmpty())
         request.setAttribute("error", "ERROR: User " + HTMLUtils.sanitizeForHTML(user) + " does not exist!");
     ServletUtils.renderFooter(request, out);
 %>

@@ -29,6 +29,8 @@ import java.util.*;
 
 import jakarta.servlet.http.*;
 
+import org.wikipedia.Wiki;
+
 /**
  *  Common servlet code so that I can maintain it easier.
  *  @author MER-C
@@ -385,6 +387,7 @@ public class ServletUtils
      *  @param default_start the default start of the date interval
      *  @param default_end the default end of the date interval
      *  @return HTML string representing the form controls
+     *  @see #parseIntervalParams(HttpServletRequest) 
      *  @since 0.03
      */
     public static String addIntervalInputs(HttpServletRequest request, LocalDate default_start, LocalDate default_end)
@@ -395,8 +398,37 @@ public class ServletUtils
             default_end == null ? "" : default_end.format(DateTimeFormatter.ISO_LOCAL_DATE));
 
         return """
-            <input type=date name=earliest value="%s"> to 
+            <input type=date name=earliest value="%s"> to \
             <input type=date name=latest value="%s"> (inclusive)
                """.formatted(earliest, latest);
+    }
+    
+    /**
+     *  Validates and parses a date interval input by the user to a {@link 
+     *  org.wikipedia.Wiki.Interval}.
+     *  @param request the HTTP servlet request
+     *  @return the parsed interval
+     *  @see #addIntervalInputs(HttpServletRequest, LocalDate, LocalDate)
+     *  @since 0.03
+     */
+    public static Wiki.Interval parseIntervalParams(HttpServletRequest request)
+    {
+        String earliest = sanitizeForAttribute(request.getParameter("earliest"));
+        String latest = sanitizeForAttribute(request.getParameter("latest"));
+
+        LocalDate earliest_ldate = earliest.equals("") ? null : LocalDate.parse(earliest);
+        LocalDate latest_ldate = latest.equals("") ? null : LocalDate.parse(latest);
+
+        try
+        {
+            return new Wiki.Interval(
+                earliest_ldate == null ? null : earliest_ldate.atTime(OffsetTime.of(0, 0, 0, 0, ZoneOffset.UTC)),
+                latest_ldate == null ? null : latest_ldate.atTime(OffsetTime.of(23, 59, 59, 0, ZoneOffset.UTC)));
+        }
+        catch (IllegalArgumentException ex)
+        {
+            request.setAttribute("error", "Earliest date is after latest date!");
+            return null;
+        }
     }
 }

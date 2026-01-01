@@ -12,10 +12,11 @@
         throw new SkipPageException();
     request.setAttribute("toolname", "Prefix contributions");
 
-    String prefix = ServletUtils.sanitizeForAttribute(request.getParameter("prefix"));    
+    String prefix = ServletUtils.sanitizeForAttribute(request.getParameter("prefix"));
+    Wiki.Interval interval = ServletUtils.parseIntervalParams(request);
+
+    ServletUtils.renderHeader(request, response, out);
 %>
-<%@ include file="datevalidate.jspf" %>
-<% ServletUtils.renderHeader(request, response, out); %>
 
 <p>
 This tool retrieves contributions of an IP range or username prefix. To search 
@@ -37,7 +38,7 @@ is performed on IP addresses. Timeouts are more likely for longer time spans.
 </form>
 
 <%
-    if (!prefix.isEmpty())
+    if (!prefix.isEmpty() && request.getAttribute("error") == null)
     {
         if (prefix.length() < 4)
             request.setAttribute("error", "ERROR: search key of insufficient length.");

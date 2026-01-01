@@ -26,14 +26,16 @@
     skip = Math.max(skip, 0);
     boolean newonly = (request.getParameter("newonly") != null);
     
+    Wiki.Interval interval = ServletUtils.parseIntervalParams(request);
+    
     Wiki enWiki = sessions.sharedSession("en.wikipedia.org");
     enWiki.setQueryLimit(20000); // 40 network requests
     Users userUtils = Users.of(enWiki);
     Revisions revisionUtils = Revisions.of(enWiki);
     Pages pageUtils = Pages.of(enWiki);
+    
+    ServletUtils.renderHeader(request, response, out);
 %>
-<%@ include file="datevalidate.jspf" %>
-<% ServletUtils.renderHeader(request, response, out); %>
 
 <p>
 This tool retrieves contributions of a list of users. There is a limit of 50
@@ -77,7 +79,7 @@ Someone # Spam
 </form>
 
 <%
-    if (inputpage == null)
+    if (inputpage == null || request.getAttribute("error") != null)
     {
         ServletUtils.renderFooter(request, out);
         throw new SkipPageException();

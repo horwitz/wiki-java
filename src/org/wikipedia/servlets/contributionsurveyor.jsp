@@ -1,13 +1,12 @@
-<!--
+<%--
     @(#)contributionsurveyor.jsp 0.02 05/07/2021
     Copyright (C) 2011 - 2022 MER-C
 
     This is free software: you are free to change and redistribute it under the 
     Affero GNU GPL version 3 or later, see <https://www.gnu.org/licenses/agpl.html> 
     for details. There is NO WARRANTY, to the extent permitted by law.
--->
+--%>
 <%@ include file="security.jspf" %>
-<%@ include file="datevalidate.jspf" %>
 <%
     if (!ServletUtils.showCaptcha(request, response, List.of("user"), difficulty))
         throw new SkipPageException();
@@ -22,7 +21,7 @@
     boolean nodrafts = (request.getParameter("nodrafts") != null);
     boolean newonly = (request.getParameter("newonly") != null);
     boolean comingle = (request.getParameter("comingle") != null);
-
+    Wiki.Interval interval = ServletUtils.parseIntervalParams(request);
     String homewiki = ServletUtils.sanitizeForAttributeOrDefault(request.getParameter("wiki"), "en.wikipedia.org");
     String bytefloor = ServletUtils.sanitizeForAttributeOrDefault(request.getParameter("bytefloor"), "150");
     
@@ -64,8 +63,6 @@
         else
             request.setAttribute("contenttype", output);
     }
-
-    ServletUtils.renderHeader(request, response, out);
     
     if (!survey.isEmpty())
     {
@@ -76,6 +73,7 @@
         out.print(String.join("\n", survey));
         return;
     }
+    ServletUtils.renderHeader(request, response, out);
  %>
 
 <p>

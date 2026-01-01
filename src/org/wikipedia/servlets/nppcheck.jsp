@@ -7,7 +7,6 @@
     for details. There is NO WARRANTY, to the extent permitted by law.
 -->
 <%@ include file="security.jspf" %>
-<%@ include file="datevalidate.jspf" %>
 <%
     if (!ServletUtils.showCaptcha(request, response, List.of("username"), difficulty))
         throw new SkipPageException();
@@ -16,6 +15,7 @@
     String username = ServletUtils.sanitizeForAttribute(request.getParameter("username"));
     NPPCheck.Mode mode = NPPCheck.Mode.fromString(request.getParameter("mode"));
     String offsetparam = Objects.requireNonNullElse(request.getParameter("offset"), "0");
+    Wiki.Interval interval = ServletUtils.parseIntervalParams(request);
     
     ServletUtils.renderHeader(request, response, out);
 %>
@@ -48,7 +48,7 @@ main space for a given user (or for all users) and page metadata. A query limit 
 </form>
 
 <%
-    if (mode == null)
+    if (mode == null || request.getAttribute("error") != null)
     {
         ServletUtils.renderFooter(request, out);
         throw new SkipPageException();

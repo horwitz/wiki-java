@@ -7,7 +7,6 @@
     for details. There is NO WARRANTY, to the extent permitted by law.
 -->
 <%@ include file="security.jspf" %>
-<%@ include file="datevalidate.jspf" %>
 <%
     request.setAttribute("toolname", "Article/editor intersection");
     request.setAttribute("scripts", new String[] { "common.js", "collapsible.js", "EditorIntersection.js" });
@@ -17,7 +16,7 @@
     String pages = HTMLUtils.sanitizeForHTML(request.getParameter("pages"));    
     String category = ServletUtils.sanitizeForAttribute(request.getParameter("category"));
     String user = ServletUtils.sanitizeForAttribute(request.getParameter("user"));
-        
+    Wiki.Interval interval = ServletUtils.parseIntervalParams(request);
     boolean noadmin = (request.getParameter("noadmin") != null);
     boolean nobot = (request.getParameter("nobot") != null);
     boolean noanon = (request.getParameter("noanon") != null);
