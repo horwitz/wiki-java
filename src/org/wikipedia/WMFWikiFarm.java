@@ -26,7 +26,6 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.*;
 import java.util.logging.*;
-import java.util.stream.*;
 
 /**
  *  Manages shared WMFWiki sessions and contains methods for dealing with WMF

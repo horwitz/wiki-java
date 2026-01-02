@@ -364,7 +364,8 @@ public class ServletUtils
             %s: Copyright &copy; MER-C 2007-%d. This tool is free software: you can redistribute it 
             and/or modify it under the terms of the <a href="//gnu.org/licenses/agpl.html">Affero 
             GNU General Public License</a> as published by the Free Software Foundation, either version
-            3 of the License, or (at your option) any later version.
+            3 of the License, or (at your option) any later version. There is NO WARRANTY, to the extent 
+            permitted by law.
 
             <p>
             Source code is available <a href="//codeberg.org/MER-C/wiki-java">at Codeberg</a>. Report bugs at 
@@ -430,5 +431,33 @@ public class ServletUtils
             request.setAttribute("error", "Earliest date is after latest date!");
             return null;
         }
+    }
+    
+    /**
+     *  Sets common HTTP headers.
+     *  @param request the servlet request
+     *  @param response the response to set headers for
+     *  @since 0.03
+     */
+    public static void setHeaders(HttpServletRequest request, HttpServletResponse response)
+    {
+        // set up CAPTCHA
+        SecureRandom sr = new SecureRandom();
+        byte[] barrtemp = new byte[32];
+        sr.nextBytes(barrtemp);
+        request.setAttribute("scriptnonce", new String(Base64.getEncoder().encode(barrtemp))); // CSP script nonce
+        //barrtemp = new byte[32];
+        //sr.nextBytes(barrtemp);
+        //request.setAttribute("servernonce", new String(Base64.getEncoder().encode(barrtemp))); // server-side nonce
+
+        // Enable HSTS (force HTTPS)
+        response.setHeader("Strict-Transport-Security", "max-age=31536000");
+        response.setHeader("Content-Security-Policy", 
+            "frame-ancestors 'none'; " + // disable framing
+            "default-src 'none'; " + // disable everything by default
+            "script-src 'self' 'nonce-" + request.getAttribute("scriptnonce") + "'; " + // allow only scripts from this domain
+            "style-src 'self'"); // allow only stylesheets from this domain
+        // disable the Referer header
+        response.setHeader("Referrer-Policy", "no-referrer");
     }
 }

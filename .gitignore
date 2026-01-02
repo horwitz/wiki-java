@@ -1,4 +1,5 @@
 src/org/wikipedia/sekrit/
+src/org/wikipedia/servlets/ServletFirewall.java
 spam.sh
 
 ### Maven ###
