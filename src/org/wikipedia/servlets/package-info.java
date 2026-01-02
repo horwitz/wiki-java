@@ -19,13 +19,13 @@
  */
 
 /**
- *  This package contains JSP files for online tools (which are invisible to 
+ *  This package contains Java servlets for online tools (which are invisible to 
  *  JavaDoc) as well as a helper class to generate HTML for said tools. The
  *  backends for these tools reside in {@link org.wikipedia.tools}. The tools
  *  are hosted on <a href="https://wikipediatools.appspot.com">
  *  wikipediatools.appspot.com</a> (there is no dependence on any Google API).
  *
- *  <h3>Deploying these tools on your infrastructure</h3>
+ *  <h2>Deploying these tools on your infrastructure</h2>
  *  <p>
  *  As the name suggests, this package requires a compliant implementation of
  *  the <a href="https://jcp.org/en/jsr/detail?id=369">Java servlet API.</a>
@@ -36,7 +36,7 @@
  *  mvn clean package jetty-jspc:jspc javadoc:javadoc war:war -Dmaven.test.skip
  *  </pre>
  * 
- *  @see <a href="https://wikipediatools.appspot.com">wikipediatools.appspot.com</a>
+ *  @see <a href="https://wikipediatools.appspot.com">Official instance</a>
  *  @see org.wikipedia.tools
  */
 package org.wikipedia.servlets;

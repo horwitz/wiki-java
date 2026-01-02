@@ -173,7 +173,7 @@ public class ServletUtils
      *  @param difficulty the difficulty of the CAPTCHA
      *  @return whether to continue servlet execution
      *  @throws IOException if a network error occurs
-     *  @see captcha.js
+     *  @see "captcha.js"
      *  @since 0.02
      */
     public static boolean showCaptcha(HttpServletRequest req, HttpServletResponse response, List<String> params, 
@@ -188,7 +188,8 @@ public class ServletUtils
         // *inject CSP nonce header only when required
         // *server side nonce
         
-        PrintWriter out = response.getWriter();
+        // we can't declare an output variable here because we may respond with
+        // binary content
         String answer = req.getParameter("powans");
         String timestamp = req.getParameter("powts");
         String nonce = req.getParameter("nonce");
@@ -204,7 +205,7 @@ public class ServletUtils
         // captcha not attempted, show CAPTCHA screen
         if (answer == null && timestamp == null && nonce == null && reqdifficulty == null)
         {
-            out.printf("""
+            response.getWriter().printf("""
                     <!doctype html>
                     <html>
                     <head>
@@ -227,7 +228,7 @@ public class ServletUtils
         else if (answer == null || timestamp == null || nonce == null || reqdifficulty == null)
         {
             response.setStatus(403);
-            out.println("Incomplete CAPTCHA parameters");
+            response.getWriter().println("Incomplete CAPTCHA parameters");
             return false;
         }
         
@@ -252,7 +253,7 @@ public class ServletUtils
                 return true;
             
             response.setStatus(403);
-            out.println("CAPTCHA failed");
+            response.getWriter().println("CAPTCHA failed");
             return false;
             
         }
@@ -301,7 +302,7 @@ public class ServletUtils
     }
     
     /**
-     *  Renders the top portion of the HTML page, or sets text content type.
+     *  Renders the top portion of HTML output.
      *  @param request a typical HTTP servlet request
      *  @param response a typical HTTP servlet response
      *  @param out the Writer to servlet output
@@ -310,30 +311,22 @@ public class ServletUtils
      */
     public static void renderHeader(HttpServletRequest request, HttpServletResponse response, Writer out) throws IOException
     {
-        switch ((String)request.getAttribute("contenttype"))
-        {
-            case "text" -> response.setContentType("text/plain;charset=UTF-8");
-            case "zip" -> response.setContentType("application/zip");
-            case null, default ->
-            {
-                response.setContentType("text/html");
-                out.write("""
-                    <!doctype html>
-                    <html>
-                    <head>
-                    <link rel=stylesheet href="styles.css">
-                    <title>%s</title>
-                    """.formatted(request.getAttribute("toolname")));
+        response.setContentType("text/html;charset=UTF-8");
+        out.write("""
+            <!doctype html>
+            <html>
+            <head>
+            <link rel=stylesheet href="styles.css">
+            <title>%s</title>
+            """.formatted(request.getAttribute("toolname")));
 
-                String[] scripts = (String[])request.getAttribute("scripts");
-                if (scripts != null)
-                    for (String script : scripts)
-                        out.write("<script src=\"" + script + "\"></script>\r\n");
+        String[] scripts = (String[])request.getAttribute("scripts");
+        if (scripts != null)
+            for (String script : scripts)
+                out.write("<script src=\"" + script + "\"></script>\r\n");
 
-                out.write("</head>\r\n");
-                out.write("<body>\r\n");
-            }
-        }
+        out.write("</head>\r\n");
+        out.write("<body>\r\n");
     }
     
     /**

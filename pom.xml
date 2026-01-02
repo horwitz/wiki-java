@@ -78,8 +78,12 @@
                         <sourceFileIncludes>
                             <sourceFileInclude>org/wikipedia/*.java</sourceFileInclude>
                             <sourceFileInclude>org/wikipedia/tools/*.java</sourceFileInclude>
+                            <sourceFileInclude>org/wikipedia/servlets/*.java</sourceFileInclude>
                             <sourceFileInclude>org/wikiutils/*.java</sourceFileInclude>
                         </sourceFileIncludes>
+                        <sourceFileExcludes>
+                            <sourceFileInclude>org/wikipedia/servlets/ServletFirewall.java</sourceFileInclude>
+                        </sourceFileExcludes>
                     </configuration>
                 </plugin>
                 <!-- TEST PLUGINS -->
