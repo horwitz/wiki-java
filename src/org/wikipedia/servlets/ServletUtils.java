@@ -427,6 +427,20 @@ public class ServletUtils
     }
     
     /**
+     *  Creates a HTML checkbox with a label.
+     *  @param param the HTTP parameter name
+     *  @param checked whether the checkbox is initially checked
+     *  @param label the label for the checkbox
+     *  @return HTML representing the checkbox
+     *  @since 0.03
+     */
+    public static String addCheckbox(String param, boolean checked, String label)
+    {
+        return "<input type=checkbox name=%s id=\"%s\" value=1%s><label for=\"%s\">%s</label>"
+            .formatted(param, param, checked ? " checked" : "", param, label);
+    }
+    
+    /**
      *  Sets common HTTP headers.
      *  @param request the servlet request
      *  @param response the response to set headers for

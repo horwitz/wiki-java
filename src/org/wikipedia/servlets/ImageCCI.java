@@ -22,7 +22,7 @@ import java.io.*;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.zip.*;
+import java.util.zip.ZipOutputStream;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -78,6 +78,12 @@ public class ImageCCI extends BaseServlet
             surveyor.setFooter("Survey URL: " + ServletUtils.getRequestURL(request));
             surveyor.setSurveyingTransferredFiles(transferred);
             survey = surveyor.outputContributionSurvey(List.of(user), false, false, true);
+            
+            if (survey.isEmpty())
+            {
+                request.setAttribute("error", "ERROR: User " + HTMLUtils.sanitizeForHTML(user) + " does not exist!");
+                survey = null;
+            }
         }
         
         // 3. Render output
@@ -85,44 +91,34 @@ public class ImageCCI extends BaseServlet
         if (survey != null)
         {
             String output = "text";
-            if (survey.isEmpty())
-                request.setAttribute("error", "ERROR: User " + HTMLUtils.sanitizeForHTML(user) + " does not exist!");
-            else if (output.equals("text"))
+            switch (output)
             {
-                response.setContentType("text/plain;charset=UTF-8");
-                response.setHeader("Content-Disposition", "attachment; filename=" 
-                    + URLEncoder.encode(user, StandardCharsets.UTF_8) + ".txt");
-                try (PrintWriter out = response.getWriter())
-                {
-                    out.print(String.join("\n", survey));
-                }
-                return;
-            }
-            else if (output.equals("zip"))
-            {
-                response.setContentType("application/zip");
-                response.setHeader("Content-Disposition", "attachment; filename=" 
-                    + URLEncoder.encode(user, StandardCharsets.UTF_8) + ".zip");
-                Map<String, byte[]> zip = new LinkedHashMap<>();
-                for (int i = 0; i < survey.size(); i++)
-                    zip.put(user + (i == 0 ? "" : ".txt.%03d".formatted(i)), survey.get(i).getBytes());
-                try (ZipOutputStream zout = new ZipOutputStream(response.getOutputStream()))
-                {
-                    ContributionSurveyor.outputZipFile(zout, zip);
-                }
-                return;
-            }
-            else if (output.equals("html")) // plain list of images (to be made default)
-            {
-                // TODO: NOT IMPLEMENTED
-            }
-            else if (output.equals("gallery")) // thumbnails
-            {
-                // TODO: NOT IMPLEMENTED
-            }
-            else if (output.equals("json"))
-            {
-                // TODO: NOT IMPLEMENTED
+                case "text":
+                    response.setContentType("text/plain;charset=UTF-8");
+                    response.setHeader("Content-Disposition", "attachment; filename=" 
+                        + URLEncoder.encode(user, StandardCharsets.UTF_8) + ".txt");
+                    try (PrintWriter out = response.getWriter())
+                    {
+                        out.print(String.join("\n", survey));
+                    }
+                    return;
+                case "zip":
+                    response.setContentType("application/zip");
+                    response.setHeader("Content-Disposition", "attachment; filename=" 
+                        + URLEncoder.encode(user, StandardCharsets.UTF_8) + ".zip");
+                    Map<String, byte[]> zip = new LinkedHashMap<>();
+                    for (int i = 0; i < survey.size(); i++)
+                        zip.put(user + (i == 0 ? "" : ".txt.%03d".formatted(i)), survey.get(i).getBytes());
+                    try (ZipOutputStream zout = new ZipOutputStream(response.getOutputStream()))
+                    {
+                        ContributionSurveyor.outputZipFile(zout, zip);
+                    }
+                    return;
+                case "html": // plain list of images (to be made default)
+                case "gallery": // thumbnails
+                case "json":
+                default:
+                    // TODO: NOT IMPLEMENTED
             }
         }
 
@@ -148,14 +144,14 @@ public class ImageCCI extends BaseServlet
                     <td>Include uploads from:
                     <td>%s
                 </table>
-                <input type=checkbox name=transferred value="%s">Include transferred files 
-                    (may be inaccurate depending on username)
+                %s
                 <br>
                 <input type=submit value="Survey user">
                 </form>
                 """, ServletUtils.sanitizeForAttribute(user), homewiki,
                     ServletUtils.addIntervalInputs(request, null, null),
-                    transferred ? " checked" : "");
+                    ServletUtils.addCheckbox("transferred", transferred, 
+                        "Include transferred files (may be inaccurate depending on username)"));
             if (surveyhtml != null)
                 out.print(surveyhtml);
             ServletUtils.renderFooter(request, out);

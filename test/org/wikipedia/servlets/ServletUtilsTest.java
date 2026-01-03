@@ -19,6 +19,8 @@
  */
 package org.wikipedia.servlets;
 
+import java.util.Map;
+
 import org.junit.jupiter.api.*;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -35,6 +37,30 @@ public class ServletUtilsTest
         assertEquals("default", ServletUtils.sanitizeForAttributeOrDefault(null, "default"));
         assertThrows(NullPointerException.class, 
             () -> ServletUtils.sanitizeForAttributeOrDefault(null, null));
+        
+        Map<String, String> tests = Map.of(
+            "simple", "simple",
+            "val\"ue", "val&quot;ue", // Tests quote replacement
+            "multiple\"quotes\"", "multiple&quot;quotes&quot;",
+            "'single-quotes'", "'single-quotes'"); // Single quotes usually safe in double-quoted attrs
+        for (var entry : tests.entrySet())
+            assertEquals(entry.getValue(), ServletUtils.sanitizeForAttribute(entry.getKey()));
+    }
+    
+    @Test
+    public void sanitizeForAttributeOrDefault()
+    {
+        assertEquals("fallback", ServletUtils.sanitizeForAttributeOrDefault(null, "fallback"));
+        assertThrows(NullPointerException.class, () -> 
+            ServletUtils.sanitizeForAttributeOrDefault(null, null));
+            
+        Map<String, String> tests = Map.of(
+            "simple", "simple",
+            "val\"ue", "val&quot;ue", // Tests quote replacement
+            "multiple\"quotes\"", "multiple&quot;quotes&quot;",
+            "'single-quotes'", "'single-quotes'"); // Single quotes usually safe in double-quoted attrs
+        for (var entry : tests.entrySet())
+            assertEquals(entry.getValue(), ServletUtils.sanitizeForAttributeOrDefault(entry.getKey(), "default"));
     }
     
     @Test
@@ -56,5 +82,16 @@ public class ServletUtilsTest
         // test final
         assertEquals("<p><a href=\"" + urlbase + "&offset=50\">Previous 50</a> | Next 50",
             ServletUtils.generatePagination(urlbase, 100, 50, 149));
+    }
+    
+    @Test
+    public void addCheckboxInput()
+    {
+        String html = ServletUtils.addCheckbox("myParam", true, "My Label");
+        assertEquals("<input type=checkbox name=myParam id=\"myParam\" value=1 checked><label for=\"myParam\">My Label</label>", html);
+
+        html = ServletUtils.addCheckbox("myParam", false, "My Label");
+        assertEquals("<input type=checkbox name=myParam id=\"myParam\" value=1><label for=\"myParam\">My Label</label>", html);
+
     }
 }
