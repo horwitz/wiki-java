@@ -64,6 +64,12 @@ span.sizeincreased { color: #009900 }
 span.sizedecreased { color: #990000 }
 span.history-deleted { color: #888888; text-decoration: line-through }
 
+/* Styles for String Similarity Finder */
+table.similarity-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+th.similarity-header { padding: 12px; border: 1px solid #ddd; background-color: #f4f4f4; }
+td.similarity-cell { width: 50%; vertical-align: top; padding: 12px; border: 1px solid #ddd; font-family: sans-serif; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word; }
+mark.match-highlight { background-color: #ffff99; padding: 2px 1px; border-radius: 3px; cursor: help; }
+
 /* miscellaneous styles */
 .shaded { background-color: #eeeeee } 
 

@@ -34,7 +34,7 @@ import org.wikipedia.*;
  */
 public class StringSimilarityFinder
 {
-    private int min_consecutive_words = 3;
+    private int min_consecutive_words = 6;
     
     public StringSimilarityFinder()
     {
@@ -318,12 +318,6 @@ public class StringSimilarityFinder
 
         return String.format(
             """
-            <style>
-                table.similarity-table { width: 100%%; border-collapse: collapse; table-layout: fixed; }
-                th.similarity-header { padding: 12px; border: 1px solid #ddd; background-color: #f4f4f4; }
-                td.similarity-cell { width: 50%%; vertical-align: top; padding: 12px; border: 1px solid #ddd; font-family: sans-serif; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word; }
-                mark.match-highlight { background-color: #ffff99; padding: 2px 1px; border-radius: 3px; cursor: help; }
-            </style>
             <table class="similarity-table">
             <thead>
             <tr>
@@ -344,8 +338,8 @@ public class StringSimilarityFinder
      *  A helper method to build an HTML string for a single text, inserting
      *  <mark> tags for highlighted segments.
      *
-     *  @param text              The full original text.
-     *  @param sortedSubMatches A list of SubMatch objects, sorted by start index.
+     *  @param text the full original text.
+     *  @param sortedSubMatches a list of SubMatch objects, sorted by start index.
      *  @return An HTML string with highlights.
      */
     private String buildHighlightedHtml(String text, List<SubMatch> sortedSubMatches)
@@ -391,11 +385,12 @@ public class StringSimilarityFinder
             .addSingleArgumentFlag("--wiki2", "en.wikipedia.org", "The wiki to fetch content from, going to slot 2 (default: en.wikipedia.org).")
             .addSingleArgumentFlag("--page1", "Example", "The wiki page on wiki1 to fetch content from, going to slot 1.")
             .addSingleArgumentFlag("--page2", "Example", "The wiki page on wiki2 to fetch content from, going to slot 2.")
-            // these aren't possible without an external parsing library
+            // Not sure if possible without huge effort. 
+            // TODO: check whether the CCIAnalyzer culling functions are able to help
             // .addSingleArgumentFlag("--revid1", "Example", "The revision ID on wiki1 to fetch content from, going to slot 1.")
             // .addSingleArgumentFlag("--revid2", "Example", "The revision ID on wiki2 to fetch content from, going to slot 2.")
             // same as for deleted content
-            .addSingleArgumentFlag("--numwords", "3", "The number of words that comprise a match.");
+            .addSingleArgumentFlag("--numwords", "6", "The number of words that comprise a match.");
         Map<String, String> parsedargs = clp.parse(args);
         
         String textA = null, textB = null;
@@ -420,7 +415,7 @@ public class StringSimilarityFinder
             Path pathB = CommandLineParser.parseFileOption(parsedargs, "--file2", "Select text file 2 to compare", "File 2 not selected", false);
             textB = Files.readString(pathB);
         }
-        int numwords = Integer.parseInt(parsedargs.getOrDefault("--numwords", "3"));
+        int numwords = Integer.parseInt(parsedargs.getOrDefault("--numwords", "6"));
 
         System.out.println("Comparing Text A and Text B:\n");
         System.out.println("---Text A---\n" + textA + "\n");
@@ -450,10 +445,19 @@ public class StringSimilarityFinder
             }
             
             // Generate and print the HTML report
-            System.out.println("\n\n--- HTML HIGHLIGHT REPORT ---");
-            String htmlReport = ssf.generateHtmlHighlight(textA, textB, foundMatches);
-            System.out.println(htmlReport);
-            System.out.println("--- END OF HTML REPORT ---");
+            System.out.printf("""
+                
+                
+                --- HTML HIGHLIGHT REPORT ---
+                <style>
+                    table.similarity-table { width: 100%%; border-collapse: collapse; table-layout: fixed; }
+                    th.similarity-header { padding: 12px; border: 1px solid #ddd; background-color: #f4f4f4; }
+                    td.similarity-cell { width: 50%%; vertical-align: top; padding: 12px; border: 1px solid #ddd; font-family: sans-serif; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word; }
+                    mark.match-highlight { background-color: #ffff99; padding: 2px 1px; border-radius: 3px; cursor: help; }
+                </style>
+                %s"
+                --- END OF HTML REPORT ---
+                """, ssf.generateHtmlHighlight(textA, textB, foundMatches));
         }
     }
 }

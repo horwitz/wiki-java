@@ -56,6 +56,7 @@ public class StringSimilarityFinderTest
     {
         assertThrows(NullPointerException.class, () -> ssf.findConsecutiveWordMatches(null, "Test"));
         assertThrows(NullPointerException.class, () -> ssf.findConsecutiveWordMatches("Test", null));
+        ssf.setMinimumMatchLength(3);
         
         // test short
         String text1 = "Another unrelated";
@@ -125,10 +126,9 @@ public class StringSimilarityFinderTest
     @Test
     public void setMinimumMatchLength()
     {
-        // verify default and get/set
-        assertEquals(3, ssf.getMinimumMatchLength());
+        assertEquals(6, ssf.getMinimumMatchLength(), "Default setting");
         ssf.setMinimumMatchLength(4);
-        assertEquals(4, ssf.getMinimumMatchLength());
+        assertEquals(4, ssf.getMinimumMatchLength(), "Get/set");
         
         // test functionality
         String text1 = "The quick brown fox jumps over the lazy dog. This is a simple test. " +
@@ -144,7 +144,7 @@ public class StringSimilarityFinderTest
             buildExpectedMatch("We are looking for at least three consecutive words", text1, 68, text2, 37),
             buildExpectedMatch("This check should be case-insensitive", text1, 140, text2, 176));
         List<StringSimilarityFinder.Match> actual = ssf.findConsecutiveWordMatches(text1, text2);
-        assertEquals(expected, actual);
+        assertEquals(expected, actual, "Functionality (before)");
         
         ssf.setMinimumMatchLength(5);
         expected = List.of(
@@ -152,7 +152,7 @@ public class StringSimilarityFinderTest
             buildExpectedMatch("We are looking for at least three consecutive words", text1, 68, text2, 37),
             buildExpectedMatch("This check should be case-insensitive", text1, 140, text2, 176));
         actual = ssf.findConsecutiveWordMatches(text1, text2);
-        assertEquals(expected, actual);
+        assertEquals(expected, actual, "Functionality (after)");
     }
 
     @Test

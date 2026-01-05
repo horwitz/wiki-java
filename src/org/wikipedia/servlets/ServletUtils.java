@@ -205,6 +205,7 @@ public class ServletUtils
         // captcha not attempted, show CAPTCHA screen
         if (answer == null && timestamp == null && nonce == null && reqdifficulty == null)
         {
+            response.setContentType("text/html;charset=UTF-8");
             response.getWriter().printf("""
                     <!doctype html>
                     <html>
@@ -311,7 +312,6 @@ public class ServletUtils
      */
     public static void renderHeader(HttpServletRequest request, HttpServletResponse response, Writer out) throws IOException
     {
-        response.setContentType("text/html;charset=UTF-8");
         out.write("""
             <!doctype html>
             <html>
@@ -351,8 +351,15 @@ public class ServletUtils
             <br>
             <br>
             <hr>
+            """);
+        if (request.getMethod().equals("GET"))
+        {
+            out.write("""
             <p><a href="%s">Permanent link</a> to this query.
-        
+                      
+            """.formatted(getRequestURL(request)));
+        }
+        out.write("""
             <p>
             %s: Copyright &copy; MER-C 2007-%d. This tool is free software: you can redistribute it 
             and/or modify it under the terms of the <a href="//gnu.org/licenses/agpl.html">Affero 
@@ -370,7 +377,7 @@ public class ServletUtils
                 <a href="./index.html">Tool directory</a> |
                 <a href="./doc/index.html">Javadoc</a>
             </body>
-            </html>""".formatted(getRequestURL(request), request.getAttribute("toolname"), OffsetDateTime.now().getYear()));
+            </html>""".formatted(request.getAttribute("toolname"), OffsetDateTime.now().getYear()));
         out.flush();
     }
     

@@ -151,7 +151,8 @@ public class ContributionSurveyorServlet extends BaseServlet
                     // TODO: NOT IMPLEMENTED
             }
         }
-    
+        
+        response.setContentType("text/html;charset=UTF-8");
         try (PrintWriter out = response.getWriter())
         {
             ServletUtils.renderHeader(request, response, out);
