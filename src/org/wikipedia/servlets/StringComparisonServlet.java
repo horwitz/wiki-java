@@ -1,5 +1,5 @@
 /**
- *  @(#)StringComparisonServlet.java 0.01 04/01/202
+ *  @(#)StringComparisonServlet.java 0.01 04/01/2026
  *  Copyright (C) 2026 MER-C
  *
  *  This program is free software: you can redistribute it and/or modify

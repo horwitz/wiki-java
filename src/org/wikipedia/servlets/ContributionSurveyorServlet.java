@@ -120,10 +120,11 @@ public class ContributionSurveyorServlet extends BaseServlet
         String surveyhtml = null;
         if (survey != null)
         {
-            String output = "text";
+            String output = request.getParameter("format");
             String fname = user == null ? category : user;
             switch (output)
             {
+                case null:
                 case "text":
                     response.setContentType("text/plain;charset=UTF-8");
                     response.setHeader("Content-Disposition", "attachment; filename=" 
@@ -139,7 +140,7 @@ public class ContributionSurveyorServlet extends BaseServlet
                         + URLEncoder.encode(fname, StandardCharsets.UTF_8) + ".zip");
                     Map<String, byte[]> zip = new LinkedHashMap<>();
                     for (int i = 0; i < survey.size(); i++)
-                        zip.put(fname + (i == 0 ? "" : ".txt.%03d".formatted(i)), survey.get(i).getBytes());
+                        zip.put(fname + ".txt" + (i == 0 ? "" : ".%03d".formatted(i)), survey.get(i).getBytes());
                     try (ZipOutputStream zout = new ZipOutputStream(response.getOutputStream()))
                     {
                         ContributionSurveyor.outputZipFile(zout, zip);
@@ -192,6 +193,10 @@ public class ContributionSurveyorServlet extends BaseServlet
                 <tr>
                     <td colspan=2>Output:
                     <td>%s
+                <tr>
+                    <td colspan=2>Output format:
+                    <td><input type=radio name=format id=format_text value=text checked><label for=format_text>Text</label>
+                        <input type=radio name=format id=format_zip value=zip><label for=format_zip>Zip</label>
                 </table>
                 <input type=submit value="Survey user">
                 </form>
