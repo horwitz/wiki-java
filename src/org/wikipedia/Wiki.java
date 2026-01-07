@@ -4856,7 +4856,7 @@ public class Wiki implements Comparable<Wiki>
         for (String fragment : constructTitleString(usernames))
         {
             postparams.put("ususers", fragment);
-            String line = makeApiCall(getparams, postparams, "getUserInfo");
+            String line = makeApiCall(getparams, postparams, "getUsers");
             detectUncheckedErrors(line, null, null);
             String[] results = line.split("<user ");
             for (int i = 1; i < results.length; i++)

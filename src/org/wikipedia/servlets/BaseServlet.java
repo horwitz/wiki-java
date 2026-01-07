@@ -44,7 +44,7 @@ public abstract class BaseServlet extends HttpServlet
     {
         ServletUtils.setHeaders(request, response);
         if (ServletFirewall.isAllowed(request, response))
-            if (ServletUtils.showCaptcha(request, response, List.of("user"), 4))
+            if (ServletUtils.showCaptcha(request, response, getCaptchaParams(), 4))
                 processRequest(request, response);
     }
     

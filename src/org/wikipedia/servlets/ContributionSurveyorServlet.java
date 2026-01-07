@@ -43,14 +43,15 @@ public class ContributionSurveyorServlet extends BaseServlet
 {
     /**
      *  Ensures that CAPTCHAs are computed over the defining parameter of the
-     *  survey, that is the user being surveyed.
-     *  @return {@code List.of("user")}
+     *  survey, that is the user or category being surveyed and the wiki these
+     *  reside on.
+     *  @return {@code List.of("user", "wiki", "category")}
      *  @since 0.03
      */
     @Override
     public List<String> getCaptchaParams()
     {
-        return List.of("user");
+        return List.of("user", "wiki", "category");
     }
     
     /**
@@ -79,6 +80,8 @@ public class ContributionSurveyorServlet extends BaseServlet
         wiki.setMaxLag(-1);
         wiki.setQueryLimit(10000); // 20 network requests, GAE only allows run time of 15s
 
+        // TODO: consolidate front-end user processing code
+        // see also CommandLineParser.parseUserOptions2
         List<String> users = new ArrayList<>();
         if (user != null)
             users.add(user);
@@ -92,7 +95,7 @@ public class ContributionSurveyorServlet extends BaseServlet
                     users.add(wiki.removeNamespace(tempstring));
         }
 
-        // 2. Perform business logic if form submitted (defining parameter: user)
+        // 2. Perform business logic if form submitted (defining parameter: user list)
         List<String> survey = null;
         if (request.getAttribute("error") == null && !users.isEmpty())
         {
@@ -124,6 +127,7 @@ public class ContributionSurveyorServlet extends BaseServlet
             String fname = user == null ? category : user;
             switch (output)
             {
+                // TODO: this is common to CCI servlets but could be applicable to other tools?
                 case null:
                 case "text":
                     response.setContentType("text/plain;charset=UTF-8");
@@ -162,7 +166,7 @@ public class ContributionSurveyorServlet extends BaseServlet
                 This tool generates a listing of a user's edits for use at <a
                 href="//en.wikipedia.org/wiki/WP:CCI">Contributor copyright investigations</a>
                 and other venues. It isolates and ranks major edits by size. A query limit of
-                10000 edits (after namespace filter and minor edit exclusion) applies.
+                10000 edits (after namespace, date interval, new page, and minor edit filters) applies.
 
                 <p>
                 <form action="./contributionsurveyor.jsp" method=GET>

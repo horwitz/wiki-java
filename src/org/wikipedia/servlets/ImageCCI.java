@@ -43,14 +43,15 @@ public class ImageCCI extends BaseServlet
 {
     /**
      *  Ensures that CAPTCHAs are computed over the defining parameter of the
-     *  survey, that is the user being surveyed.
-     *  @return {@code List.of("user")}
+     *  survey, that is the user or category being surveyed and the wiki these
+     *  reside on.
+     *  @return {@code List.of("user", "wiki", "category")}
      *  @since 0.04
      */
     @Override
     public List<String> getCaptchaParams()
     {
-        return List.of("user");
+        return List.of("user", "wiki", "category");
     }
     
     /**
@@ -61,27 +62,53 @@ public class ImageCCI extends BaseServlet
     public void processRequest(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException
     {
         // 1. Parse parameters
+        // category not enabled because API list=allusers aiuser parameter is not vectorised
+        // (it works, it's just too slow)
         request.setAttribute("toolname", "Image contribution surveyor");
+        // request.setAttribute("scripts", new String[] { "common.js", "ContributionSurveyor.js" });
         String homewiki = ServletUtils.sanitizeForAttributeOrDefault(request.getParameter("wiki"), "en.wikipedia.org");
         String user = request.getParameter("user");
+        String category = null; // request.getParameter("category");
         boolean transferred = (request.getParameter("transferred") != null);
         Wiki.Interval interval = ServletUtils.parseIntervalParams(request);
-    
-        // 2. Perform business logic if form submitted (defining parameter: user)
-        List<String> survey = null;
-        if (user != null && request.getAttribute("error") == null)
+        boolean comingled = false; // (request.getParameter("comingled") != null);
+        
+        WMFWikiFarm sessions = WMFWikiFarm.instance();
+        sessions.setInitializer(w -> { 
+            w.setMaxLag(-1);
+            w.setQueryLimit(3500); // 7 network requests, GAE only allows run time of 15s
+        });
+        Wiki wiki = sessions.sharedSession(homewiki);
+
+        // TODO: consolidate front-end user processing code
+        // see also CommandLineParser.parseUserOptions2
+        List<String> users = new ArrayList<>();
+        if (user != null)
+            users.add(user);
+        else if (category != null)
         {
-            WMFWiki wiki = WMFWikiFarm.instance().sharedSession(homewiki);
-            wiki.setMaxLag(-1);
+            List<String> catmembers = wiki.getCategoryMembers(category, Wiki.USER_NAMESPACE);
+            if (catmembers.isEmpty())
+                request.setAttribute("error", "Category \"" + HTMLUtils.sanitizeForHTML(category) + "\" contains no users!");
+            else
+                for (String tempstring : catmembers)
+                    users.add(wiki.removeNamespace(tempstring));
+        }
+    
+        // 2. Perform business logic if form submitted (defining parameter: user list)
+        List<String> survey = null;
+        if (request.getAttribute("error") == null && !users.isEmpty())
+        {
             ContributionSurveyor surveyor = new ContributionSurveyor(wiki);
             surveyor.setInterval(interval);
+            surveyor.setComingled(comingled);
             surveyor.setFooter("Survey URL: " + ServletUtils.getRequestURL(request));
             surveyor.setSurveyingTransferredFiles(transferred);
-            survey = surveyor.outputContributionSurvey(List.of(user), false, false, true);
+            survey = surveyor.outputContributionSurvey(users, false, false, true);
             
             if (survey.isEmpty())
             {
-                request.setAttribute("error", "ERROR: User " + HTMLUtils.sanitizeForHTML(user) + " does not exist!");
+                request.setAttribute("error", "No uploads found!");
                 survey = null;
             }
         }
@@ -91,13 +118,15 @@ public class ImageCCI extends BaseServlet
         if (survey != null)
         {
             String output = request.getParameter("format");
+            String fname = user == null ? category : user;
             switch (output)
             {
+                // TODO: this is common to CCI servlets but could be applicable to other tools?
                 case null:
                 case "text":
                     response.setContentType("text/plain;charset=UTF-8");
                     response.setHeader("Content-Disposition", "attachment; filename=" 
-                        + URLEncoder.encode(user, StandardCharsets.UTF_8) + ".txt");
+                        + URLEncoder.encode(fname, StandardCharsets.UTF_8) + ".txt");
                     try (PrintWriter out = response.getWriter())
                     {
                         out.print(String.join("\n", survey));
@@ -106,10 +135,10 @@ public class ImageCCI extends BaseServlet
                 case "zip":
                     response.setContentType("application/zip");
                     response.setHeader("Content-Disposition", "attachment; filename=" 
-                        + URLEncoder.encode(user, StandardCharsets.UTF_8) + ".zip");
+                        + URLEncoder.encode(fname, StandardCharsets.UTF_8) + ".zip");
                     Map<String, byte[]> zip = new LinkedHashMap<>();
                     for (int i = 0; i < survey.size(); i++)
-                        zip.put(user + ".txt" + (i == 0 ? "" : ".%03d".formatted(i)), survey.get(i).getBytes());
+                        zip.put(fname + ".txt" + (i == 0 ? "" : ".%03d".formatted(i)), survey.get(i).getBytes());
                     try (ZipOutputStream zout = new ZipOutputStream(response.getOutputStream()))
                     {
                         ContributionSurveyor.outputZipFile(zout, zip);
@@ -127,18 +156,23 @@ public class ImageCCI extends BaseServlet
         try (PrintWriter out = response.getWriter())
         {
             ServletUtils.renderHeader(request, response, out);
-            // TODO: feature parity with the text contribution surveyor
             out.printf("""
                 <p>
                 This tool generates a listing of a user's image uploads for use at <a
                 href="//en.wikipedia.org/wiki/WP:CCI">Contributor copyright investigations.</a>
+                A query limit of 3500 uploads per wiki (after date interval filter) applies.
 
                 <p>
                 <form action="./imagecci.jsp" method=GET>
                 <table>
                 <tr>
-                    <td>User to survey:
-                    <td><input type=text name=user value="%s" required>
+                    <!--<td><input type=radio name=mode id="radio_user" checked>-->
+                    <td><label for=user>User to survey:</label>
+                    <td><input type=text name=user id=user value="%s" required>
+                <!--<tr>
+                    <td><input type=radio name=mode id="radio_category">
+                    <td><label for=radio_category>Fetch users from category:</label>
+                    <td><input type=text name=category id=category value="%s" disabled>-->
                 <tr>
                     <td>Home wiki:
                     <td><input type=text name="wiki" value="%s" required>
@@ -147,6 +181,9 @@ public class ImageCCI extends BaseServlet
                     <td>%s
                 <tr>
                     <td colspan=2>%s
+                <!--<tr>
+                    <td colspan=2>Output:
+                    <td>%s-->
                 <tr>
                     <td>Output format:
                     <td><input type=radio name=format id=format_text value=text checked><label for=format_text>Text</label>
@@ -155,10 +192,13 @@ public class ImageCCI extends BaseServlet
                 <br>
                 <input type=submit value="Survey user">
                 </form>
-                """, ServletUtils.sanitizeForAttribute(user), homewiki,
+                """, ServletUtils.sanitizeForAttribute(user), 
+                    ServletUtils.sanitizeForAttribute(category),
+                    homewiki,
                     ServletUtils.addIntervalInputs(request, null, null),
                     ServletUtils.addCheckbox("transferred", transferred, 
-                        "Include transferred files (may be inaccurate depending on username)"));
+                        "Include transferred files (may be inaccurate depending on username)"),
+                    ServletUtils.addCheckbox("comingle", comingled, "comingled (for sockfarms where each user has few edits)"));
             if (surveyhtml != null)
                 out.print(surveyhtml);
             ServletUtils.renderFooter(request, out);

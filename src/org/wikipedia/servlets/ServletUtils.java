@@ -197,7 +197,10 @@ public class ServletUtils
         
         StringBuilder paramstr = new StringBuilder();
         for (String param : params)
-            paramstr.append(req.getParameter(param));
+        {
+            String value = req.getParameter(param);
+            paramstr.append(value == null ? "" : value);
+        }
         String challenge = sanitizeForAttribute(paramstr.toString());
         // String snonce = (String)req.getAttribute("servernonce");
         String tohash = nonce + timestamp + challenge;
