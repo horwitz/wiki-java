@@ -12,10 +12,10 @@ disableElement = function(el)
 {
     el.disabled = true;
     el.required = false;
-}
+};
 
 enableRequiredElement = function(el)
 {
     el.disabled = false;
     el.required = true;
-}
+};

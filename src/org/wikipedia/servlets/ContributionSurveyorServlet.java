@@ -21,6 +21,7 @@ package org.wikipedia.servlets;
 import java.io.*;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.time.*;
 import java.util.*;
 import java.util.zip.ZipOutputStream;
 
@@ -65,13 +66,14 @@ public class ContributionSurveyorServlet extends BaseServlet
         request.setAttribute("toolname", "Contribution surveyor");
         request.setAttribute("scripts", new String[] { "common.js", "ContributionSurveyor.js" });
 
-        String user = request.getParameter("user");
+        String un = request.getParameter("user");
         String category = request.getParameter("category");
         boolean nominor = (request.getParameter("nominor") != null);
         boolean noreverts = (request.getParameter("noreverts") != null);
         boolean nodrafts = (request.getParameter("nodrafts") != null);
         boolean newonly = (request.getParameter("newonly") != null);
         boolean comingle = (request.getParameter("comingle") != null);
+        String blockedafterstr = request.getParameter("blockedafter");
         Wiki.Interval interval = ServletUtils.parseIntervalParams(request);
         String homewiki = ServletUtils.sanitizeForAttributeOrDefault(request.getParameter("wiki"), "en.wikipedia.org");
         String bytefloor = ServletUtils.sanitizeForAttributeOrDefault(request.getParameter("bytefloor"), "150");
@@ -83,8 +85,10 @@ public class ContributionSurveyorServlet extends BaseServlet
         // TODO: consolidate front-end user processing code
         // see also CommandLineParser.parseUserOptions2
         List<String> users = new ArrayList<>();
-        if (user != null)
-            users.add(user);
+        OffsetDateTime blockedafter = (blockedafterstr == null || blockedafterstr.isEmpty()) ? null : 
+            LocalDate.parse(blockedafterstr).atTime(OffsetTime.of(23, 59, 59, 0, ZoneOffset.UTC));
+        if (un != null)
+            users.add(un);
         else if (category != null)
         {
             List<String> catmembers = wiki.getCategoryMembers(category, Wiki.USER_NAMESPACE);
@@ -93,6 +97,18 @@ public class ContributionSurveyorServlet extends BaseServlet
             else
                 for (String tempstring : catmembers)
                     users.add(wiki.removeNamespace(tempstring));
+        }
+        // filter for users blocked after __ (for persistent sockfarms)
+        if (blockedafter != null)
+        {
+            List<Wiki.User> userobjs = wiki.getUsers(users);
+            users.clear();
+            for (Wiki.User user : userobjs)
+            {
+                Wiki.LogEntry block = user.getBlockDetails();
+                if (block == null || block.getTimestamp().isAfter(blockedafter))
+                    users.add(user.getUsername());
+            }
         }
 
         // 2. Perform business logic if form submitted (defining parameter: user list)
@@ -124,7 +140,7 @@ public class ContributionSurveyorServlet extends BaseServlet
         if (survey != null)
         {
             String output = request.getParameter("format");
-            String fname = user == null ? category : user;
+            String fname = un == null ? category : un;
             switch (output)
             {
                 // TODO: this is common to CCI servlets but could be applicable to other tools?
@@ -173,12 +189,15 @@ public class ContributionSurveyorServlet extends BaseServlet
                 <table>
                 <tr>
                     <td><input type=radio name=mode id="radio_user" checked>
-                    <td><label for=radio_user>User to survey:</label>
+                    <td><label for=user>User to survey:</label>
                     <td><input type=text name=user id=user value="%s" required>
                 <tr>
-                    <td><input type=radio name=mode id="radio_category">
-                    <td><label for=radio_category>Fetch users from category:</label>
-                    <td><input type=text name=category id=category value="%s" disabled>
+                    <td rowspan=2><input type=radio name=mode id="radio_category">
+                    <td><label for=category>Fetch users from category:</label>
+                    <td><input type=text name=category id=category value="%s" disabled> (not recursive)
+                <tr>
+                    <td>Blocked after:
+                    <td><input type=date name=blockedafter id=blockedafter value="%s" disabled>
                 <tr>
                     <td colspan=2>Home wiki:
                     <td><input type=text name="wiki" value="%s" required>
@@ -204,11 +223,12 @@ public class ContributionSurveyorServlet extends BaseServlet
                 </table>
                 <input type=submit value="Survey user">
                 </form>
-                """, ServletUtils.sanitizeForAttribute(user),
-                ServletUtils.sanitizeForAttribute(category), homewiki,
-                ServletUtils.addCheckbox("nominor", user == null || nominor, "minor edits"),
-                ServletUtils.addCheckbox("noreverts", user == null || noreverts, "reverts"),
-                ServletUtils.addCheckbox("nodrafts", user == null || nodrafts, "userspace and draft (ns 118) edits"),
+                """, ServletUtils.sanitizeForAttribute(un),
+                ServletUtils.sanitizeForAttribute(category), 
+                ServletUtils.sanitizeForAttribute(blockedafterstr), homewiki,
+                ServletUtils.addCheckbox("nominor", survey == null || nominor, "minor edits"),
+                ServletUtils.addCheckbox("noreverts", survey == null || noreverts, "reverts"),
+                ServletUtils.addCheckbox("nodrafts", survey == null || nodrafts, "userspace and draft (ns 118) edits"),
                 ServletUtils.addCheckbox("newonly", newonly, "all except new pages"),
                 ServletUtils.addIntervalInputs(request, null, null), bytefloor,
                 ServletUtils.addCheckbox("comingle", comingle, "comingled (for sockfarms where each user has few edits)"));

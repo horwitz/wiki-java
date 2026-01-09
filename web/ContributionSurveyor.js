@@ -16,12 +16,14 @@ document.addEventListener('DOMContentLoaded', function()
     document.getElementById('radio_user').addEventListener('click', function()
     {
         disableElement(document.getElementById('category'));
+        document.getElementById('blockedafter').disabled = true;
         enableRequiredElement(document.getElementById('user'));
     });
     
     document.getElementById('radio_category').addEventListener('click', function()
     {
         enableRequiredElement(document.getElementById('category'));
+        document.getElementById('blockedafter').disabled = false;
         disableElement(document.getElementById('user'));
     });
 });
