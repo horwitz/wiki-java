@@ -1,6 +1,6 @@
 /**
- *  @(#)UserLinkAdditionFinder.java 0.03 15/06/2024
- *  Copyright (C) 2015-2024 MER-C
+ *  @(#)UserLinkAdditionFinder.java 0.04 08/01/2026
+ *  Copyright (C) 2015-2026 MER-C
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
@@ -22,14 +22,13 @@ package org.wikipedia.tools;
 import java.io.*;
 import java.util.*;
 import java.util.regex.*;
-import java.time.OffsetDateTime;
 import java.util.stream.Collectors;
 import org.wikipedia.*;
 
 /**
  *  Finds links added by a user in the main namespace.
  *  @author MER-C
- *  @version 0.03
+ *  @version 0.04
  */
 public class UserLinkAdditionFinder
 {
@@ -38,6 +37,8 @@ public class UserLinkAdditionFinder
     private final ExternalLinks el;
     private static final WMFWikiFarm sessions = WMFWikiFarm.instance();
     private final List<Pattern> whitelist_regexes = new ArrayList<>();
+    private int sizediff = Integer.MIN_VALUE;
+    private boolean includeminor = true;
     
     /**
      *  Determines which blacklisted domains are removed from search results.
@@ -87,6 +88,8 @@ public class UserLinkAdditionFinder
             .addBooleanFlag("--removeblacklisted", "Remove (globally and locally) blacklisted links")
             .addSingleArgumentFlag("--fetchafter", "date", "Fetch only edits after this date.")
             .addSingleArgumentFlag("--fetchbefore", "date", "Fetch only edits before this date")
+            .addBooleanFlag("--ignoreminor", "Ignore minor edits.")
+            .addSingleArgumentFlag("--minsize", "size", "Only includes edits that add more than size bytes.")
             .addSingleArgumentFlag("--ignorebelow", "X", "Don't return domains added less than X times")
             .addSection("If a file is not specified, a dialog box will prompt for one.")
             .parse(args);
@@ -100,6 +103,9 @@ public class UserLinkAdditionFinder
         int ignorebelow = Integer.parseInt(parsedargs.getOrDefault("--ignorebelow", "-1"));
         
         UserLinkAdditionFinder finder = new UserLinkAdditionFinder(thiswiki);
+        if (parsedargs.containsKey("--minsize"))
+            finder.setMinimumSizeDiff(Integer.parseInt(parsedargs.get("--minsize")));
+        finder.setIgnoringMinorEdits(parsedargs.containsKey("--ignoreminor"));
         ExternalLinkPopularity elp = new ExternalLinkPopularity(thiswiki);
         elp.setMaxLinks(threshold);
 
@@ -186,6 +192,51 @@ public class UserLinkAdditionFinder
     {
         return wiki;
     }
+    
+    /**
+     *  Sets the minimum change size (in bytes added) to include in surveys.
+     *  Default is {@code Integer.MIN_VALUE} (disabled).
+     *  @param sizediff the minimum change size, in bytes added
+     *  @see #getMinimumSizeDiff()
+     *  @since 0.04
+     */
+    public void setMinimumSizeDiff(int sizediff)
+    {
+        this.sizediff = sizediff;
+    }
+
+    /**
+     *  Gets the minimum change size to include in surveys.
+     *  @return the minimum change size, in bytes
+     *  @see #setMinimumSizeDiff(int)
+     *  @since 0.04
+     */
+    public int getMinimumSizeDiff()
+    {
+        return sizediff;
+    }
+    
+    /**
+     *  Sets whether surveys ignore minor edits. Default = true.
+     *  @param ignoreminor (see above)
+     *  @see #isIgnoringMinorEdits()
+     *  @since 0.04
+     */
+    public void setIgnoringMinorEdits(boolean ignoreminor)
+    {
+        includeminor = !ignoreminor;
+    }
+
+    /**
+     *  Gets whether surveys ignore minor edits. Default = true.
+     *  @return (see above)
+     *  @see #setIgnoringMinorEdits(boolean)
+     *  @since 0.04
+     */
+    public boolean isIgnoringMinorEdits()
+    {
+        return !includeminor;
+    }
 
     /**
      *  Fetches the list of links added by a list of users. The list of users
@@ -204,7 +255,8 @@ public class UserLinkAdditionFinder
         List<List<Wiki.Revision>> contribs = wiki.contribs(users, null, rh);
         List<Wiki.Revision> revisions = contribs.stream()
             .flatMap(List::stream)
-            .filter(revision -> !revision.isContentDeleted())
+            .filter(revision -> !revision.isContentDeleted() && revision.getSizeDiff() > sizediff
+                && (includeminor || !revision.isMinor()))
             .collect(Collectors.toList());
         for (Wiki.Revision revision : revisions)
         {

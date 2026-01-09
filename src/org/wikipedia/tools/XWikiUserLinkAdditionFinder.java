@@ -1,6 +1,6 @@
 /**
- *  @(#)XWikiUserLinkAdditionFinder.java 0.01 06/07/2023
- *  Copyright (C) 2023-20XX MER-C and contributors
+ *  @(#)XWikiUserLinkAdditionFinder.java 0.02 08/01/2026
+ *  Copyright (C) 2023-2026 MER-C and contributors
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
@@ -26,7 +26,7 @@ import org.wikipedia.*;
  *  Rudimentary cross-wiki tool that finds links added by a list of users in
  *  the main namespace.
  *  @author MER-C
- *  @version 0.01
+ *  @version 0.02
  */
 public class XWikiUserLinkAdditionFinder
 {
@@ -45,10 +45,15 @@ public class XWikiUserLinkAdditionFinder
             .addBooleanFlag("--removeblacklisted", "Remove globally blacklisted links")
             .addSingleArgumentFlag("--fetchafter", "date", "Fetch only edits after this date.")
             .addSingleArgumentFlag("--fetchbefore", "date", "Fetch only edits before this date")
+            .addBooleanFlag("--ignoreminor", "Ignore minor edits.")
+            .addSingleArgumentFlag("--minsize", "size", "Only includes edits that add more than size bytes.")
             .addSingleArgumentFlag("--ignorebelow", "X", "Don't return domains added less than X times")
             .addUserInputOptions("Get links for");
         Map<String, String> parsedargs = clp.parse(args);
         Wiki.Interval dates = CommandLineParser.parseInterval(parsedargs, "--fetchafter", "--fetchbefore");
+        int minsize = Integer.MIN_VALUE;
+        if (parsedargs.containsKey("--minsize"))
+            minsize = Integer.parseInt(parsedargs.get("--minsize"));
         int ignorebelow = Integer.parseInt(parsedargs.getOrDefault("--ignorebelow", "-1"));
         var rm = parsedargs.containsKey("--removeblacklisted") ? UserLinkAdditionFinder.RemovalMode.GLOBAL_BLACKLIST : UserLinkAdditionFinder.RemovalMode.NO_BLACKLISTS;
         
@@ -78,6 +83,8 @@ public class XWikiUserLinkAdditionFinder
         for (WMFWiki wiki : wikisedited)
         {
             UserLinkAdditionFinder finder = new UserLinkAdditionFinder(wiki);
+            finder.setMinimumSizeDiff(minsize);
+            finder.setIgnoringMinorEdits(parsedargs.containsKey("--ignoreminor"));
             Map<Wiki.Revision, List<String>> results = finder.getLinksAdded(users, dates);
             if (results.isEmpty())
                 continue;

@@ -1,6 +1,6 @@
 /**
- *  @(#)UserLinkAdditionFinderUnitTest.java 0.01 17/10/2015
- *  Copyright (C) 2015 MER-C
+ *  @(#)UserLinkAdditionFinderUnitTest.java 0.04 08/01/2026
+ *  Copyright (C) 2015-2026 MER-C
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
@@ -21,7 +21,6 @@
 package org.wikipedia.tools;
 
 import java.io.IOException;
-import java.time.*;
 import java.util.*;
 import java.util.stream.*;
 import org.junit.jupiter.api.*;
@@ -29,7 +28,7 @@ import org.wikipedia.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- *  Diff parsing unit tests for the UserLinkAdditionFinder.
+ *  Unit tests for the UserLinkAdditionFinder.
  *  @author MER-C
  */
 public class UserLinkAdditionFinderTest
@@ -53,6 +52,57 @@ public class UserLinkAdditionFinderTest
     {
         assertEquals("test.wikipedia.org", finder_test.getWiki().getDomain());
         assertEquals("en.wikipedia.org", finder_en.getWiki().getDomain());
+    }
+    
+    @Test
+    public void setMinimumSizeDiff() throws Exception
+    {
+        assertEquals(Integer.MIN_VALUE, finder_en.getMinimumSizeDiff(), "Default setting");
+        
+        // https://en.wikipedia.org/wiki/Special:Contributions/Shittipa 
+        // (2 edits, only one adds links and that has positive bytes added)
+        // see getLinksAdded for full test
+        String un = "Shittipa";
+        List<String> users = List.of(un);
+        var results = finder_en.getLinksAdded(users, null);
+        assertEquals(1, results.size());
+        for (var result : results.entrySet())
+        {
+            assertEquals(823758919L, result.getKey().getID());
+            assertEquals(29, result.getKey().getSizeDiff());
+            assertEquals(List.of("http://gastroinflorida.com/"), result.getValue());
+        }
+        
+        finder_en.setMinimumSizeDiff(30);
+        assertEquals(30, finder_en.getMinimumSizeDiff(), "Get/set");
+        
+        results = finder_en.getLinksAdded(users, null);
+        assertTrue(results.isEmpty(), "Functionality");
+    }
+    
+    @Test
+    public void setIgnoringMinorEdits() throws IOException
+    {
+        assertFalse(finder_en.isIgnoringMinorEdits(), "Default setting");
+        
+        // https://en.wikipedia.org/wiki/Special:Contributions/Souravtaran
+        // (1 edit, only one adds links and is minor)
+        String un = "Souravtaran";
+        List<String> users = List.of(un);
+        var results = finder_en.getLinksAdded(users, null);
+        assertEquals(1, results.size());
+        for (var result : results.entrySet())
+        {
+            assertEquals(1330576444L, result.getKey().getID());
+            assertTrue(result.getKey().isMinor());
+            assertEquals(List.of("https://www.kolkatatourguide.com/durga-puja-parikrama/"), result.getValue());
+        }
+        
+        finder_en.setIgnoringMinorEdits(true);
+        assertTrue(finder_en.isIgnoringMinorEdits(), "Get/set");
+        
+        results = finder_en.getLinksAdded(users, null);
+        assertTrue(results.isEmpty(), "Functionality");
     }
     
     @Test
@@ -111,9 +161,9 @@ public class UserLinkAdditionFinderTest
                 assertEquals(List.of("http://www.drgoldman.com/"), links);
         }
         
-        // check date cutoff (all users indeffed prior to this date, therefore empty)
+        // all users indeffed prior to the timestamp given
         linksadded = finder_en.getLinksAdded(users, Wiki.Interval.parse("2018-06-01T00:00:00Z", null));
-        assertTrue(linksadded.isEmpty());
+        assertTrue(linksadded.isEmpty(), "Interval cutoff");
     }
 
     @Test
