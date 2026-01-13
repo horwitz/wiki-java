@@ -744,7 +744,11 @@ public class AdminStats
      */
     public static void export(Map<String, Long> hist, String filename) throws IOException
     {
-        DataTable dt = DataTable.create(hist, List.of("Reason", "Count"));
+        record HistEntry(String key, Long value) { };
+        List<HistEntry> list = new ArrayList();
+        for (var entry : hist.entrySet())
+            list.add(new HistEntry(entry.getKey(), entry.getValue()));
+        DataTable dt = DataTable.create(list, List.of("Reason", "Count"));
         System.out.println(dt.formatAsWikitext());
         Files.writeString(Paths.get(filename), dt.formatAsCSV());
     }
