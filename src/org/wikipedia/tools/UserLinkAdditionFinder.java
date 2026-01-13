@@ -32,6 +32,8 @@ import org.wikipedia.*;
  */
 public class UserLinkAdditionFinder
 {
+    // TODO: deleted contributions
+    
     private final WMFWiki wiki;
     private final Pages pages;
     private final ExternalLinks el;

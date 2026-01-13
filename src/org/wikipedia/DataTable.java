@@ -30,6 +30,11 @@ public class DataTable
     private Map<?, ?> hist;
     private List<String> headers;
     
+    // TODO: Map<?, ?> should be <T extends java.lang.Record>
+    // use reflection to get contents
+    // fold WikitextUtils.addTableRow here
+    // add HTML output
+    
     /**
      *  Creates a new data table.
      *  @param hist the input data

@@ -1,0 +1,219 @@
+/**
+ *  @(#)UserInfo.java 0.02 11/01/2026
+ *  Copyright (C) 2021-2026 MER-C and contributors
+ *
+ *  This program is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU General Public License
+ *  as published by the Free Software Foundation; either version 3
+ *  of the License, or (at your option) any later version. Additionally
+ *  this file is subject to the "Classpath" exception.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software Foundation,
+ *  Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
+package org.wikipedia.tools;
+
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+import org.wikipedia.*;
+
+/**
+ *  Outputs a table of summary user information.
+ *  @author MER-C
+ *  @version 0.02
+ */
+public class UserInfo
+{
+    private static WMFWikiFarm sessions = WMFWikiFarm.instance();
+    
+    /**
+     *  Runs this program.
+     *  @param args the command line arguments
+     *  @throws Exception if a network error occurs
+     */
+    public static void main(String[] args) throws Exception
+    {
+        Map<String, String> parsedargs = new CommandLineParser("org.wikipedia.tools.BlockLockStuff")
+            .addVersion("0.02")
+            .addSingleArgumentFlag("--wiki", "en.wikipedia.org", "Fetch socks from this wiki")
+            .addUserInputOptions("Fetch sock info for")
+            .addHelp()
+            .parse(args);
+        String wikistring = parsedargs.getOrDefault("--wiki", "en.wikipedia.org");
+        Wiki wiki = sessions.sharedSession(wikistring);
+        List<String> socks = CommandLineParser.parseUserOptions(parsedargs, wiki);
+
+        userInfoTable(wiki, socks);
+        //lockFinder(socks);
+        //staleScreener(wiki, socks);
+        
+        // TODO: a servlet and offline version overhauling the above.
+        // Servlet Input = user list, category or page
+        // options: show only unblocked, show only accounts < X old (default: 90 days)
+        // return DataTable
+        // highlight non-stale
+        // pipe to other tools (e.g. ContributionSurveyor)
+        // pipe from other tools (e.g. ArticleEditorIntersection)
+    }
+    
+    /**
+     *  Gets information about a list of users, fused from {@link Wiki#User} and
+     *  their contributions, and presents it in one table.
+     *  @param wiki the wiki to get information from
+     *  @param usernames a list of usernames, non-existing allowed
+     *  @throws Exception if a network error occurs
+     *  @since 0.02
+     */
+    public static void userInfoTable(Wiki wiki, List<String> usernames) throws Exception
+    {
+        List<Wiki.User> users = wiki.getUsers(usernames);
+        // somewhat slow, there could be tens of thousands of edits
+        List<List<Wiki.Revision>> contribs = wiki.contribs(usernames, null, null);
+        List<String> boring_groups = List.of("*", "user", "autoconfirmed");
+        Wiki.LogEntry earliestblock = null;
+        
+        System.out.println("""
+            {| class="wikitable sortable"
+            |-
+            ! User !! Actions !! Reg. date !! First edit !! Last edit !! Edit count !! Articles !! Groups !! Blocked? !! B. Expiry !! B. Timestamp !! B. Reason
+            """);
+        
+        for (int i = 0; i < usernames.size(); i++)
+        {
+            Wiki.User user = users.get(i);
+            if (user == null)
+            {
+                System.out.println(WikitextUtils.addTableRow(List.of(usernames.get(i), "", "", 
+                    "", "", "0", "0", "unregistered", "", "", "", "")));
+                continue;
+            }
+            
+            Wiki.LogEntry blockinfo = user.getBlockDetails();
+            Map<String, String> blockdetails = null;
+            OffsetDateTime blockts = null;
+            if (blockinfo != null)
+            {
+                blockdetails = blockinfo.getDetails();
+                blockts = blockinfo.getTimestamp();
+                if (earliestblock == null || earliestblock.getTimestamp().isAfter(blockts))
+                    earliestblock = blockinfo;
+            }
+            
+            List<Wiki.Revision> usercontribs = contribs.get(i);
+            usercontribs.sort((rev1, rev2) -> rev1.getTimestamp().isBefore(rev2.getTimestamp()) ? -1 : 1);
+            int articles = 0;
+            for (Wiki.Revision rev : usercontribs)
+                if (rev.isNew() && wiki.namespace(rev.getTitle()) == Wiki.MAIN_NAMESPACE)
+                    articles++;
+            
+            List<String> cells = new ArrayList<>();
+            String un = user.getUsername();
+            String unenc = URLEncoder.encode(un, StandardCharsets.UTF_8);
+            cells.add("[[User:" + un + "|" + un + "]] ([[User talk:" + un + "|talk]])");
+            cells.add("[{{fullurl:Special:Log|user=" + unenc + "}} logs]"); // TODO: add more summary links/actions
+            cells.add(user.getRegistrationDate().format(DateTimeFormatter.ISO_DATE_TIME));
+            
+            int editcount = user.countEdits();
+            if (usercontribs.isEmpty())
+                cells.addAll(List.of("", "", "[[Special:Contributions/" + un + "|" + editcount + "]]", "0"));
+            else
+            {
+                cells.add(usercontribs.get(0).getTimestamp().format(DateTimeFormatter.ISO_DATE_TIME));
+                cells.add(usercontribs.get(usercontribs.size() - 1).getTimestamp().format(DateTimeFormatter.ISO_DATE_TIME));
+                cells.add("[[Special:Contributions/" + un + "|" + editcount + "]]");
+                cells.add("" + articles);
+            }
+            List<String> groups = user.getGroups();
+            groups.removeAll(boring_groups);
+            if (groups.isEmpty())
+                cells.add("none ([[Special:Userrights/" + un + "|add]])");
+            else
+                cells.add("[[Special:Userrights/" + un + "|" + String.join(", ", groups) + "]]");
+            if (blockinfo == null)
+                cells.addAll(List.of("No ([[Special:Block/" + un + "|block]])", "", "", ""));
+            else
+            {
+                cells.add("[[Special:Block/" + un + "|Yes]] ([[Special:Unblock/" + un + "|unblock]])");
+                cells.add(blockdetails.get("expiry") == null ? "indefinite" : blockdetails.get("expiry"));
+                cells.add(blockts.format(DateTimeFormatter.ISO_DATE_TIME));
+                cells.add("<nowiki>" + blockinfo.getComment() + "</nowiki>");
+            }
+            System.out.println(WikitextUtils.addTableRow(cells));
+            
+            // TODO: add locks, lock timestamp and lock reason - not possible currently due to:
+            // 1. T261752
+            // 2. The API call behind WMFWiki.getGlobalUserInfo doesn't return when the lock occurred
+            // 3. Wiki.getLogEntries("globalauth", null, null) doesn't return the details because it
+            //    is not a native Wiki log type
+            // Any will result in this bug being fixed.
+        }
+        System.out.println("|}");
+        // once lock information is available, then this should be the minimum of block and lock timestamps
+        //System.out.println("Earliest current block: " + earliestblock.getTitle() + 
+        //    " at " + earliestblock.getTimestamp().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+    }
+    
+    public static void lockFinder(List<String> socks) throws Exception
+    {
+        WMFWiki meta = sessions.sharedSession("meta.wikimedia.org");
+        System.out.println("Not locked:");
+        System.out.println("*{{MultiLock");
+        for (String sock : socks)
+        {
+            // TODO: this is an inefficient way of determining whether an account
+            // is locked - there is an additional API call that is still one user = one call
+            // but less data transfer. Also, as usual, the W?F can't be arsed doing this
+            // properly: https://phabricator.wikimedia.org/T261752
+            Map<String, Object> ginfo = sessions.getGlobalUserInfo(sock);
+            if (ginfo != null && !(Boolean)ginfo.get("locked"))
+                System.out.print("|" + meta.removeNamespace(sock));
+        }
+        System.out.println("}}\n\n");
+    }
+    
+    public static void staleScreener(Wiki wiki, List<String> socks) throws Exception
+    {
+        // determine whether accounts are stale
+        List<String> notstale = new ArrayList<>();
+        List<String> stale = new ArrayList<>();
+        List<List<Wiki.Revision>> contribs = wiki.contribs(socks, null, null);
+        OffsetDateTime staledate = OffsetDateTime.now().minusDays(91);
+
+        for (int i = 0; i < socks.size(); i++)
+        {
+            String sock = socks.get(i);
+            String sock2 = wiki.removeNamespace(sock);
+            Wiki.RequestHelper rh = wiki.new RequestHelper().byUser(sock);
+            List<Wiki.LogEntry> socklogs = wiki.getLogEntries(Wiki.ALL_LOGS, null, rh);
+            
+            List<Wiki.Revision> sockcontribs = contribs.get(i);
+            OffsetDateTime lastlog = socklogs.get(0).getTimestamp();
+            OffsetDateTime lastactive = lastlog;
+            if (!sockcontribs.isEmpty())
+            {
+                OffsetDateTime lastedit = sockcontribs.get(0).getTimestamp();
+                if (lastedit.isAfter(lastlog))
+                    lastactive = lastedit;
+            }
+            if (lastactive.isAfter(staledate))
+                notstale.add("*{{checkuser|" + sock2 + "}}");
+            else
+                stale.add("*{{checkuser|" + sock2 + "}}");
+        }
+        System.out.println(";Not stale:");
+        for (String s : notstale)
+            System.out.println(s);
+        System.out.println(";Probably stale:");
+        for (String s : stale)
+            System.out.println(s);
+    }
+}
