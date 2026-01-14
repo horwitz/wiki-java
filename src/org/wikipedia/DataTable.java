@@ -36,6 +36,9 @@ public class DataTable<T extends Record>
     private final List<T> data;
     private List<String> headers;
     
+    // TODO: allow skipping columns in output
+    // remove all instances of WikitextUtils.addTableRow and all dedicated HTML/wikitable exports
+    
     /**
      *  Creates a new data table.
      *  @param <T> a Java record class that represents the rows of this table
@@ -173,6 +176,9 @@ public class DataTable<T extends Record>
      */
     public String formatAsHTML()
     {
+        // TODO: add CSS class for each column, additional CSS class or styling
+        // for the table
+
         StringBuilder sb = new StringBuilder("<table>\n");
         if (headers != null)
         {

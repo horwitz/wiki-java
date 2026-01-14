@@ -45,6 +45,14 @@ public class AdminStats
     }
     
     /**
+     *  An entry in a histogram.
+     *  @param key the label/object
+     *  @param value the count of key in a collection
+     */
+    public record HistEntry(String key, Long value) { }
+    // should be replaced with Bag when it comes
+    
+    /**
      *  Runs this program. You must supply a start and end date.
      *  @param args the command line arguments
      *  @throws Exception if a network error occurs
@@ -744,7 +752,6 @@ public class AdminStats
      */
     public static void export(Map<String, Long> hist, String filename) throws IOException
     {
-        record HistEntry(String key, Long value) { };
         List<HistEntry> list = new ArrayList();
         for (var entry : hist.entrySet())
             list.add(new HistEntry(entry.getKey(), entry.getValue()));

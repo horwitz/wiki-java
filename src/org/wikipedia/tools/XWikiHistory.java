@@ -19,7 +19,7 @@
  */
 package org.wikipedia.tools;
 
-import java.time.format.DateTimeFormatter;
+import java.time.OffsetDateTime;
 import java.util.*;
 import org.wikipedia.*;
 
@@ -34,6 +34,11 @@ public class XWikiHistory
 {
     private final static WMFWikiFarm sessions = WMFWikiFarm.instance();
     
+    public record ArticleData(String domain, String page, OffsetDateTime createdate, String user, int fedits, String snippet) { }
+    // temporary, likely to move elsewhere
+    public record DeletionLog(String project, OffsetDateTime ts, String admin, String action, String title, String reason) { }
+    public record GUserInfo(String username, Object gedits, Object home, String wikis, Object locked) { }
+
     /**
      *  Runs this program.
      *  @param args the command line arguments
@@ -76,9 +81,9 @@ public class XWikiHistory
         Map<WMFWiki, String> snippets = getSnippets(wikiarticles);
         
         System.out.println("==" + article + "==");
-        System.out.println("{| class=\"wikitable sortable\"");
-        System.out.println("! Wiki !! Page !! Creation date !! Creator !! Creator foreign edit count !! Snippet");
-        
+        List<String> headers = List.of("Wiki", "Page", "Creation date", "Creator", "Foreign edit count", "Snippet");
+        List<ArticleData> rows1 = new ArrayList<>();
+                
         for (var entry : wikiarticles.entrySet())
         {
             WMFWiki wiki = entry.getKey();
@@ -89,50 +94,43 @@ public class XWikiHistory
             // Map<String, Object> pageinfo = wiki.getPageInfo(List.of(page)).get(0);
             String snippet = snippets.get(wiki);
             
-            List<String> tablerows = List.of(wiki.getDomain(),
+            rows1.add(new ArticleData(
+                wiki.getDomain(),
                 "[" + wiki.getPageUrl(page) + " " + page + "] ("
                     + "[" + wiki.getPageUrl(wiki.getTalkPage(page)) + " talk] &middot; "
                     + "[" + wiki.getPageUrl("Special:PageHistory/" + page) + " history])",
-                bottomhistory.get(0).getTimestamp().toString(),
+                bottomhistory.get(0).getTimestamp(),
                 "[" + wiki.getPageUrl("User:" + username) + " " + username + "] ("
                     + "[" + wiki.getPageUrl("User talk:" + username) + " talk] &middot; "
                     + "[" + wiki.getPageUrl("Special:Contributions/" + username) + " contribs])",
-                creator == null ? "0" : String.valueOf(creator.countEdits()),
-                snippet == null ? "null" : snippet);
-            System.out.println(WikitextUtils.addTableRow(tablerows));
+                creator == null ? 0 : creator.countEdits(),
+                snippet == null ? "null" : snippet));
         }
-        System.out.println("|}");
+        System.out.println(DataTable.create(rows1, headers).formatAsWikitext());
         
         // output deletion logs
         String wdtitle = wikiarticles.get(wikidata);
         if (wdtitle != null)
         {
             Map<WMFWiki, List<Wiki.LogEntry>> deletions = getCrossWikiDeletionLogs(wdtitle);
+            List<DeletionLog> rows2 = new ArrayList<>();
+            headers = List.of("Project", "Date", "Admin", "Action", "Title", "Reason");
             System.out.println("===Cross-wiki deletion log===");
-            System.out.println("{| class=\"wikitable sortable\"");
-            System.out.println("! Project !! Date !! Admin !! Action !! Title !! Reason");
             deletions.forEach((wiki, entries) ->
             {
                 String domain = wiki.getDomain();
                 for (Wiki.LogEntry le : entries)
-                {
-                    System.out.println(WikitextUtils.addTableRow(List.of(
-                        domain,
-                        le.getTimestamp().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
-                        le.getUser(),
-                        le.getAction(),
-                        le.getTitle(),
-                        "<nowiki>" + le.getComment() + "</nowiki>")
-                    ));
-                }
+                    rows2.add(new DeletionLog(domain, le.getTimestamp(),
+                        le.getUser(), le.getAction(), le.getTitle(),
+                        "<nowiki>" + le.getComment() + "</nowiki>"));
             });
-            System.out.println("|}");
+            System.out.println(DataTable.create(rows2, headers).formatAsWikitext());
         }
         
         // global user information
         System.out.println("===Creator global user info===");
-        System.out.println("{| class=\"wikitable sortable\"");
-        System.out.println("! Username !! Global edit count !! Home !! Wikis edited !! Locked?");
+        headers = List.of("Username", "Global edit count", "Home", "Wikis edited", "Locked?");
+        List<GUserInfo> rows3 = new ArrayList<>();
         Set<String> users = new TreeSet<>();
         for (WMFWiki wiki : wikiarticles.keySet())
         {
@@ -143,15 +141,14 @@ public class XWikiHistory
         for (String username : users)
         {
             Map<String, Object> globaluserinfo = sessions.getGlobalUserInfo(username);
-            System.out.println(WikitextUtils.addTableRow(List.of(
+            rows3.add(new GUserInfo(
                 Users.generateWikitextSummaryLinksShort(username),
-                "" + globaluserinfo.get("editcount"),
-                (String)globaluserinfo.get("home"),
+                globaluserinfo.get("editcount"),
+                globaluserinfo.get("home"),
                 "[[m:Special:CentralAuth/" + username + "|" + globaluserinfo.get("wikicount") + "]]",
-                globaluserinfo.get("locked").toString()
-                )));
+                globaluserinfo.get("locked")));
         }
-        System.out.println("|}");
+        System.out.println(DataTable.create(rows3, headers).formatAsWikitext());
     }
     
     public static Map<WMFWiki, List<Wiki.Revision>> getHistories(Map<WMFWiki, String> articles)
