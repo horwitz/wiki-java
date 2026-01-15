@@ -6791,6 +6791,16 @@ public class Wiki implements Comparable<Wiki>
             this.blockinfo = blockinfo;
             this.editcount = editcount;
         }
+        
+        /**
+         *  Gets the wiki on which this user is registered.
+         *  @return the wiki on which this user is registered, i.e. {@code Wiki.this}
+         *  @since 0.39
+         */
+        public Wiki getWiki()
+        {
+            return Wiki.this;
+        }
 
         /**
          *  Gets this user's username.
@@ -7093,6 +7103,16 @@ public class Wiki implements Comparable<Wiki>
         public long getID()
         {
             return id;
+        }
+        
+        /**
+         *  Gets the wiki on which this event happens.
+         *  @return the wiki on which this event happens, i.e. {@code Wiki.this}
+         *  @since 0.39
+         */
+        public Wiki getWiki()
+        {
+            return Wiki.this;
         }
 
         /**

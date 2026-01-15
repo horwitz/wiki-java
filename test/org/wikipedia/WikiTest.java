@@ -679,6 +679,7 @@ public class WikiTest
             .byTitle("User:Nimimaan")
             .withinInterval(interval);
         List<Wiki.LogEntry> le = enWiki.getLogEntries(Wiki.ALL_LOGS, null, rh);
+        assertEquals(enWiki, le.get(0).getWiki());
         assertEquals(75695806L, le.get(0).getID());
         assertEquals("2016-06-21T13:14:54Z", le.get(0).getTimestamp().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
         assertEquals("MER-C", le.get(0).getUser());
@@ -1139,6 +1140,7 @@ public class WikiTest
     {
         // https://en.wikipedia.org/w/index.php?title=Wikipedia_talk%3AWikiProject_Spam&oldid=597454682
         Wiki.Revision rev = enWiki.getRevision(597454682L);
+        assertEquals(enWiki, rev.getWiki());
         assertEquals("Wikipedia talk:WikiProject Spam", rev.getTitle());
         assertEquals("2014-02-28T00:40:31Z", rev.getTimestamp().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
         assertEquals("Lowercase sigmabot III", rev.getUser());
@@ -1295,6 +1297,7 @@ public class WikiTest
         assertNull(users.get(3), "non-existent user");
         assertNull(users.get(5), "IP address range");
 
+        assertEquals(enWiki, users.get(2).getWiki());
         assertEquals(usernames.get(2), users.get(2).getUsername(), "normalized username");
         assertNull(users.get(2).getBlockDetails());
         assertEquals(Wiki.Gender.unknown, users.get(2).getGender());
