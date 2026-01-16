@@ -34,10 +34,9 @@ import java.util.*;
 public class DataTable<T extends Record>
 {
     private final List<T> data;
-    private List<String> headers;
+    private List<String> headers, skipcols;
     
-    // TODO: allow skipping columns in output
-    // remove all instances of WikitextUtils.addTableRow and all dedicated HTML/wikitable exports
+    // TODO: remove all instances of WikitextUtils.addTableRow and all dedicated HTML/wikitable exports
     
     /**
      *  Creates a new data table.
@@ -64,6 +63,7 @@ public class DataTable<T extends Record>
     /**
      *  Returns a read-only view of the table's headers.
      *  @return the list of headers
+     *  @see #setHeaders(List)
      */
     public List<String> getHeaders()
     {
@@ -78,6 +78,7 @@ public class DataTable<T extends Record>
      *  @param headers the headers for this table
      *  @throws IllegalArgumentException if the number of headers does not equal
      *  the number of record components (columns)
+     *  @see #getHeaders() 
      */
     public void setHeaders(List<String> headers)
     {
@@ -91,6 +92,43 @@ public class DataTable<T extends Record>
         }
         this.headers = headers;
     }
+
+    /**
+     *  Returns a read-only view of skipped columns on export.
+     *  @return the skipped columns
+     *  @see #setSkippedColumns(List)
+     *  @since 0.02
+     */
+    public List<String> getSkippedCols()
+    {
+        if (skipcols == null)
+            return null;
+        return Collections.unmodifiableList(skipcols);
+    }
+    
+    /**
+     *  Sets columns to be skipped when exporting the table. Column names must
+     *  match the record parameter name; incorrect column names are ignored. Use
+     *  {@code null} to not skip any columns.
+     * 
+     *  @param cols columns to skip
+     *  @throws IllegalArgumentException if the number of skipped columns is
+     *  greater than or equal to the number of record components (columns)
+     *  @see #getSkippedCols() 
+     *  @since 0.02
+     */
+    public void setSkippedColumns(List<String> cols)
+    {
+        if (cols != null && !data.isEmpty())
+        {
+            int ncols = data.get(0).getClass().getRecordComponents().length;
+            int nskipcols = cols.size();
+            if (nskipcols >= ncols)
+                throw new IllegalArgumentException("The number of skipped columns (" + nskipcols + 
+                    ") must be less than the total number of columns (" + ncols + ").");
+        }
+        this.skipcols = cols;
+    }
     
     /**
      *  Exports the table to CSV. 
@@ -100,20 +138,20 @@ public class DataTable<T extends Record>
     {
         StringBuilder sb = new StringBuilder();
         if (headers != null)
-            writeCsvLine(sb, headers.toArray());
+            writeCsvLine(sb, getOutputHeaders());
         for (T record : data)
             writeCsvLine(sb, extractValues(record));
         return sb.toString();
     }
     
-    private void writeCsvLine(StringBuilder sb, Object[] values)
+    private void writeCsvLine(StringBuilder sb, List<?> values)
     {
-        for (int i = 0; i < values.length; i++)
+        for (int i = 0; i < values.size(); i++)
         {
             if (i > 0)
                 sb.append(",");
 
-            Object val = values[i];
+            Object val = values.get(i);
             if (val == null)
                 continue; // equivalent to empty string
 
@@ -146,18 +184,19 @@ public class DataTable<T extends Record>
         StringBuilder sb = new StringBuilder("{| class=\"wikitable sortable\"\n");
         if (headers != null)
         {
-            sb.append("! ").append(headers.get(0));
-            for (int i = 1; i < headers.size(); i++)
-                sb.append(" !! ").append(headers.get(i));
+            List<String> hdrs = getOutputHeaders();
+            sb.append("! ").append(hdrs.get(0));
+            for (int i = 1; i < hdrs.size(); i++)
+                sb.append(" !! ").append(hdrs.get(i));
             sb.append("\n");
         }
         for (T record : data)
         {
             sb.append("|-\n");
-            Object[] values = extractValues(record);
-            for (int i = 0; i < values.length; i++)
+            List<Object> values = extractValues(record);
+            for (int i = 0; i < values.size(); i++)
             {
-                String sval = render(values[i]);
+                String sval = render(values.get(i));
                 if (i == 0)
                     sb.append("| ").append(sval);
                 else
@@ -177,13 +216,13 @@ public class DataTable<T extends Record>
     public String formatAsHTML()
     {
         // TODO: add CSS class for each column, additional CSS class or styling
-        // for the table
+        // for the table, make sortable
 
         StringBuilder sb = new StringBuilder("<table>\n");
         if (headers != null)
         {
             sb.append("<thead>\n<tr>\n");
-            for (String header : headers)
+            for (String header : getOutputHeaders())
                 sb.append("<th>").append(HTMLUtils.sanitizeForHTML(header)).append("\n");
             sb.append("</thead>\n");
         }
@@ -192,8 +231,7 @@ public class DataTable<T extends Record>
         for (T record : data)
         {
             sb.append("<tr>\n");
-            Object[] values = extractValues(record);
-            for (Object value : values)
+            for (Object value : extractValues(record))
             {
                 sb.append("<td>");
                 sb.append(HTMLUtils.sanitizeForHTML(render(value))).append("\n");
@@ -214,15 +252,29 @@ public class DataTable<T extends Record>
         };
     }
     
+    // helper to get headers for output
+    private List<String> getOutputHeaders()
+    {
+        if (skipcols == null)
+            return headers;
+        RecordComponent[] rc = data.get(0).getClass().getRecordComponents();
+        List<String> ret = new ArrayList<>();
+        for (int i = 0; i < rc.length; i++)
+            if (!skipcols.contains(rc[i].getName()))
+                ret.add(headers.get(i));
+        return ret;
+    }
+    
     // helper to extract component values from a Record using reflection
-    private Object[] extractValues(T record)
+    private List<Object> extractValues(T record)
     {
         RecordComponent[] components = record.getClass().getRecordComponents();
-        Object[] values = new Object[components.length];
+        List<Object> values = new ArrayList<>();
         try
         {
-            for (int i = 0; i < components.length; i++)
-                values[i] = components[i].getAccessor().invoke(record);
+            for (RecordComponent component : components)
+                if (skipcols == null || !skipcols.contains(component.getName()))
+                    values.add(component.getAccessor().invoke(record));
         } 
         catch (IllegalAccessException | InvocationTargetException e)
         {

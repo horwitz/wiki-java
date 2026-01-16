@@ -34,7 +34,7 @@ public class DataTableTest
     private record TwoColRecord(String key, Object value) {}
     private record MultiColRecord(String col1, OffsetDateTime col2, int col3) {}
     
-    private final List<String> headers2, headers3;
+    private final List<String> headers2, headers3, skipcols;
     private List<TwoColRecord> list1, list2;
     private List<MultiColRecord> list3;
     
@@ -45,6 +45,7 @@ public class DataTableTest
     {
         headers2 = List.of("Column1", "Column2");
         headers3 = List.of("Test1", "Test2", "Test3");
+        skipcols = List.of("col2", "col4");
         
         list1 = List.of(
             new TwoColRecord("Value1", 10),
@@ -63,7 +64,7 @@ public class DataTableTest
     @Test
     public void create()
     {
-        assertThrows(IllegalArgumentException.class, () -> DataTable.create(list1, headers3));
+        assertThrows(IllegalArgumentException.class, () -> DataTable.create(list1, headers3), "Too many headers");
     }
     
     @Test
@@ -71,7 +72,7 @@ public class DataTableTest
     {
         DataTable dt = DataTable.create(list1, headers2);
         assertEquals(headers2, dt.getHeaders(), "From constructor");
-        assertThrows(IllegalArgumentException.class, () -> DataTable.create(list1, headers3));
+        assertThrows(IllegalArgumentException.class, () -> DataTable.create(list1, headers3), "Too many headers");
         
         List<String> newheaders2 = List.of("Test1", "Test2");
         dt.setHeaders(newheaders2);
@@ -79,6 +80,20 @@ public class DataTableTest
         
         dt.setHeaders(null);
         assertNull(dt.getHeaders(), "Null accepted");
+    }
+    
+    @Test
+    public void skipCols()
+    {
+        DataTable dt = DataTable.create(list3, headers3);
+        assertNull(dt.getSkippedCols(), "Default");
+        assertThrows(IllegalArgumentException.class, () -> dt.setSkippedColumns(headers3), "Too many skipped columns");
+        
+        dt.setSkippedColumns(skipcols);
+        assertEquals(skipcols, dt.getSkippedCols(), "Get/set");
+        
+        dt.setSkippedColumns(null);
+        assertNull(dt.getSkippedCols(), "Null accepted");
     }
 
     @Test
@@ -119,6 +134,14 @@ public class DataTableTest
             B,2025-06-21T00:05:05Z,2
             """;
         assertEquals(expected, dt.formatAsCSV(), "Three column");
+        
+        dt.setSkippedColumns(skipcols);
+        expected = """
+            Test1,Test3
+            A,5
+            B,2
+            """;
+        assertEquals(expected, dt.formatAsCSV(), "Three column with skipped columns");
     }
 
     @Test
@@ -170,6 +193,18 @@ public class DataTableTest
             |}
             """;
         assertEquals(expected, dt.formatAsWikitext(), "Three column");
+        
+        dt.setSkippedColumns(skipcols);
+        expected = """
+            {| class="wikitable sortable"
+            ! Test1 !! Test3
+            |-
+            | A || 5
+            |-
+            | B || 2
+            |}
+            """;
+        assertEquals(expected, dt.formatAsWikitext(), "Three column with skipped columns");
     }
     
     @Test
@@ -240,5 +275,25 @@ public class DataTableTest
             </table>
             """;
         assertEquals(expected, dt.formatAsHTML(), "Three column");
+        
+        dt.setSkippedColumns(skipcols);
+        expected = """
+            <table>
+            <thead>
+            <tr>
+            <th>Test1
+            <th>Test3
+            </thead>
+            <tbody>
+            <tr>
+            <td>A
+            <td>5
+            <tr>
+            <td>B
+            <td>2
+            </tbody>
+            </table>
+            """;
+        assertEquals(expected, dt.formatAsHTML(), "Three column with skipped columns");
     }
 }
