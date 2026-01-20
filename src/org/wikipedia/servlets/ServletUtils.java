@@ -442,12 +442,38 @@ public class ServletUtils
      *  @param checked whether the checkbox is initially checked
      *  @param label the label for the checkbox
      *  @return HTML representing the checkbox
+     *  @see #generateRadioButtons(String, List, HttpServletRequest)
      *  @since 0.03
      */
     public static String addCheckbox(String param, boolean checked, String label)
     {
         return "<input type=checkbox name=%s id=\"%s\" value=1%s><label for=\"%s\">%s</label>"
             .formatted(param, param, checked ? " checked" : "", param, label);
+    }
+    
+    /**
+     *  Creates a set of HTML radio buttons. If the HTTP parameter has no
+     *  supplied value then the first value will be selected.
+     *  @param param the HTTP parameter name
+     *  @param values the radio button values
+     *  @param request the servlet request
+     *  @return a list of HTML strings representing the set of radio buttons
+     *  @throws IllegalArgumentException if less than two values are supplied
+     *  @see #addCheckbox(String, boolean, String)
+     *  @since 0.03
+     */
+    public static List<String> generateRadioButtons(String param, List<String> values, HttpServletRequest request)
+    {
+        if (values.size() < 2)
+            throw new IllegalArgumentException("At least two values must be supplied to have a valid radio button set.");
+        String selected = request.getParameter(param);
+        if (selected == null)
+            selected = values.get(0);
+        List<String> ret = new ArrayList<>();
+        for (String value : values)
+            ret.add("<input type=radio name=%s id=\"radio_%s_%s\" value=%s%s>"
+                .formatted(param, param, value, value, value.equals(selected) ? " checked" : ""));
+        return ret;
     }
     
     /**

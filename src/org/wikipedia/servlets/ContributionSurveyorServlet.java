@@ -66,6 +66,7 @@ public class ContributionSurveyorServlet extends BaseServlet
         request.setAttribute("toolname", "Contribution surveyor");
         request.setAttribute("scripts", new String[] { "common.js", "ContributionSurveyor.js" });
 
+        String mode = Objects.requireNonNullElse(request.getParameter("mode"), "user");
         String un = request.getParameter("user");
         String category = request.getParameter("category");
         boolean nominor = (request.getParameter("nominor") != null);
@@ -177,6 +178,8 @@ public class ContributionSurveyorServlet extends BaseServlet
         try (PrintWriter out = response.getWriter())
         {
             ServletUtils.renderHeader(request, response, out);
+            List<String> modes   = ServletUtils.generateRadioButtons("mode", List.of("user", "category"), request);
+            List<String> formats = ServletUtils.generateRadioButtons("format", List.of("text", "zip"), request);
             out.printf("""
                 <p>
                 This tool generates a listing of a user's edits for use at <a
@@ -188,16 +191,16 @@ public class ContributionSurveyorServlet extends BaseServlet
                 <form action="./contributionsurveyor.jsp" method=GET>
                 <table>
                 <tr>
-                    <td><input type=radio name=mode id="radio_user" checked>
+                    <td>%s
                     <td><label for=user>User to survey:</label>
-                    <td><input type=text name=user id=user value="%s" required>
+                    <td><input type=text name=user id=user value="%s" %s>
                 <tr>
-                    <td rowspan=2><input type=radio name=mode id="radio_category">
+                    <td rowspan=2>%s
                     <td><label for=category>Fetch users from category:</label>
-                    <td><input type=text name=category id=category value="%s" disabled> (not recursive)
+                    <td><input type=text name=category id=category value="%s" %s> (not recursive)
                 <tr>
                     <td>Blocked after:
-                    <td><input type=date name=blockedafter id=blockedafter value="%s" disabled>
+                    <td><input type=date name=blockedafter id=blockedafter value="%s" %s>
                 <tr>
                     <td colspan=2>Home wiki:
                     <td><input type=text name="wiki" value="%s" required>
@@ -218,20 +221,25 @@ public class ContributionSurveyorServlet extends BaseServlet
                     <td>%s
                 <tr>
                     <td colspan=2>Output format:
-                    <td><input type=radio name=format id=format_text value=text checked><label for=format_text>Text</label>
-                        <input type=radio name=format id=format_zip value=zip><label for=format_zip>Zip</label>
+                    <td>%s<label for=radio_format_text>Text</label>
+                        %s<label for=radio_format_zip>Zip</label>
                 </table>
                 <input type=submit value="Survey user">
                 </form>
-                """, ServletUtils.sanitizeForAttribute(un),
+                """, modes.get(0), ServletUtils.sanitizeForAttribute(un), 
+                "user".equals(mode) ? "required" : "disabled", 
+                modes.get(1), 
                 ServletUtils.sanitizeForAttribute(category), 
-                ServletUtils.sanitizeForAttribute(blockedafterstr), homewiki,
+                "category".equals(mode) ? "required" : "disabled", 
+                ServletUtils.sanitizeForAttribute(blockedafterstr), 
+                "category".equals(mode) ? "required" : "disabled", homewiki,
                 ServletUtils.addCheckbox("nominor", survey == null || nominor, "minor edits"),
                 ServletUtils.addCheckbox("noreverts", survey == null || noreverts, "reverts"),
                 ServletUtils.addCheckbox("nodrafts", survey == null || nodrafts, "userspace and draft (ns 118) edits"),
                 ServletUtils.addCheckbox("newonly", newonly, "all except new pages"),
                 ServletUtils.addIntervalInputs(request, null, null), bytefloor,
-                ServletUtils.addCheckbox("comingle", comingle, "comingled (for sockfarms where each user has few edits)"));
+                ServletUtils.addCheckbox("comingle", comingle, "comingled (for sockfarms where each user has few edits)"),
+                formats.get(0), formats.get(1));
             if (surveyhtml != null)
                 out.print(surveyhtml);
             ServletUtils.renderFooter(request, out);

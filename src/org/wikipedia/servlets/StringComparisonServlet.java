@@ -22,7 +22,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
 import java.io.*;
-import java.util.List;
+import java.util.*;
 
 import org.wikipedia.*;
 import org.wikipedia.tools.StringSimilarityFinder;
@@ -46,6 +46,8 @@ public class StringComparisonServlet extends BaseServlet
     public void processRequest(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
     {
         // 1. Parse parameters
+        String mode1 = Objects.requireNonNullElse(request.getParameter("mode1"), "page");
+        String mode2 = Objects.requireNonNullElse(request.getParameter("mode2"), "page");
         String wiki1 = request.getParameter("wiki1");
         String wiki2 = request.getParameter("wiki2");
         String page1 = request.getParameter("page1");
@@ -58,18 +60,18 @@ public class StringComparisonServlet extends BaseServlet
             minlength = DEFAULT_MATCH_LENGTH;
 
         // 2. Perform business logic if submitted
-        String comparisonResultHtml = null;
+        String comparisonResultHtml = null, text1a = text1, text2a = text2;
         if (wiki1 != null && page1 != null)
         {
             WMFWiki w = WMFWikiFarm.instance().sharedSession(wiki1);
-            text1 = w.getPlainText(List.of(page1)).get(0);
+            text1a = w.getPlainText(List.of(page1)).get(0);
         }
         if (wiki2 != null && page2 != null)
         {
             WMFWiki w = WMFWikiFarm.instance().sharedSession(wiki2);
-            text2 = w.getPlainText(List.of(page2)).get(0);
+            text2a = w.getPlainText(List.of(page2)).get(0);
         }
-        if (text1 != null && text2 != null)
+        if (text1a != null && text2a != null)
         {
             try
             {
@@ -78,8 +80,8 @@ public class StringComparisonServlet extends BaseServlet
                 StringSimilarityFinder finder = new StringSimilarityFinder();
                 finder.setMinimumMatchLength(minMatch);
 
-                List<StringSimilarityFinder.Match> matches = finder.findConsecutiveWordMatches(text1, text2);
-                comparisonResultHtml = finder.generateHtmlHighlight(text1, text2, matches);
+                List<StringSimilarityFinder.Match> matches = finder.findConsecutiveWordMatches(text1a, text2a);
+                comparisonResultHtml = finder.generateHtmlHighlight(text1a, text2a, matches);
             } 
             catch (NumberFormatException e)
             {
@@ -91,10 +93,10 @@ public class StringComparisonServlet extends BaseServlet
                 e.printStackTrace();
             }
         }
-        else if (text1 != null)
-            request.setAttribute("error", "Page " + HTMLUtils.sanitizeForHTML(page1) + " does not exist.");
-        else if (text2 != null)
-            request.setAttribute("error", "Page " + HTMLUtils.sanitizeForHTML(page2) + " does not exist.");
+        else if (text1a != null)
+            request.setAttribute("error", "Page \"" + HTMLUtils.sanitizeForHTML(page2) + "\" does not exist.");
+        else if (text2a != null)
+            request.setAttribute("error", "Page \"" + HTMLUtils.sanitizeForHTML(page1) + "\" does not exist.");
 
         // 3. Render output        
         response.setContentType("text/html;charset=UTF-8");
@@ -104,6 +106,9 @@ public class StringComparisonServlet extends BaseServlet
             request.setAttribute("scripts", new String[] { "common.js", "StringComparison.js" });
             ServletUtils.renderHeader(request, response, out);
             
+            List<String> radio1 = ServletUtils.generateRadioButtons("mode1", List.of("page", "text"), request);
+            List<String> radio2 = ServletUtils.generateRadioButtons("mode2", List.of("page", "text"), request);
+            
             out.printf("""
                 <p>
                 This tool compares two passages for groups of common words.
@@ -112,30 +117,30 @@ public class StringComparisonServlet extends BaseServlet
                 <h4>Text 1</h4>
                 <table>
                 <tr>
-                    <td><input type=radio name=mode1 id="radio_wikipage1" checked>
+                    <td>%s
                     <td><label for=page1>Wiki page:</label>
-                    <td><input type=text name=wiki1 id=wiki1 value="%s" required>/wiki/
-                        <input type=text name=page1 id=page1 value="%s" required>
+                    <td><input type=text name=wiki1 id=wiki1 value="%s" %s>/wiki/
+                        <input type=text name=page1 id=page1 value="%s" %s>
                 <tr>
-                    <td><input type=radio name=mode1 id="radio_text1">
+                    <td>%s
                     <td><label for=text1>Enter text:</label>
                     <td>
-                <textarea name=text1 id=text1 placeholder="Enter first text here..." rows=5 required disabled>
+                <textarea name=text1 id=text1 placeholder="Enter first text here..." rows=5 %s>
                 %s
                 </textarea>
                 </table>
                 <h4>Text 2</h4>
                 <table>
-                <tr>        
-                    <td><input type=radio name=mode2 id="radio_wikipage2" checked>
-                    <td><label for=radio_wikipage2>Wiki page:</label>
-                    <td><input type=text name=wiki2 id=wiki2 value="%s" required>/wiki/
-                        <input type=text name=page2 id=page2 value="%s" required>
                 <tr>
-                    <td><input type=radio name=mode2 id="radio_text2">
+                    <td>%s
+                    <td><label for=page2>Wiki page:</label>
+                    <td><input type=text name=wiki2 id=wiki2 value="%s" %s>/wiki/
+                        <input type=text name=page2 id=page2 value="%s" %s>
+                <tr>
+                    <td>%s
                     <td><label for=text2>Enter text:</label>
                     <td>
-                <textarea name=text2 id=text2 placeholder="Enter second text here..." rows=5 required disabled>
+                <textarea name=text2 id=text2 placeholder="Enter second text here..." rows=5 %s>
                 %s
                 </textarea>
                 </table>
@@ -147,12 +152,14 @@ public class StringComparisonServlet extends BaseServlet
                 <input type=submit value="Compare texts">
                 </form>
                 """, 
-                ServletUtils.sanitizeForAttributeOrDefault(wiki1, "en.wikipedia.org"), 
-                ServletUtils.sanitizeForAttribute(page1), 
-                HTMLUtils.sanitizeForHTML(text1), 
-                ServletUtils.sanitizeForAttributeOrDefault(wiki2, "en.wikipedia.org"),
-                ServletUtils.sanitizeForAttribute(page2), 
-                HTMLUtils.sanitizeForHTML(text2), 
+                radio1.get(0), ServletUtils.sanitizeForAttributeOrDefault(wiki1, "en.wikipedia.org"), 
+                "page".equals(mode1) ? "required" : "disabled",
+                ServletUtils.sanitizeForAttribute(page1), "page".equals(mode1) ? "required" : "disabled",
+                radio1.get(1), "text".equals(mode1) ? "required" : "disabled", HTMLUtils.sanitizeForHTML(text1), 
+                radio2.get(0), ServletUtils.sanitizeForAttributeOrDefault(wiki2, "en.wikipedia.org"),
+                "page".equals(mode2) ? "required" : "disabled",
+                ServletUtils.sanitizeForAttribute(page2), "page".equals(mode2) ? "required" : "disabled",
+                radio2.get(1), "text".equals(mode2) ? "required" : "disabled", HTMLUtils.sanitizeForHTML(text2), 
                 ServletUtils.sanitizeForAttribute(minlength));
 
             // results section

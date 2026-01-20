@@ -12,28 +12,28 @@
  */
 document.addEventListener('DOMContentLoaded', function() 
 {
-    document.getElementById('radio_wikipage1').addEventListener('click', function()
+    document.getElementById('radio_mode1_page').addEventListener('click', function()
     {
         disableElement(document.getElementById('text1'));
         enableRequiredElement(document.getElementById('wiki1'));
         enableRequiredElement(document.getElementById('page1'));
     });
     
-    document.getElementById('radio_text1').addEventListener('click', function()
+    document.getElementById('radio_mode1_text').addEventListener('click', function()
     {
         enableRequiredElement(document.getElementById('text1'));
         disableElement(document.getElementById('wiki1'));
         disableElement(document.getElementById('page1'));
     });
     
-    document.getElementById('radio_wikipage2').addEventListener('click', function()
+    document.getElementById('radio_mode2_page').addEventListener('click', function()
     {
         disableElement(document.getElementById('text2'));
         enableRequiredElement(document.getElementById('wiki2'));
         enableRequiredElement(document.getElementById('page2'));
     });
     
-    document.getElementById('radio_text2').addEventListener('click', function()
+    document.getElementById('radio_mode2_text').addEventListener('click', function()
     {
         enableRequiredElement(document.getElementById('text2'));
         disableElement(document.getElementById('wiki2'));
