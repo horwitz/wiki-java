@@ -44,9 +44,7 @@ links per domain.
 <tr>
     <td valign=top>Domains:
     <td>
-        <textarea name=domains rows=10 required>
-<%= inputdomains %>
-        </textarea>
+        <textarea name=domains rows=10 required><%= inputdomains %></textarea>
 </table>
 <br>
 <input type=submit value=Search>
@@ -83,12 +81,8 @@ links per domain.
 %>
 <hr>
 <h3>Reformatted domain lists</h3>
-<textarea readonly rows=10>
-<%= regex %>
-</textarea>
-<textarea readonly rows=10>
-<%= linksummary %>
-</textarea>
+<textarea readonly rows=10><%= regex %></textarea>
+<textarea readonly rows=10><%= linksummary %></textarea>
 <%
     }
     ServletUtils.renderFooter(request, out);

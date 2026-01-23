@@ -80,6 +80,8 @@ public class StringComparisonServlet extends BaseServlet
                 StringSimilarityFinder finder = new StringSimilarityFinder();
                 finder.setMinimumMatchLength(minMatch);
 
+                text1a = text1a.trim();
+                text2a = text2a.trim();
                 List<StringSimilarityFinder.Match> matches = finder.findConsecutiveWordMatches(text1a, text2a);
                 comparisonResultHtml = finder.generateHtmlHighlight(text1a, text2a, matches);
             } 
@@ -125,9 +127,7 @@ public class StringComparisonServlet extends BaseServlet
                     <td>%s
                     <td><label for=text1>Enter text:</label>
                     <td>
-                <textarea name=text1 id=text1 placeholder="Enter first text here..." rows=5 %s>
-                %s
-                </textarea>
+                <textarea name=text1 id=text1 placeholder="Enter first text here..." rows=5 %s>%s</textarea>
                 </table>
                 <h4>Text 2</h4>
                 <table>
@@ -140,9 +140,7 @@ public class StringComparisonServlet extends BaseServlet
                     <td>%s
                     <td><label for=text2>Enter text:</label>
                     <td>
-                <textarea name=text2 id=text2 placeholder="Enter second text here..." rows=5 %s>
-                %s
-                </textarea>
+                <textarea name=text2 id=text2 placeholder="Enter second text here..." rows=5 %s>%s</textarea>
                 </table>
                 <h4>Settings</h4>
                 <label for="minlength">Minimum words for match:</label>

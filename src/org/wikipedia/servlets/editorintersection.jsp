@@ -48,9 +48,7 @@ first in the GUI) apply.
     <td valign=top><input type=radio name=mode id="radio_pages" value="pages"<%= mode.equals("pages") ? " checked" : "" %>>
     <td valign=top><label for="radio_pages">Pages:<br>(one per line)</label>
     <td>
-        <textarea id=pages name=pages rows=10 <%= mode.equals("pages") ? "required" : "disabled" %>>
-<%= pages %>
-        </textarea>
+        <textarea id=pages name=pages rows=10 <%= mode.equals("pages") ? "required" : "disabled" %>><%= pages %></textarea>
 <tr>
     <td colspan=2>Exclude: 
     <td><input type=checkbox name=noadmin id="noadmin" value=1<%= (pages.isEmpty() || noadmin) ? " checked" : "" %>>

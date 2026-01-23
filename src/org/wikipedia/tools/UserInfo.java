@@ -49,7 +49,7 @@ public class UserInfo
      *  @param blockts when the user was blocked
      *  @param blockcomment why the user was blocked
      *  @see UserInfo#userInfoTable(Wiki, List)
-     *  @sinee 0.02
+     *  @since 0.02
      */
     public record UserInfoRecord(String user, String actions, OffsetDateTime regts, OffsetDateTime firstedit,
         OffsetDateTime lastedit, String editcount, int articles, String groups, String blocked, String blockexpiry,
@@ -85,7 +85,7 @@ public class UserInfo
     }
     
     /**
-     *  Gets information about a list of users, fused from {@link Wiki#User} and
+     *  Gets information about a list of users, fused from {@link Wiki.User} and
      *  their contributions, and presents it in one table.
      *  @param wiki the wiki to get information from
      *  @param usernames a list of usernames, non-existing allowed

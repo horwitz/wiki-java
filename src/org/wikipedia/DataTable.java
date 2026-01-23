@@ -20,7 +20,7 @@
 package org.wikipedia;
 
 import java.lang.reflect.*;
-import java.time.OffsetDateTime;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
@@ -34,7 +34,7 @@ import java.util.*;
 public class DataTable<T extends Record>
 {
     private final List<T> data;
-    private List<String> headers, skipcols;
+    private List<String> headers, skipcols, cssclasses;
     
     // TODO: remove all instances of WikitextUtils.addTableRow and all dedicated HTML/wikitable exports
     
@@ -131,6 +131,44 @@ public class DataTable<T extends Record>
     }
     
     /**
+     *  Returns a read-only view of the names of CSS classes to be used when 
+     *  exporting the table as HTML.
+     *  @return the CSS class names
+     *  @see #setColumnClasses(List)
+     *  @since 0.02
+     */
+    public List<String> getColumnClasses()
+    {
+        if (cssclasses == null)
+            return null;
+        return Collections.unmodifiableList(cssclasses);
+    }
+    
+    /**
+     *  Sets CSS class names to be used when exporting the table as HTML. Use 
+     *  {@code null} to not use any CSS classes or {@code null} as an individual
+     *  value to leave a column without a class.
+     * 
+     *  @param colclasses a list of CSS class names
+     *  @throws IllegalArgumentException if the number of mappings is not equal 
+     *  to the number of record components (columns)
+     *  @see #getColumnClasses() 
+     *  @since 0.02
+     */
+    public void setColumnClasses(List<String> colclasses)
+    {
+        if (colclasses != null && !data.isEmpty())
+        {
+            int ncols = data.get(0).getClass().getRecordComponents().length;
+            int nmappings = colclasses.size();
+            if (nmappings != ncols)
+                throw new IllegalArgumentException("The number of CSS classes (" + nmappings + 
+                    ") must be equal to the total number of columns (" + ncols + ").");
+        }
+        this.cssclasses = colclasses;
+    }
+    
+    /**
      *  Exports the table to CSV. 
      *  @return the table in CSV format
      */
@@ -215,10 +253,21 @@ public class DataTable<T extends Record>
      */
     public String formatAsHTML()
     {
-        // TODO: add CSS class for each column, additional CSS class or styling
-        // for the table, make sortable
+        // TODO: additional CSS class or styling for the table, make sortable
 
         StringBuilder sb = new StringBuilder("<table>\n");
+        if (cssclasses != null)
+        {
+            sb.append("<colgroup>\n");
+            for (String cls : cssclasses)
+            {
+                if (cls == null)
+                    sb.append("<col />\n");
+                else
+                    sb.append("<col class=\"").append(cls.replace("\"", "&quot;")).append("\" />\n");
+            }
+            sb.append("</colgroup>\n");
+        }
         if (headers != null)
         {
             sb.append("<thead>\n<tr>\n");
@@ -227,7 +276,6 @@ public class DataTable<T extends Record>
             sb.append("</thead>\n");
         }
         sb.append("<tbody>\n");
-
         for (T record : data)
         {
             sb.append("<tr>\n");

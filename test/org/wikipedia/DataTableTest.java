@@ -95,6 +95,20 @@ public class DataTableTest
         dt.setSkippedColumns(null);
         assertNull(dt.getSkippedCols(), "Null accepted");
     }
+    
+    @Test
+    public void columnClasses()
+    {
+        DataTable dt = DataTable.create(list1, headers2);
+        assertNull(dt.getColumnClasses(), "Default");
+        assertThrows(IllegalArgumentException.class, () -> dt.setColumnClasses(headers3), "Too many CSS classes");
+        
+        dt.setColumnClasses(headers2);
+        assertEquals(headers2, dt.getColumnClasses(), "Get/set");
+        
+        dt.setColumnClasses(null);
+        assertNull(dt.getColumnClasses(), "Null accepted");
+    }
 
     @Test
     public void formatAsCSV() 
@@ -295,5 +309,33 @@ public class DataTableTest
             </table>
             """;
         assertEquals(expected, dt.formatAsHTML(), "Three column with skipped columns");
+        
+        List<String> classes = new ArrayList<>();
+        classes.add(null);
+        classes.add("column2");
+        dt = DataTable.create(list1, headers2);
+        dt.setColumnClasses(classes);
+        expected = """
+            <table>
+            <colgroup>
+            <col />
+            <col class="column2" />
+            </colgroup>
+            <thead>
+            <tr>
+            <th>Column1
+            <th>Column2
+            </thead>
+            <tbody>
+            <tr>
+            <td>Value1
+            <td>10
+            <tr>
+            <td>Value2
+            <td>20
+            </tbody>
+            </table>
+            """;
+        assertEquals(expected, dt.formatAsHTML(), "With column CSS classes");
     }
 }
