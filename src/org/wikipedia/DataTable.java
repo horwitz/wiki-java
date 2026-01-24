@@ -23,6 +23,7 @@ import java.lang.reflect.*;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.function.BiFunction;
 
 /**
  *  A table of data. Note: this class is not intended to be a data frame or to
@@ -35,6 +36,8 @@ public class DataTable<T extends Record>
 {
     private final List<T> data;
     private List<String> headers, skipcols, cssclasses;
+    private String tableclass;
+    private BiFunction<T, Integer, String> rowclass;
     
     // TODO: remove all instances of WikitextUtils.addTableRow and all dedicated HTML/wikitable exports
     
@@ -169,6 +172,56 @@ public class DataTable<T extends Record>
     }
     
     /**
+     *  Gets the CSS class to be applied to the table as a whole or {@code null}
+     *  if unstyled.
+     *  @return (see above)
+     *  @see #setTableClass(String) 
+     *  @since 0.02
+     */
+    public String getTableClass()
+    {
+        return tableclass;
+    }
+    
+    /**
+     *  Sets a CSS class to be applied to the the table as a whole. Use {@code 
+     *  null} to not use one.
+     *  @param cls a CSS class to be applied to the table as a whole
+     *  @see #getTableClass()
+     *  @since 0.02
+     */
+    public void setTableClass(String cls)
+    {
+        this.tableclass = cls;
+    }
+    
+    /**
+     *  Gets the two-parameter function that computes the CSS class to be 
+     *  applied to each row of the data table.
+     *  @return (see above)
+     *  @see #setRowClasses(BiFunction) 
+     *  @since 0.02
+     */
+    public BiFunction<T, Integer, String> getRowClasses()
+    {
+        return rowclass;
+    }
+    
+    /**
+     *  Sets the two-parameter function that computes the CSS class to be 
+     *  applied to each row of the data table. The parameters of the function
+     *  are the record to be rendered and the row number. Use {@code null} to 
+     *  not use one.
+     *  @param clsfn the two-parameter function to use to compute row classes
+     *  @see #getRowClasses()
+     *  @since 0.02
+     */
+    public void setRowClasses(BiFunction<T, Integer, String> clsfn)
+    {
+        this.rowclass = clsfn;
+    }
+    
+    /**
      *  Exports the table to CSV. 
      *  @return the table in CSV format
      */
@@ -219,7 +272,10 @@ public class DataTable<T extends Record>
      */
     public String formatAsWikitext()
     {
-        StringBuilder sb = new StringBuilder("{| class=\"wikitable sortable\"\n");
+        StringBuilder sb = new StringBuilder("{| class=\"wikitable sortable");
+        if (tableclass != null)
+            sb.append(" ").append(tableclass);
+        sb.append("\"\n");
         if (headers != null)
         {
             List<String> hdrs = getOutputHeaders();
@@ -247,15 +303,19 @@ public class DataTable<T extends Record>
     }
     
     /**
-     *  Exports the table to HTML without styling.
+     *  Exports the table to HTML.
      *  @return the table in HTML format
      *  @since 0.02
      */
     public String formatAsHTML()
     {
-        // TODO: additional CSS class or styling for the table, make sortable
+        // TODO: make sortable
 
-        StringBuilder sb = new StringBuilder("<table>\n");
+        StringBuilder sb = new StringBuilder();
+        if (tableclass == null)
+            sb.append("<table>\n");
+        else
+            sb.append("<table class=\"").append(tableclass).append("\">\n");
         if (cssclasses != null)
         {
             sb.append("<colgroup>\n");
@@ -276,9 +336,13 @@ public class DataTable<T extends Record>
             sb.append("</thead>\n");
         }
         sb.append("<tbody>\n");
-        for (T record : data)
+        for (int i = 0; i < data.size(); i++)
         {
-            sb.append("<tr>\n");
+            T record = data.get(i);
+            if (rowclass == null)
+                sb.append("<tr>\n");
+            else
+                sb.append("<tr class=\"").append(rowclass.apply(record, i)).append("\">\n");
             for (Object value : extractValues(record))
             {
                 sb.append("<td>");

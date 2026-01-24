@@ -21,6 +21,7 @@ package org.wikipedia;
 
 import java.time.OffsetDateTime;
 import java.util.*;
+import java.util.function.BiFunction;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -109,6 +110,33 @@ public class DataTableTest
         dt.setColumnClasses(null);
         assertNull(dt.getColumnClasses(), "Null accepted");
     }
+    
+    @Test
+    public void tableClass()
+    {
+        DataTable dt = DataTable.create(list1, headers2);
+        assertNull(dt.getTableClass(), "Default");
+        
+        dt.setTableClass("testclass");
+        assertEquals("testclass", dt.getTableClass(), "Get/set");
+        
+        dt.setTableClass(null);
+        assertNull(dt.getTableClass(), "Null accepted");
+    }
+    
+    @Test
+    public void rowClasses()
+    {
+        DataTable<TwoColRecord> dt = DataTable.create(list1, headers2);
+        assertNull(dt.getRowClasses(), "Default");
+        
+        BiFunction<TwoColRecord, Integer, String> bf = (rec, rn) -> "Test";
+        dt.setRowClasses(bf);
+        assertEquals(bf, dt.getRowClasses(), "Get/set");
+        
+        dt.setRowClasses(null);
+        assertNull(dt.getRowClasses(), "Null accepted");
+    }
 
     @Test
     public void formatAsCSV() 
@@ -161,7 +189,7 @@ public class DataTableTest
     @Test
     public void formatAsWikitext() 
     {
-        DataTable dt = DataTable.create(list1, headers2);
+        DataTable<TwoColRecord> dt = DataTable.create(list1, headers2);
         String expected = """
             {| class="wikitable sortable"
             ! Column1 !! Column2
@@ -196,7 +224,7 @@ public class DataTableTest
             """;
         assertEquals(expected, dt.formatAsWikitext(), "Challenging");
         
-        dt = DataTable.create(list3, headers3);
+        DataTable<MultiColRecord> dt2 = DataTable.create(list3, headers3);
         expected = """
             {| class="wikitable sortable"
             ! Test1 !! Test2 !! Test3
@@ -206,9 +234,9 @@ public class DataTableTest
             | B || 2025-06-21T00:05:05Z || 2
             |}
             """;
-        assertEquals(expected, dt.formatAsWikitext(), "Three column");
+        assertEquals(expected, dt2.formatAsWikitext(), "Three column");
         
-        dt.setSkippedColumns(skipcols);
+        dt2.setSkippedColumns(skipcols);
         expected = """
             {| class="wikitable sortable"
             ! Test1 !! Test3
@@ -218,13 +246,26 @@ public class DataTableTest
             | B || 2
             |}
             """;
-        assertEquals(expected, dt.formatAsWikitext(), "Three column with skipped columns");
+        assertEquals(expected, dt2.formatAsWikitext(), "Three column with skipped columns");
+        
+        dt = DataTable.create(list1, headers2);
+        dt.setTableClass("class1");
+        expected = """
+            {| class="wikitable sortable class1"
+            ! Column1 !! Column2
+            |-
+            | Value1 || 10
+            |-
+            | Value2 || 20
+            |}
+            """;
+        assertEquals(expected, dt.formatAsWikitext(), "Styled");
     }
     
     @Test
     public void formatAsHTML()
     {
-        DataTable dt = DataTable.create(list1, headers2);
+        DataTable<TwoColRecord> dt = DataTable.create(list1, headers2);
         String expected = """
             <table>
             <thead>
@@ -267,7 +308,7 @@ public class DataTableTest
             """;
         assertEquals(expected, dt.formatAsHTML(), "Challenging");
         
-        dt = DataTable.create(list3, headers3);
+        DataTable<MultiColRecord> dt2 = DataTable.create(list3, headers3);
         expected = """
             <table>
             <thead>
@@ -288,9 +329,9 @@ public class DataTableTest
             </tbody>
             </table>
             """;
-        assertEquals(expected, dt.formatAsHTML(), "Three column");
+        assertEquals(expected, dt2.formatAsHTML(), "Three column");
         
-        dt.setSkippedColumns(skipcols);
+        dt2.setSkippedColumns(skipcols);
         expected = """
             <table>
             <thead>
@@ -308,15 +349,17 @@ public class DataTableTest
             </tbody>
             </table>
             """;
-        assertEquals(expected, dt.formatAsHTML(), "Three column with skipped columns");
+        assertEquals(expected, dt2.formatAsHTML(), "Three column with skipped columns");
         
         List<String> classes = new ArrayList<>();
         classes.add(null);
         classes.add("column2");
         dt = DataTable.create(list1, headers2);
         dt.setColumnClasses(classes);
+        dt.setTableClass("class1");
+        dt.setRowClasses((rec, rn) -> rec.key() + "_" + rn);
         expected = """
-            <table>
+            <table class="class1">
             <colgroup>
             <col />
             <col class="column2" />
@@ -327,15 +370,15 @@ public class DataTableTest
             <th>Column2
             </thead>
             <tbody>
-            <tr>
+            <tr class="Value1_0">
             <td>Value1
             <td>10
-            <tr>
+            <tr class="Value2_1">
             <td>Value2
             <td>20
             </tbody>
             </table>
             """;
-        assertEquals(expected, dt.formatAsHTML(), "With column CSS classes");
+        assertEquals(expected, dt.formatAsHTML(), "Styled");
     }
 }
