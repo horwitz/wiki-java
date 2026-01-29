@@ -267,7 +267,8 @@ public class DataTable<T extends Record>
     }
     
     /**
-     *  Exports the table to wikitext.
+     *  Exports the table to wikitext. Outputs are <em>NOT</em> sanitised 
+     *  because they may contain additional formatting.
      *  @return the table in wikitext format
      */
     public String formatAsWikitext()
@@ -303,7 +304,8 @@ public class DataTable<T extends Record>
     }
     
     /**
-     *  Exports the table to HTML.
+     *  Exports the table to HTML. Outputs are <em>NOT</em> sanitised because
+     *  they may contain additional formatting.
      *  @return the table in HTML format
      *  @since 0.02
      */
@@ -332,7 +334,7 @@ public class DataTable<T extends Record>
         {
             sb.append("<thead>\n<tr>\n");
             for (String header : getOutputHeaders())
-                sb.append("<th>").append(HTMLUtils.sanitizeForHTML(header)).append("\n");
+                sb.append("<th>").append(header).append("\n");
             sb.append("</thead>\n");
         }
         sb.append("<tbody>\n");
@@ -346,7 +348,7 @@ public class DataTable<T extends Record>
             for (Object value : extractValues(record))
             {
                 sb.append("<td>");
-                sb.append(HTMLUtils.sanitizeForHTML(render(value))).append("\n");
+                sb.append(render(value)).append("\n");
             }
         }
         sb.append("</tbody>\n</table>\n");

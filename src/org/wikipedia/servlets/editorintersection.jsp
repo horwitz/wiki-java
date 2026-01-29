@@ -150,7 +150,7 @@ first in the GUI) apply.
                     title.append("s");
                 sb.append("<p>\n");
                 sb.append(ServletUtils.beginCollapsibleSection(title.toString(), true));
-                sb.append(revisionUtils.toHTML(revs));
+                sb.append(revisionUtils.toDataTable(revs, "html").formatAsHTML());
                 sb.append(ServletUtils.endCollapsibleSection());
             }
             return sb;

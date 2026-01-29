@@ -299,9 +299,9 @@ public class DataTableTest
             <td>Simple value
             <tr>
             <td>
-            <td>Has &quot;Quotes&quot; inside
+            <td>Has "Quotes" inside
             <tr>
-            <td>&lt;script&gt;alert(&#x27;PWNED&#x27;);&lt;&#x2F;script&gt;
+            <td><script>alert('PWNED');</script>
             <td>Simple
             </tbody>
             </table>

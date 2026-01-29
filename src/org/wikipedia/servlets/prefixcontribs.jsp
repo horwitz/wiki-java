@@ -53,7 +53,7 @@ is performed on IP addresses. Timeouts are more likely for longer time spans.
             if (revisions.isEmpty())
                 out.println("<p>\nNo contributions found.");
             else
-                out.println(Revisions.of(enWiki).toHTML(revisions));
+                out.println(Revisions.of(enWiki).toDataTable(revisions, "html").formatAsHTML());
             if (revisions.size() == 1000)
                 out.println("<p>\nAt least 1000 contributions found.");
             else

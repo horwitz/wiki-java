@@ -1,6 +1,6 @@
 /**
- *  @(#)Revisions.java 0.01 07/08/2018
- *  Copyright (C) 2018-20XX MER-C and contributors
+ *  @(#)Revisions.java 0.02 25/01/2026
+ *  Copyright (C) 2018-2026 MER-C and contributors
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
@@ -27,12 +27,31 @@ import java.util.stream.*;
 /**
  *  Utility classes for dealing with (lists of) wiki revisions.
  *  @author MER-C
- *  @version 0.01
+ *  @version 0.02
  *  @see org.wikipedia.Wiki.Revision
  */
 public class Revisions
 {
     private final Wiki wiki;
+    
+    /**
+     *  A representation of a {@link Wiki.Revision} for output in tabular format.
+     *  @param difflink a link to the diff to the previous revision
+     *  @param timestamp a link to the revision whose text is the timestamp
+     *  @param flag_new a formatted indication this is a new revision
+     *  @param flag_minor a formatted indication this is a minor edit
+     *  @param flag_bot a formatted indication this is a bot edit
+     *  @param title the title of the relevant page
+     *  @param user a formatted rendering of the user making the edit
+     *  @param size the size of the revision
+     *  @param sizediff a formatted indication of the bytes added
+     *  @param comment the edit summary
+     *  @see DataTable
+     *  @see Wiki.Revision
+     *  @since 0.02
+     */
+    public record RevisionRecord(String difflink, String timestamp, String flag_new, String flag_minor, String flag_bot,
+        String title, String user, int size, String sizediff, String comment) { }
     
     private Revisions(Wiki wiki)
     {
@@ -87,125 +106,55 @@ public class Revisions
     }
     
     /**
-     *  Turns a list of revisions into human-readable wikitext. Be careful, as
-     *  slowness may result when copying large amounts of wikitext produced by
-     *  this method, or by the wiki trying to parse it. Takes the form of:
-     *
-     *  <p>*(diff link) 2009-01-01 00:00 User (talk | contribs) (edit summary)
-     *  @param revisions a list of revisions
-     *  @return those revisions as wikitext
-     *  @since Wiki.java 0.20
-     */
-    public static String toWikitext(Iterable<Wiki.Revision> revisions)
-    {
-        StringBuilder buffer = new StringBuilder(100000);
-        buffer.append("<div style=\"font-family: monospace; font-size: 120%\">\n");
-        for (Wiki.Revision rev : revisions)
-        {
-            // timestamp, link to oldid
-            buffer.append("*");
-            buffer.append("[[Special:Permanentlink/");
-            buffer.append(rev.getID());
-            buffer.append("|");
-            buffer.append(DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(rev.getTimestamp()));
-            buffer.append("]] ");
-            
-            // diff link
-            buffer.append("([[Special:Diff/");
-            buffer.append(rev.getID());
-            buffer.append("|prev]]) ");
-            
-            if (rev.isNew())
-                buffer.append("'''N''' ");
-            else
-                buffer.append(". ");
-            if (rev.isMinor())
-                buffer.append("'''m''' ");
-            else
-                buffer.append(". ");
-            if (rev.isBot())
-                buffer.append("'''b''' ");
-            else
-                buffer.append(". ");
-            
-            buffer.append("[[");
-            buffer.append(rev.getTitle());
-            buffer.append("]] .. ");
-            
-            // user
-            String user2 = rev.getUser();
-            if (user2 == null || user2.equals(Wiki.Event.USER_DELETED))
-                buffer.append(Events.DELETED_EVENT_HTML);
-            else
-                buffer.append(Users.generateWikitextSummaryLinksShort(user2));
-            
-            // size
-            buffer.append(" .. (");
-            buffer.append(rev.getSize());
-            buffer.append(" bytes) (");
-            buffer.append(rev.getSizeDiff());
-            
-            // edit summary
-            buffer.append(") .. (");
-            String summary = rev.getComment();
-            if (summary == null || summary.equals(Wiki.Event.COMMENT_DELETED))
-                buffer.append(Events.DELETED_EVENT_HTML);
-            else
-            {
-                // kill wikimarkup
-                buffer.append("<nowiki>");
-                buffer.append(summary);
-                buffer.append("</nowiki>");
-            }
-            buffer.append(")\n");
-        }
-        buffer.append("</div>");
-        return buffer.toString();
-    }
-    
-    /**
-     *  Generates HTML from Wiki.Revisions. Output is a wikitable to parsed 
-     *  wikitext returned by {@link #toWikitext(Iterable)}.
+     *  Converts an {@code Iterable} of wiki revisions into a {@link DataTable}
+     *  for output in tabular format.
      *  @param revisions the revisions to convert
+     *  @param format the output format, "html" or "wikitext" (temporary parameter)
      *  @return (see above)
-     *  @see #toWikitext(Iterable)
+     *  @see Revisions.RevisionRecord
+     *  @since 0.02
      */
-    public String toHTML(Iterable<Wiki.Revision> revisions)
+    public DataTable<RevisionRecord> toDataTable(Iterable<Wiki.Revision> revisions, String format)
     {
-        StringBuilder buffer = new StringBuilder(100000);
+        // TODO: the output of toWikitext and toDataTable isn't identical: there are
+        // links and edit summaries that can be rendered in wikitext and HTML
+        // also wiki format has class="wikitable sortable" already given
+        
+        List<RevisionRecord> rows = new ArrayList<>();
         Users userutils = Users.of(wiki);
         Pages pageutils = Pages.of(wiki);
-        buffer.append("<table class=\"wikitable revisions\">\n");
         for (Wiki.Revision rev : revisions)
         {
             String revurl = rev.permanentUrl();
             String page = rev.getTitle();
             String user = rev.getUser();
-            String comment = rev.getParsedComment();
+            String comment = format.equals("html") ? rev.getParsedComment() : rev.getComment();
             int sizediff = rev.getSizeDiff();
             String userhtml = user == null || user.equals(Wiki.Event.USER_DELETED)
-                ? Events.DELETED_EVENT_HTML : userutils.generateHTMLSummaryLinksShort(user);
+                ? Events.DELETED_EVENT_HTML : (format.equals("html") ? userutils.generateHTMLSummaryLinksShort(user) : Users.generateWikitextSummaryLinksShort(user));
             String commenthtml = comment == null || comment.equals(Wiki.Event.COMMENT_DELETED)
-                ? Events.DELETED_EVENT_HTML : comment;
-            
-            buffer.append("""
-                <tr class="revision">
-                <td class="difflink"><a href="%s&diff=prev">prev</a>
-                <td class="date"><a href="%s">%s</a>
-                <td class="flag">%s
-                <td class="flag">%s
-                <td class="flag">%s
-                <td class="title">%s
-                <td class="user">%s
-                <td class="revsize">%d bytes
-                <td class="revsizediff"><span class="%s">%d</span>
-                <td>%s
-                """.formatted(revurl, revurl, DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(rev.getTimestamp()),
-                rev.isNew() ? "<b>N</b>" : ".", rev.isMinor() ? "<b>m</b>" : ".", rev.isBot() ? "<b>b</b>" : ".",
-                pageutils.generatePageLink(page, true), userhtml, rev.getSize(), 
-                sizediff > 0 ? "sizeincreased" : "sizedecreased", sizediff, commenthtml));
+                ? Events.DELETED_EVENT_HTML : (format.equals("html") ? comment : "<nowiki>" + comment + "</nowiki>");
+            String prevlink = format.equals("html") ?
+                "<a href=\"" + revurl + "&diff=prev\">prev</a>" :
+                "[[Special:Diff/" + rev.getID() + "|prev]]";
+            String currentlink = format.equals("html") ?
+                "<a href=\"" + revurl + "\">" + DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(rev.getTimestamp()) + "</a>" :
+                "[[Special:Permanentlink/" + rev.getID() + "|" + DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(rev.getTimestamp()) + "]]";
+            rows.add(new RevisionRecord(
+                prevlink, currentlink,
+                rev.isNew() ? (format.equals("html") ? "<b>N</b>" : "'''N'''") : "",
+                rev.isMinor() ? (format.equals("html") ? "<b>m</b>" : "'''m'''") : "",
+                rev.isBot() ? (format.equals("html") ? "<b>b</b>" : "'''b'''") : "",
+                format.equals("html") ? pageutils.generatePageLink(page, true) : ("[[" + page + "]]"),
+                userhtml, rev.getSize(),
+                "<span class=\"" + (sizediff > 0 ? "sizeincreased" : "sizedecreased") + "\">" + sizediff + "</span>",
+                commenthtml));
         }
-        buffer.append("</table>\n");
-        return buffer.toString();
+        DataTable dt = DataTable.create(rows, null);
+        dt.setTableClass(format.equals("html") ? "wikitable revisions" : "revisions");
+        dt.setRowClasses((rr, i) -> "revision");
+        dt.setHeaders(List.of("Previous", "Timestamp", "New", "Minor", "Bot", "Title", "User", "Size (bytes)", "Size change", "Comment"));
+        dt.setColumnClasses(List.of("difflink", "date", "flag", "flag", "flag", "title", "user", "revsize", "revsizediff", "comment"));
+        return dt;
     }
 }

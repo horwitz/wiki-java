@@ -19,7 +19,6 @@
  */
 package org.wikipedia;
 
-import java.time.*;
 import java.util.*;
 import org.junit.jupiter.api.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -93,51 +92,111 @@ public class RevisionsTest
     }
     
     @Test
-    public void toWikitext() throws Exception
+    public void toDataTable() throws Exception
     {
         // note for this means of getting revisions the new page flag and sizediffs aren't available
+
+        // normal revision
         // https://en.wikipedia.org/w/index.php?title=Phoenician_sanctuary_of_Kharayeb&oldid=1165014330
+        // revision deleted edit summary + minor edit
         // https://en.wikipedia.org/w/index.php?title=Hun_Manet&oldid=1171939466
+        // revision deleted user + minor edit
         // https://en.wikipedia.org/w/index.php?title=Hun_Manet&oldid=1171939631
         List<Wiki.Revision> revisions = enWiki.getRevisions(new long[] { 1165014330L, 1171939631L, 1171939466L });
-        String begin = "<div style=\"font-family: monospace; font-size: 120%\">\n";
-        String end = "</div>";
-        
-        // Test each for functionality
-        String actual_0 = Revisions.toWikitext(revisions.subList(0, 1));
-        String expected_0 = """
-            *[[Special:Permanentlink/1165014330|2023-07-12T13:04:44Z]] ([[Special:Diff/1165014330|prev]]) \
-            . . . [[Phoenician sanctuary of Kharayeb]] .. [[User:Elias Ziade|Elias Ziade]] \
-            ([[User talk:Elias Ziade|talk]] &middot; [[Special:Contributions/Elias Ziade|contribs]]) \
-            .. (27768 bytes) (0) .. (<nowiki>[[WP:AES|←]]Created page with '{{Infobox historic site \
-            | name = Phoenician sanctuary of Kharayeb | native_name = معبد الخرايب الفينيقي \
-            | native_language = ar | image =  | caption =  \
-            | built_for = Unidentified Phoenician deity, presumably a healing god/godess \
-            | architecture = [[Phoenicia]]n, [[Achaemenid Empire|Achaemenid]], [[Hellenistic period|Hellenistic]] \
-            | governing_body =  | designation1 =  | designation1_date =  | designation1_parent =  \
-            | designation1_number =  |...'</nowiki>)
+        String expected = """
+            <table class="wikitable revisions">
+            <colgroup>
+            <col class="difflink" />
+            <col class="date" />
+            <col class="flag" />
+            <col class="flag" />
+            <col class="flag" />
+            <col class="title" />
+            <col class="user" />
+            <col class="revsize" />
+            <col class="revsizediff" />
+            <col class="comment" />
+            </colgroup>
+            <thead>
+            <tr>
+            <th>Previous
+            <th>Timestamp
+            <th>New
+            <th>Minor
+            <th>Bot
+            <th>Title
+            <th>User
+            <th>Size (bytes)
+            <th>Size change
+            <th>Comment
+            </thead>
+            <tbody>
+            <tr class="revision">
+            <td><a href="https://en.wikipedia.org/w/index.php?oldid=1165014330&diff=prev">prev</a>
+            <td><a href="https://en.wikipedia.org/w/index.php?oldid=1165014330">2023-07-12T13:04:44Z</a>
+            <td>
+            <td>
+            <td>
+            <td><a href="https://en.wikipedia.org/wiki/Phoenician_sanctuary_of_Kharayeb">Phoenician sanctuary of Kharayeb</a>
+            <td><a href="https://en.wikipedia.org/wiki/User%3AElias_Ziade">Elias Ziade</a> (<a href="https://en.wikipedia.org/wiki/User_talk%3AElias_Ziade">talk</a> \
+            &middot; <a href="https://en.wikipedia.org/wiki/Special%3AContributions%2FElias_Ziade">contribs</a>)
+            <td>27768
+            <td><span class="sizedecreased">0</span>
+            <td><a href="https://en.wikipedia.org/wiki/Wikipedia:AES" class="mw-redirect" title="Wikipedia:AES">←</a>Created page with \
+            &#039;{{Infobox historic site | name = Phoenician sanctuary of Kharayeb | native_name = معبد الخرايب الفينيقي | \
+            native_language = ar | image =  | caption =  | built_for = Unidentified Phoenician deity, presumably a healing god/godess | \
+            architecture = <a href="https://en.wikipedia.org/wiki/Phoenicia" title="Phoenicia">Phoenician</a>, \
+            <a href="https://en.wikipedia.org/wiki/Achaemenid_Empire" title="Achaemenid Empire">Achaemenid</a>, \
+            <a href="https://en.wikipedia.org/wiki/Hellenistic_period" title="Hellenistic period">Hellenistic</a> | governing_body =  | \
+            designation1 =  | designation1_date =  | designation1_parent =  | designation1_number =  |...&#039;
+            <tr class="revision">
+            <td><a href="https://en.wikipedia.org/w/index.php?oldid=1171939631&diff=prev">prev</a>
+            <td><a href="https://en.wikipedia.org/w/index.php?oldid=1171939631">2023-08-24T01:56:14Z</a>
+            <td>
+            <td><b>m</b>
+            <td>
+            <td><a href="https://en.wikipedia.org/wiki/Hun_Manet">Hun Manet</a>
+            <td><a href="https://en.wikipedia.org/wiki/User%3AGobonobo">Gobonobo</a> (<a href="https://en.wikipedia.org/wiki/User_talk%3AGobonobo">talk</a> \
+            &middot; <a href="https://en.wikipedia.org/wiki/Special%3AContributions%2FGobonobo">contribs</a>)
+            <td>19234
+            <td><span class="sizedecreased">0</span>
+            <td><span class="history-deleted">deleted</span>
+            <tr class="revision">
+            <td><a href="https://en.wikipedia.org/w/index.php?oldid=1171939466&diff=prev">prev</a>
+            <td><a href="https://en.wikipedia.org/w/index.php?oldid=1171939466">2023-08-24T01:55:09Z</a>
+            <td>
+            <td><b>m</b>
+            <td>
+            <td><a href="https://en.wikipedia.org/wiki/Hun_Manet">Hun Manet</a>
+            <td><span class="history-deleted">deleted</span>
+            <td>107696
+            <td><span class="sizedecreased">0</span>
+            <td>becuase i feel like it
+            </tbody>
+            </table>
             """;
-        assertEquals(begin + expected_0 + end, actual_0);
-        // revision deleted edit summary + minor edit
-        String actual_1 = Revisions.toWikitext(revisions.subList(1, 2));
-        String expected_1 = """
-            *[[Special:Permanentlink/1171939631|2023-08-24T01:56:14Z]] ([[Special:Diff/1171939631|prev]]) \
-            . '''m''' . [[Hun Manet]] .. [[User:Gobonobo|Gobonobo]] \
-            ([[User talk:Gobonobo|talk]] &middot; [[Special:Contributions/Gobonobo|contribs]]) \
-            .. (19234 bytes) (0) .. (<span class="history-deleted">deleted</span>)              
-            """;
-        assertEquals(begin + expected_1 + end, actual_1);
-        // revision deleted user + minor edit
-        String actual_2 = Revisions.toWikitext(revisions.subList(2, 3));
-        String expected_2 = """
-            *[[Special:Permanentlink/1171939466|2023-08-24T01:55:09Z]] ([[Special:Diff/1171939466|prev]]) \
-            . '''m''' . [[Hun Manet]] .. <span class="history-deleted">deleted</span> \
-            .. (107696 bytes) (0) .. (<nowiki>becuase i feel like it</nowiki>)              
-            """;
-        assertEquals(begin + expected_2 + end, actual_2);
-        
-        // Combined
-        String actual = Revisions.toWikitext(revisions);
-        assertEquals(begin + expected_0 + expected_1 + expected_2 + end, actual);
+        DataTable<Revisions.RevisionRecord> dt = Revisions.of(enWiki).toDataTable(revisions, "html");
+        assertEquals(expected, dt.formatAsHTML());
+
+        expected = """
+            {| class="wikitable sortable revisions"
+            ! Previous !! Timestamp !! New !! Minor !! Bot !! Title !! User !! Size (bytes) !! Size change !! Comment
+            |-
+            | [[Special:Diff/1165014330|prev]] || [[Special:Permanentlink/1165014330|2023-07-12T13:04:44Z]] ||  ||  ||  ||\
+             [[Phoenician sanctuary of Kharayeb]] || [[User:Elias Ziade|Elias Ziade]] ([[User talk:Elias Ziade|talk]] &middot;\
+             [[Special:Contributions/Elias Ziade|contribs]]) || 27768 || <span class="sizedecreased">0</span> ||\
+             <nowiki>%s</nowiki>
+            |-
+            | [[Special:Diff/1171939631|prev]] || [[Special:Permanentlink/1171939631|2023-08-24T01:56:14Z]] ||  || '''m''' ||  ||\
+             [[Hun Manet]] || [[User:Gobonobo|Gobonobo]] ([[User talk:Gobonobo|talk]] &middot; [[Special:Contributions/Gobonobo|contribs]]) ||\
+             19234 || <span class="sizedecreased">0</span> || <span class="history-deleted">deleted</span>
+            |-
+            | [[Special:Diff/1171939466|prev]] || [[Special:Permanentlink/1171939466|2023-08-24T01:55:09Z]] ||  || '''m''' ||  ||\
+             [[Hun Manet]] || <span class="history-deleted">deleted</span> || 107696 || <span class="sizedecreased">0</span> ||\
+             <nowiki>%s</nowiki>
+            |}
+            """.formatted(revisions.get(0).getComment(), revisions.get(2).getComment());
+        dt = Revisions.of(enWiki).toDataTable(revisions, "wikitext");
+        assertEquals(expected, dt.formatAsWikitext());
     }
 }
