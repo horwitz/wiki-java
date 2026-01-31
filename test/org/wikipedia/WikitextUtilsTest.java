@@ -56,4 +56,31 @@ public class WikitextUtilsTest
         assertEquals("A  end2 -->", WikitextUtils.removeComments("A <!-- Two ends --> end2 -->"));
         assertEquals("-->End at 0", WikitextUtils.removeComments("-->End at 0<!--"));
     }
+    
+    @Test
+    public void formatWikiLink()
+    {
+        Wiki enWiki = Wiki.newSession("en.wikipedia.org");
+        WikitextUtils.WikiLink wl = new WikitextUtils.WikiLink(enWiki, "Test1", "Test2");
+        assertEquals(wl.format(Writable.Format.HTML), "<a href=\"https://en.wikipedia.org/wiki/Test1\">Test2</a>");
+        assertEquals(wl.format(Writable.Format.WIKITEXT), "[[:Test1|Test2]]");
+        assertThrows(UnsupportedOperationException.class, () -> wl.format(Writable.Format.CSV), "CSV not supported");
+        
+        WikitextUtils.WikiLink wl2 = new WikitextUtils.WikiLink(enWiki, "Test1", null);
+        assertEquals(wl2.format(Writable.Format.HTML), "<a href=\"https://en.wikipedia.org/wiki/Test1\"></a>");
+        assertEquals(wl2.format(Writable.Format.WIKITEXT), "[[:Test1]]");
+    }
+    
+    @Test
+    public void formatExternalLink()
+    {
+        WikitextUtils.ExternalLink el = new WikitextUtils.ExternalLink("https://example.com", "Test2");
+        assertEquals(el.format(Writable.Format.HTML), "<a href=\"https://example.com\">Test2</a>");
+        assertEquals(el.format(Writable.Format.WIKITEXT), "[https://example.com Test2]");
+        assertThrows(UnsupportedOperationException.class, () -> el.format(Writable.Format.CSV), "CSV not supported");
+        
+        WikitextUtils.ExternalLink el2 = new WikitextUtils.ExternalLink("https://example.com",  null);
+        assertEquals(el2.format(Writable.Format.HTML), "<a href=\"https://example.com\"></a>");
+        assertEquals(el2.format(Writable.Format.WIKITEXT), "[https://example.com]");
+    }
 }

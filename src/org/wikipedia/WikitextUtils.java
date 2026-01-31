@@ -1,6 +1,6 @@
 /**
- *  @(#)WikitextUtils.java 0.02 23/12/2016
- *  Copyright (C) 2012-2018 MER-C
+ *  @(#)WikitextUtils.java 0.03 31/01/2026
+ *  Copyright (C) 2012-2026 MER-C
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
@@ -25,7 +25,7 @@ import java.util.*;
  *  Utility methods for generating and parsing wikitext that don't belong in
  *  any of the specialist utility classes.
  *  @author MER-C
- *  @version 0.02
+ *  @version 0.03
  */
 public class WikitextUtils
 {
@@ -113,4 +113,61 @@ public class WikitextUtils
         }
         return delta;
     }
+    
+    /**
+     *  Represents a wikilink. In wikitext, this is [[<code>title</code>|<code>text</code>]].
+     *  @param wiki the wiki on which the link exists/is intended for
+     *  @param title the title linked to
+     *  @param text the text to display for the link (can be null)
+     *  @since 0.03
+     */
+    public record WikiLink(Wiki wiki, String title, String text) implements Writable
+    {
+        /**
+         *  Formats this wikilink in wikitext or HTML. CSV or other formats are
+         *  not supported. Inputs are <em>not</em> sanitized.
+         *  @param format {@link Formattable.Format#WIKITEXT} or {@link
+         *  Formattable.Format#HTML}
+         *  @return this link formatted as wikitext or HTML
+         *  @throws UnsupportedOperationException if other formats are supplied
+         */
+        @Override
+        public String format(Writable.Format format)
+        {
+            return switch (format)
+            {
+                case HTML -> "<a href=\"" + wiki.getPageUrl(title) + "\">" + (text == null ? "" : text) + "</a>";
+                case WIKITEXT -> "[[:" + title + (text == null ? "" : "|" + text) + "]]";
+                default -> throw new UnsupportedOperationException("Cannot format a link as this format");
+            };
+        }
+    }
+    
+    /**
+     *  Represents an external link.
+     *  @param url the URL to link to
+     *  @param text the text to display for the link (can be null)
+     *  @since 0.03
+     */
+    public record ExternalLink(String url, String text) implements Writable
+    {
+        /**
+         *  Formats this external link in wikitext or HTML. CSV or other formats
+         *  are not supported. Inputs are <em>not</em> sanitized.
+         *  @param format {@link Formattable.Format#WIKITEXT} or {@link
+         *  Formattable.Format#HTML}
+         *  @return this link formatted as wikitext or HTML
+         *  @throws UnsupportedOperationException if other formats are supplied
+         */
+        @Override
+        public String format(Writable.Format format)
+        {
+            return switch (format)
+            {
+                case HTML -> "<a href=\"" + url + "\">" + (text == null ? "" : text) + "</a>";
+                case WIKITEXT -> "[" + url + (text == null ? "" : " " + text) + "]";
+                default -> throw new UnsupportedOperationException("Cannot format a link as this format");
+            };
+        }
+    }   
 }
