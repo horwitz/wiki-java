@@ -106,7 +106,7 @@ public class XWikiHistory
                 creator == null ? 0 : creator.countEdits(),
                 snippet == null ? "null" : snippet));
         }
-        System.out.println(DataTable.create(rows1, headers).formatAsWikitext());
+        System.out.println(DataTable.create(rows1, headers).format(Writable.Format.WIKITEXT));
         
         // output deletion logs
         String wdtitle = wikiarticles.get(wikidata);
@@ -124,7 +124,7 @@ public class XWikiHistory
                         le.getUser(), le.getAction(), le.getTitle(),
                         "<nowiki>" + le.getComment() + "</nowiki>"));
             });
-            System.out.println(DataTable.create(rows2, headers).formatAsWikitext());
+            System.out.println(DataTable.create(rows2, headers).format(Writable.Format.WIKITEXT));
         }
         
         // global user information
@@ -148,7 +148,7 @@ public class XWikiHistory
                 "[[m:Special:CentralAuth/" + username + "|" + globaluserinfo.get("wikicount") + "]]",
                 globaluserinfo.get("locked")));
         }
-        System.out.println(DataTable.create(rows3, headers).formatAsWikitext());
+        System.out.println(DataTable.create(rows3, headers).format(Writable.Format.WIKITEXT));
     }
     
     public static Map<WMFWiki, List<Wiki.Revision>> getHistories(Map<WMFWiki, String> articles)

@@ -147,14 +147,14 @@ public class DataTableTest
             Value1,10
             Value2,20
             """;
-        assertEquals(expected, dt.formatAsCSV(), "Simple");
+        assertEquals(expected, dt.format(Writable.Format.CSV), "Simple");
         
         dt = DataTable.create(list1, null);
         expected = """
             Value1,10
             Value2,20
             """;
-        assertEquals(expected, dt.formatAsCSV(), "Null header");
+        assertEquals(expected, dt.format(Writable.Format.CSV), "Null header");
         
         dt = DataTable.create(list2, headers2);
         expected = """
@@ -167,7 +167,7 @@ public class DataTableTest
             "Multi
             Line",Easy
             """;
-        assertEquals(expected, dt.formatAsCSV(), "Challenging");
+        assertEquals(expected, dt.format(Writable.Format.CSV), "Challenging");
         
         dt = DataTable.create(list3, headers3);
         expected = """
@@ -175,7 +175,7 @@ public class DataTableTest
             A,2020-01-01T00:00:00Z,5
             B,2025-06-21T00:05:05Z,2
             """;
-        assertEquals(expected, dt.formatAsCSV(), "Three column");
+        assertEquals(expected, dt.format(Writable.Format.CSV), "Three column");
         
         dt.setSkippedColumns(skipcols);
         expected = """
@@ -183,7 +183,7 @@ public class DataTableTest
             A,5
             B,2
             """;
-        assertEquals(expected, dt.formatAsCSV(), "Three column with skipped columns");
+        assertEquals(expected, dt.format(Writable.Format.CSV), "Three column with skipped columns");
     }
 
     @Test
@@ -199,7 +199,7 @@ public class DataTableTest
             | Value2 || 20
             |}
             """;
-        assertEquals(expected, dt.formatAsWikitext(), "Simple");
+        assertEquals(expected, dt.format(Writable.Format.WIKITEXT), "Simple");
         
         dt = DataTable.create(list1, null);
         expected = """
@@ -210,7 +210,7 @@ public class DataTableTest
             | Value2 || 20
             |}
             """;
-        assertEquals(expected, dt.formatAsWikitext(), "Null header");
+        assertEquals(expected, dt.format(Writable.Format.WIKITEXT), "Null header");
         
         dt = DataTable.create(list2.subList(0, 2), headers2);
         expected = """
@@ -222,7 +222,7 @@ public class DataTableTest
             |  || Has "Quotes" inside
             |}
             """;
-        assertEquals(expected, dt.formatAsWikitext(), "Challenging");
+        assertEquals(expected, dt.format(Writable.Format.WIKITEXT), "Challenging");
         
         DataTable<MultiColRecord> dt2 = DataTable.create(list3, headers3);
         expected = """
@@ -234,7 +234,7 @@ public class DataTableTest
             | B || 2025-06-21T00:05:05Z || 2
             |}
             """;
-        assertEquals(expected, dt2.formatAsWikitext(), "Three column");
+        assertEquals(expected, dt2.format(Writable.Format.WIKITEXT), "Three column");
         
         dt2.setSkippedColumns(skipcols);
         expected = """
@@ -246,7 +246,7 @@ public class DataTableTest
             | B || 2
             |}
             """;
-        assertEquals(expected, dt2.formatAsWikitext(), "Three column with skipped columns");
+        assertEquals(expected, dt2.format(Writable.Format.WIKITEXT), "Three column with skipped columns");
         
         dt = DataTable.create(list1, headers2);
         dt.setTableClass("class1");
@@ -259,7 +259,7 @@ public class DataTableTest
             | Value2 || 20
             |}
             """;
-        assertEquals(expected, dt.formatAsWikitext(), "Styled");
+        assertEquals(expected, dt.format(Writable.Format.WIKITEXT), "Styled");
     }
     
     @Test
@@ -283,7 +283,7 @@ public class DataTableTest
             </tbody>
             </table>
             """;
-        assertEquals(expected, dt.formatAsHTML(), "Simple");
+        assertEquals(expected, dt.format(Writable.Format.HTML), "Simple");
         
         dt = DataTable.create(list2.subList(0, 3), headers2);
         expected = """
@@ -306,7 +306,7 @@ public class DataTableTest
             </tbody>
             </table>
             """;
-        assertEquals(expected, dt.formatAsHTML(), "Challenging");
+        assertEquals(expected, dt.format(Writable.Format.HTML), "Challenging");
         
         DataTable<MultiColRecord> dt2 = DataTable.create(list3, headers3);
         expected = """
@@ -329,7 +329,7 @@ public class DataTableTest
             </tbody>
             </table>
             """;
-        assertEquals(expected, dt2.formatAsHTML(), "Three column");
+        assertEquals(expected, dt2.format(Writable.Format.HTML), "Three column");
         
         dt2.setSkippedColumns(skipcols);
         expected = """
@@ -349,7 +349,7 @@ public class DataTableTest
             </tbody>
             </table>
             """;
-        assertEquals(expected, dt2.formatAsHTML(), "Three column with skipped columns");
+        assertEquals(expected, dt2.format(Writable.Format.HTML), "Three column with skipped columns");
         
         List<String> classes = new ArrayList<>();
         classes.add(null);
@@ -379,6 +379,6 @@ public class DataTableTest
             </tbody>
             </table>
             """;
-        assertEquals(expected, dt.formatAsHTML(), "Styled");
+        assertEquals(expected, dt.format(Writable.Format.HTML), "Styled");
     }
 }

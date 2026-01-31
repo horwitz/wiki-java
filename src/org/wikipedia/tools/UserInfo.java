@@ -72,7 +72,7 @@ public class UserInfo
         Wiki wiki = sessions.sharedSession(wikistring);
         List<String> socks = CommandLineParser.parseUserOptions(parsedargs, wiki);
 
-        System.out.println(userInfoTable(wiki, socks).formatAsWikitext());
+        System.out.println(userInfoTable(wiki, socks).format(Writable.Format.WIKITEXT));
         //lockFinder(socks);
         //staleScreener(wiki, socks);
         

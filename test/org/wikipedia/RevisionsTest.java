@@ -176,7 +176,7 @@ public class RevisionsTest
             </table>
             """;
         DataTable<Revisions.RevisionRecord> dt = Revisions.of(enWiki).toDataTable(revisions, "html");
-        assertEquals(expected, dt.formatAsHTML());
+        assertEquals(expected, dt.format(Writable.Format.HTML));
 
         expected = """
             {| class="wikitable sortable revisions"
@@ -197,6 +197,6 @@ public class RevisionsTest
             |}
             """.formatted(revisions.get(0).getComment(), revisions.get(2).getComment());
         dt = Revisions.of(enWiki).toDataTable(revisions, "wikitext");
-        assertEquals(expected, dt.formatAsWikitext());
+        assertEquals(expected, dt.format(Writable.Format.WIKITEXT));
     }
 }

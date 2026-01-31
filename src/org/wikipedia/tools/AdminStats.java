@@ -756,8 +756,8 @@ public class AdminStats
         for (var entry : hist.entrySet())
             list.add(new HistEntry(entry.getKey(), entry.getValue()));
         DataTable dt = DataTable.create(list, List.of("Reason", "Count"));
-        System.out.println(dt.formatAsWikitext());
-        Files.writeString(Paths.get(filename), dt.formatAsCSV());
+        System.out.println(dt.format(Writable.Format.WIKITEXT));
+        Files.writeString(Paths.get(filename), dt.format(Writable.Format.CSV));
     }
        
     /**

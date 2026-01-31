@@ -178,7 +178,7 @@ Someone # Spam
         if (usercontribs.isEmpty())
             out.println("<p>No contributions within interval or user does not exist.");
         else
-            out.println(revisionUtils.toDataTable(usercontribs, "html").formatAsHTML());
+            out.println(revisionUtils.toDataTable(usercontribs, "html").format(Writable.Format.HTML));
     }
 
     // end pagination

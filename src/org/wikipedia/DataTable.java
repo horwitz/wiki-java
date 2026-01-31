@@ -32,7 +32,7 @@ import java.util.function.BiFunction;
  *  @author MER-C
  *  @version 0.02
  */
-public class DataTable<T extends Record>
+public class DataTable<T extends Record> implements Writable
 {
     private final List<T> data;
     private List<String> headers, skipcols, cssclasses;
@@ -222,17 +222,27 @@ public class DataTable<T extends Record>
     }
     
     /**
-     *  Exports the table to CSV. 
-     *  @return the table in CSV format
+     *  Exports the table to the given format. Outputs are <em>NOT</em> sanitised 
+     *  because they may contain additional formatting.
+     *  @return the table in that format
+     *  @since 0.02
      */
-    public String formatAsCSV()
+    public String format(Writable.Format format)
     {
-        StringBuilder sb = new StringBuilder();
-        if (headers != null)
-            writeCsvLine(sb, getOutputHeaders());
-        for (T record : data)
-            writeCsvLine(sb, extractValues(record));
-        return sb.toString();
+        return switch (format)
+        {
+            case HTML -> formatAsHTML();
+            case WIKITEXT -> formatAsWikitext();
+            case CSV ->
+            {
+                StringBuilder sb = new StringBuilder();
+                if (headers != null)
+                    writeCsvLine(sb, getOutputHeaders());
+                for (T record : data)
+                    writeCsvLine(sb, extractValues(record));
+                yield sb.toString();
+            }
+        };
     }
     
     private void writeCsvLine(StringBuilder sb, List<?> values)
@@ -246,7 +256,7 @@ public class DataTable<T extends Record>
             if (val == null)
                 continue; // equivalent to empty string
 
-            String text = render(val);
+            String text = render(val, Writable.Format.WIKITEXT);
             
             // RFC 4180: Quote if text contains comma, double-quote, or newline
             boolean searchQuotes = text.contains("\"");
@@ -265,13 +275,8 @@ public class DataTable<T extends Record>
         }
         sb.append("\n");
     }
-    
-    /**
-     *  Exports the table to wikitext. Outputs are <em>NOT</em> sanitised 
-     *  because they may contain additional formatting.
-     *  @return the table in wikitext format
-     */
-    public String formatAsWikitext()
+
+    private String formatAsWikitext()
     {
         StringBuilder sb = new StringBuilder("{| class=\"wikitable sortable");
         if (tableclass != null)
@@ -291,7 +296,7 @@ public class DataTable<T extends Record>
             List<Object> values = extractValues(record);
             for (int i = 0; i < values.size(); i++)
             {
-                String sval = render(values.get(i));
+                String sval = render(values.get(i), Writable.Format.WIKITEXT);
                 if (i == 0)
                     sb.append("| ").append(sval);
                 else
@@ -303,13 +308,7 @@ public class DataTable<T extends Record>
         return sb.toString();
     }
     
-    /**
-     *  Exports the table to HTML. Outputs are <em>NOT</em> sanitised because
-     *  they may contain additional formatting.
-     *  @return the table in HTML format
-     *  @since 0.02
-     */
-    public String formatAsHTML()
+    private String formatAsHTML()
     {
         // TODO: make sortable
 
@@ -348,7 +347,7 @@ public class DataTable<T extends Record>
             for (Object value : extractValues(record))
             {
                 sb.append("<td>");
-                sb.append(render(value)).append("\n");
+                sb.append(render(value, Writable.Format.HTML)).append("\n");
             }
         }
         sb.append("</tbody>\n</table>\n");
@@ -356,12 +355,13 @@ public class DataTable<T extends Record>
     }
     
     // helper to transform an object to a string
-    private String render(Object value)
+    private String render(Object value, Writable.Format format)
     {
         return switch (value)
         {
             case null -> "";
             case OffsetDateTime dt -> dt.format(DateTimeFormatter.ISO_DATE_TIME);
+            case Writable w -> w.format(format);
             default -> value.toString();
         };
     }
