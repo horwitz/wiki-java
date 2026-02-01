@@ -76,21 +76,22 @@ public class UsersTest
     }
     
     @Test
-    public void generateWikitextSummaryLinksShort() throws Exception
+    public void formatShortLinks() throws Exception
     {
+        Users.ShortLinks sl = new Users.ShortLinks(testWiki, "MER-C");
         String expected = "[[User:MER-C|MER-C]] ([[User talk:MER-C|talk]] &middot; "
             + "[[Special:Contributions/MER-C|contribs]])";
-        assertEquals(expected, Users.generateWikitextSummaryLinksShort("MER-C"));
-    }
-    
-    @Test
-    public void generateUserLinksShort() throws Exception
-    {
-        String expected = 
+        assertEquals(expected, sl.format(Writable.Format.WIKITEXT), "Simple, wikitext");
+        expected = 
               "<a href=\"" + testWiki.getPageUrl("User:MER-C") + "\">MER-C</a> ("
             + "<a href=\"" + testWiki.getPageUrl("User talk:MER-C") + "\">talk</a> &middot; "
             + "<a href=\"" + testWiki.getPageUrl("Special:Contributions/MER-C") + "\">contribs</a>)";
-        assertEquals(expected, testWikiUsers.generateHTMLSummaryLinksShort("MER-C"));
+        assertEquals(expected, sl.format(Writable.Format.HTML), "Simple, HTML");
+        assertThrows(UnsupportedOperationException.class, () -> sl.format(Writable.Format.CSV), "Unsupported format");
+        
+        Users.ShortLinks sl2 = new Users.ShortLinks(testWiki, null);
+        assertEquals(Events.DELETED_EVENT_HTML, sl2.format(Writable.Format.WIKITEXT), "Null user, wikitext");
+        assertEquals(Events.DELETED_EVENT_HTML, sl2.format(Writable.Format.HTML), "Null user, HTML");
     }
     
     @Test

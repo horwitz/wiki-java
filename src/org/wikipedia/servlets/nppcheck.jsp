@@ -56,7 +56,6 @@ main space for a given user (or for all users) and page metadata. A query limit 
     out.println("<hr>");
 
     WMFWiki enWiki = sessions.sharedSession("en.wikipedia.org");
-    Users users = Users.of(enWiki);
     Pages pageutils = Pages.of(enWiki);
     enWiki.setQueryLimit(7500);
     NPPCheck check = new NPPCheck(enWiki);
@@ -183,7 +182,7 @@ main space for a given user (or for all users) and page metadata. A query limit 
         }
 %>
   <td class="revsize"><%= size %>
-  <td class="user"><%= users.generateHTMLSummaryLinksShort(creatorname) %>
+  <td class="user"><%= new Users.ShortLinks(enWiki, creatorname).format(Writable.Format.HTML) %>
   <td class="date"><%= registrationdate %>
   <td class="revsize"><%= editcount %>
   <td class="revsize"><%= MathsAndStats.formatDuration(dt_user) %>
@@ -192,7 +191,7 @@ main space for a given user (or for all users) and page metadata. A query limit 
         if (mode.requiresReviews() && username.isEmpty())
         {
             String reviewer = entry.getUser();
-            out.println("  <td class=\"user\">" + users.generateHTMLSummaryLinksShort(reviewer));
+            out.println("  <td class=\"user\">" + new Users.ShortLinks(enWiki, reviewer).format(Writable.Format.HTML));
             out.println("  <td class=\"revsize\">" + reviewerdata.get(i).countEdits());
         }
         out.println("  <td>" + snippets.get(i));

@@ -125,9 +125,9 @@ public class WikitextUtils
     {
         /**
          *  Formats this wikilink in wikitext or HTML. CSV or other formats are
-         *  not supported. Inputs are <em>not</em> sanitized.
-         *  @param format {@link Formattable.Format#WIKITEXT} or {@link
-         *  Formattable.Format#HTML}
+         *  not supported. <strong>Inputs are not sanitized</strong>.
+         *  @param format {@link Writable.Format#WIKITEXT} or {@link
+         *  Writable.Format#HTML}
          *  @return this link formatted as wikitext or HTML
          *  @throws UnsupportedOperationException if other formats are supplied
          */
@@ -137,7 +137,7 @@ public class WikitextUtils
             return switch (format)
             {
                 case HTML -> "<a href=\"" + wiki.getPageUrl(title) + "\">" + (text == null ? "" : text) + "</a>";
-                case WIKITEXT -> "[[:" + title + (text == null ? "" : "|" + text) + "]]";
+                case WIKITEXT -> "[[" + title + (text == null ? "" : "|" + text) + "]]";
                 default -> throw new UnsupportedOperationException("Cannot format a link as this format");
             };
         }
@@ -153,9 +153,9 @@ public class WikitextUtils
     {
         /**
          *  Formats this external link in wikitext or HTML. CSV or other formats
-         *  are not supported. Inputs are <em>not</em> sanitized.
-         *  @param format {@link Formattable.Format#WIKITEXT} or {@link
-         *  Formattable.Format#HTML}
+         *  are not supported. <strong>Inputs are not sanitized</strong>.
+         *  @param format {@link Writable.Format#WIKITEXT} or {@link
+         *  Writable.Format#HTML}
          *  @return this link formatted as wikitext or HTML
          *  @throws UnsupportedOperationException if other formats are supplied
          */

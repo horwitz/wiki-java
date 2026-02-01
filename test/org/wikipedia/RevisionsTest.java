@@ -132,8 +132,8 @@ public class RevisionsTest
             </thead>
             <tbody>
             <tr class="revision">
-            <td><a href="https://en.wikipedia.org/w/index.php?oldid=1165014330&diff=prev">prev</a>
-            <td><a href="https://en.wikipedia.org/w/index.php?oldid=1165014330">2023-07-12T13:04:44Z</a>
+            <td><a href="https://en.wikipedia.org/wiki/Special%3ADiff%2F1165014330">prev</a>
+            <td><a href="https://en.wikipedia.org/wiki/Special%3APermanentlink%2F1165014330">2023-07-12T13:04:44Z</a>
             <td>
             <td>
             <td>
@@ -150,8 +150,8 @@ public class RevisionsTest
             <a href="https://en.wikipedia.org/wiki/Hellenistic_period" title="Hellenistic period">Hellenistic</a> | governing_body =  | \
             designation1 =  | designation1_date =  | designation1_parent =  | designation1_number =  |...&#039;
             <tr class="revision">
-            <td><a href="https://en.wikipedia.org/w/index.php?oldid=1171939631&diff=prev">prev</a>
-            <td><a href="https://en.wikipedia.org/w/index.php?oldid=1171939631">2023-08-24T01:56:14Z</a>
+            <td><a href="https://en.wikipedia.org/Special%3ADiff%2F1171939631">prev</a>
+            <td><a href="https://en.wikipedia.org/wiki/Special%3APermanentlink%2F1171939631">2023-08-24T01:56:14Z</a>
             <td>
             <td><b>m</b>
             <td>
@@ -162,8 +162,8 @@ public class RevisionsTest
             <td><span class="sizedecreased">0</span>
             <td><span class="history-deleted">deleted</span>
             <tr class="revision">
-            <td><a href="https://en.wikipedia.org/w/index.php?oldid=1171939466&diff=prev">prev</a>
-            <td><a href="https://en.wikipedia.org/w/index.php?oldid=1171939466">2023-08-24T01:55:09Z</a>
+            <td><a href="https://en.wikipedia.org/wiki/Special%3ADiff%2F1171939466">prev</a>
+            <td><a href="https://en.wikipedia.org/wiki/Special%3APermanentlink%2F1171939466">2023-08-24T01:55:09Z</a>
             <td>
             <td><b>m</b>
             <td>

@@ -63,12 +63,12 @@ public class WikitextUtilsTest
         Wiki enWiki = Wiki.newSession("en.wikipedia.org");
         WikitextUtils.WikiLink wl = new WikitextUtils.WikiLink(enWiki, "Test1", "Test2");
         assertEquals(wl.format(Writable.Format.HTML), "<a href=\"https://en.wikipedia.org/wiki/Test1\">Test2</a>");
-        assertEquals(wl.format(Writable.Format.WIKITEXT), "[[:Test1|Test2]]");
+        assertEquals(wl.format(Writable.Format.WIKITEXT), "[[Test1|Test2]]");
         assertThrows(UnsupportedOperationException.class, () -> wl.format(Writable.Format.CSV), "CSV not supported");
         
         WikitextUtils.WikiLink wl2 = new WikitextUtils.WikiLink(enWiki, "Test1", null);
         assertEquals(wl2.format(Writable.Format.HTML), "<a href=\"https://en.wikipedia.org/wiki/Test1\"></a>");
-        assertEquals(wl2.format(Writable.Format.WIKITEXT), "[[:Test1]]");
+        assertEquals(wl2.format(Writable.Format.WIKITEXT), "[[Test1]]");
     }
     
     @Test

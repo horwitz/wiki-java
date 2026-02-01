@@ -1,6 +1,6 @@
 /**
- *  @(#)Users.java 0.01 23/06/2018
- *  Copyright (C) 2018-20XX MER-C and contributors
+ *  @(#)Users.java 0.02 01/02/2026
+ *  Copyright (C) 2018-2026 MER-C and contributors
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
@@ -29,7 +29,7 @@ import javax.security.auth.login.FailedLoginException;
 /**
  *  Utility methods for wiki users.
  *  @author MER-C
- *  @version 0.01
+ *  @version 0.02
  *  @see org.wikipedia.Wiki.User
  */
 public class Users
@@ -41,6 +41,33 @@ public class Users
     {
         this.wiki = wiki;
         pageutils = Pages.of(wiki);
+    }
+    
+    /**
+     *  Represents user links of the form <samp>User (talk &middot; contribs)</samp>.
+     *  @param wiki the wiki 
+     *  @param username the username (may be null, assumed to be RevisionDeleted)
+     *  @since 0.02
+     */
+    public record ShortLinks(Wiki wiki, String username) implements Writable
+    {
+        /**
+         *  Generates short user links in wikitext or HTML. CSV or other formats
+         *  are not supported. <strong>Inputs are not sanitized</strong>.
+         *  @param format {@link Writable.Format#WIKITEXT} or {@link
+         *  Writable.Format#HTML}
+         *  @return the formatted user links
+         *  @throws UnsupportedOperationException if other formats are supplied
+         */
+        @Override
+        public String format(Writable.Format format)
+        {
+            if (username == null)
+                return Events.DELETED_EVENT_HTML;
+            return new WikitextUtils.WikiLink(wiki, "User:" + username, username).format(format) +
+                " (" + new WikitextUtils.WikiLink(wiki, "User talk:" + username, "talk").format(format) +
+                " &middot; " + new WikitextUtils.WikiLink(wiki, "Special:Contributions/" + username, "contribs").format(format) + ")";
+        }
     }
     
     /**
@@ -56,26 +83,11 @@ public class Users
     }
     
     /**
-     *  Creates user links in HTML of the form <samp>User (talk &middot;
-     *  contribs)</samp>
-     *  @param username the username
-     *  @return the generated HTML
-     *  @see #generateHTMLSummaryLinks(String)
-     */
-    public String generateHTMLSummaryLinksShort(String username)
-    {
-        return pageutils.generatePageLink("User:" + username, username) + " ("
-            +  pageutils.generatePageLink("User talk:" + username, "talk") + " &middot; "
-            +  pageutils.generatePageLink("Special:Contributions/" + username, "contribs") + ")";
-    }
-    
-    /**
      *  Creates user links in HTML of the form <samp>User (talk | contribs | 
      *  deletedcontribs | block | block log)</samp>
      *  @param username the username
      *  @return the generated HTML
      *  @see #generateWikitextSummaryLinks(String)
-     *  @see #generateHTMLSummaryLinksShort(String)
      */
     public String generateHTMLSummaryLinks(String username)
     {
@@ -108,20 +120,6 @@ public class Users
             +  "[{{fullurl:Special:Log|user=" + userenc + "}} logs] | "
             +  "[[Special:Block/" + username + "|block]] | "
             +  "[{{fullurl:Special:Log|type=block&page=User:" + userenc + "}} block log])\n";
-    }
-
-    /**
-     *  Creates user links in wikitext of the form <samp>User (talk &middot; 
-     *  contribs)</samp>.
-     *  @param username the username
-     *  @return the generated wikitext
-     *  @see #generateHTMLSummaryLinksShort(String) 
-     */
-    public static String generateWikitextSummaryLinksShort(String username)
-    {
-        return "[[User:" + username + "|" + username + "]] (" 
-            +  "[[User talk:" + username + "|talk]] &middot; "
-            +  "[[Special:Contributions/" + username + "|contribs]])";
     }
     
     /**

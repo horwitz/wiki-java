@@ -36,8 +36,8 @@ public class Revisions
     
     /**
      *  A representation of a {@link Wiki.Revision} for output in tabular format.
-     *  @param difflink a link to the diff to the previous revision
-     *  @param timestamp a link to the revision whose text is the timestamp
+     *  @param diff a link to the diff to the previous revision
+     *  @param revlink a link to the revision whose text is the timestamp
      *  @param flag_new a formatted indication this is a new revision
      *  @param flag_minor a formatted indication this is a minor edit
      *  @param flag_bot a formatted indication this is a bot edit
@@ -50,8 +50,8 @@ public class Revisions
      *  @see Wiki.Revision
      *  @since 0.02
      */
-    public record RevisionRecord(String difflink, String timestamp, String flag_new, String flag_minor, String flag_bot,
-        String title, String user, int size, String sizediff, String comment) { }
+    public record RevisionRecord(WikitextUtils.WikiLink diff, WikitextUtils.WikiLink revlink, String flag_new, String flag_minor, String flag_bot,
+        WikitextUtils.WikiLink title, Users.ShortLinks user, int size, String sizediff, String comment) { }
     
     private Revisions(Wiki wiki)
     {
@@ -117,36 +117,26 @@ public class Revisions
     public DataTable<RevisionRecord> toDataTable(Iterable<Wiki.Revision> revisions, String format)
     {
         // TODO: the output of toWikitext and toDataTable isn't identical: there are
-        // links and edit summaries that can be rendered in wikitext and HTML
+        // edit summaries that can be rendered in wikitext and HTML
         // also wiki format has class="wikitable sortable" already given
         
         List<RevisionRecord> rows = new ArrayList<>();
-        Users userutils = Users.of(wiki);
-        Pages pageutils = Pages.of(wiki);
         for (Wiki.Revision rev : revisions)
         {
-            String revurl = rev.permanentUrl();
-            String page = rev.getTitle();
             String user = rev.getUser();
             String comment = format.equals("html") ? rev.getParsedComment() : rev.getComment();
             int sizediff = rev.getSizeDiff();
-            String userhtml = user == null || user.equals(Wiki.Event.USER_DELETED)
-                ? Events.DELETED_EVENT_HTML : (format.equals("html") ? userutils.generateHTMLSummaryLinksShort(user) : Users.generateWikitextSummaryLinksShort(user));
             String commenthtml = comment == null || comment.equals(Wiki.Event.COMMENT_DELETED)
                 ? Events.DELETED_EVENT_HTML : (format.equals("html") ? comment : "<nowiki>" + comment + "</nowiki>");
-            String prevlink = format.equals("html") ?
-                "<a href=\"" + revurl + "&diff=prev\">prev</a>" :
-                "[[Special:Diff/" + rev.getID() + "|prev]]";
-            String currentlink = format.equals("html") ?
-                "<a href=\"" + revurl + "\">" + DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(rev.getTimestamp()) + "</a>" :
-                "[[Special:Permanentlink/" + rev.getID() + "|" + DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(rev.getTimestamp()) + "]]";
             rows.add(new RevisionRecord(
-                prevlink, currentlink,
+                new WikitextUtils.WikiLink(wiki, "Special:Diff/" + rev.getID(), "prev"), 
+                new WikitextUtils.WikiLink(wiki, "Special:Permanentlink/" + rev.getID(), DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(rev.getTimestamp())),
                 rev.isNew() ? (format.equals("html") ? "<b>N</b>" : "'''N'''") : "",
                 rev.isMinor() ? (format.equals("html") ? "<b>m</b>" : "'''m'''") : "",
                 rev.isBot() ? (format.equals("html") ? "<b>b</b>" : "'''b'''") : "",
-                format.equals("html") ? pageutils.generatePageLink(page, true) : ("[[" + page + "]]"),
-                userhtml, rev.getSize(),
+                new WikitextUtils.WikiLink(wiki, rev.getTitle(), null),
+                new Users.ShortLinks(wiki, user == null || user.equals(Wiki.Event.USER_DELETED) ? null : user), 
+                rev.getSize(),
                 "<span class=\"" + (sizediff > 0 ? "sizeincreased" : "sizedecreased") + "\">" + sizediff + "</span>",
                 commenthtml));
         }

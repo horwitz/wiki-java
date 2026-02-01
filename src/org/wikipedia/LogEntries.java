@@ -57,7 +57,7 @@ public class LogEntries
                 buffer.append(Events.DELETED_EVENT_HTML);
             else
             {
-                buffer.append(Users.generateWikitextSummaryLinksShort(user2));
+                buffer.append(new Users.ShortLinks(Wiki.newSession("en.wikipedia.org"), user2).format(Writable.Format.WIKITEXT)); // hack
                 buffer.append(" ");
             }
             

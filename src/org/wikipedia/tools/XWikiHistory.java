@@ -37,7 +37,7 @@ public class XWikiHistory
     public record ArticleData(String domain, String page, OffsetDateTime createdate, String user, int fedits, String snippet) { }
     // temporary, likely to move elsewhere
     public record DeletionLog(String project, OffsetDateTime ts, String admin, String action, String title, String reason) { }
-    public record GUserInfo(String username, Object gedits, Object home, String wikis, Object locked) { }
+    public record GUserInfo(Users.ShortLinks user, Object gedits, Object home, String wikis, Object locked) { }
 
     /**
      *  Runs this program.
@@ -142,7 +142,7 @@ public class XWikiHistory
         {
             Map<String, Object> globaluserinfo = sessions.getGlobalUserInfo(username);
             rows3.add(new GUserInfo(
-                Users.generateWikitextSummaryLinksShort(username),
+                new Users.ShortLinks(wikidata, username), // hack
                 globaluserinfo.get("editcount"),
                 globaluserinfo.get("home"),
                 "[[m:Special:CentralAuth/" + username + "|" + globaluserinfo.get("wikicount") + "]]",
