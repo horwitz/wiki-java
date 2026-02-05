@@ -643,6 +643,7 @@ public class ContributionSurveyor
         int sectionsperpage = articlesperpage / articlespersection;  
         Map<String, Map<String, List<Wiki.Revision>>> results = null, delresults = null;
         Map<String, Map<String, List<String>>> imagesurvey = null;
+        Writable.Format fmt = Writable.Format.WIKITEXT;
         
         if (contribs)
             results = contributionSurvey(usernames, ns);
@@ -706,8 +707,7 @@ public class ContributionSurveyor
             // start of every new page
             String header = "";
             if (!comingle)
-                header = "== " + username + " ==\n" + 
-                    Users.generateWikitextSummaryLinks(username) + "\n";
+                header = "== " + username + " ==\n" + new Users.Links(wiki, username).format(fmt) + "\n";
             for (int i = sizebefore; i < sections.size(); i++)
             {
                 if (i == sizebefore || i % sectionsperpage == 0)

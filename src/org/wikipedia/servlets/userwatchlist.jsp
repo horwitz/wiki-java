@@ -30,7 +30,6 @@
     
     Wiki enWiki = sessions.sharedSession("en.wikipedia.org");
     enWiki.setQueryLimit(20000); // 40 network requests
-    Users userUtils = Users.of(enWiki);
     Revisions revisionUtils = Revisions.of(enWiki);
     Pages pageUtils = Pages.of(enWiki);
     
@@ -168,7 +167,7 @@ Someone # Spam
 <ul>
     <li>
         <%
-        out.println(userUtils.generateHTMLSummaryLinks(user));
+        out.println(new Users.Links(enWiki, user).format(Writable.Format.WIKITEXT));
         if (!reason.isEmpty())
             out.println("<li><i>" + reason + "</i>");
         out.println("</ul>");

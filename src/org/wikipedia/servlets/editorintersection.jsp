@@ -122,7 +122,6 @@ first in the GUI) apply.
     });
     Pages pageUtils = Pages.of(wiki);
     Revisions revisionUtils = Revisions.of(wiki);
-    Users userUtils = Users.of(wiki);
 
     String blah = bypage.entrySet().stream()
         .sorted((entry1, entry2) -> 
@@ -136,7 +135,7 @@ first in the GUI) apply.
             sb.append("<h2>");
             sb.append(entry.getKey());
             sb.append("</h2>\n");
-            sb.append(userUtils.generateHTMLSummaryLinks(entry.getKey()));
+            sb.append(new Users.Links(wiki, entry.getKey()).format(Writable.Format.HTML));
 
             for (Map.Entry<String, List<Wiki.Revision>> entry2 : entry.getValue().entrySet())
             {

@@ -62,25 +62,25 @@ public class WikitextUtilsTest
     {
         Wiki enWiki = Wiki.newSession("en.wikipedia.org");
         WikitextUtils.WikiLink wl = new WikitextUtils.WikiLink(enWiki, "Test1", "Test2");
-        assertEquals(wl.format(Writable.Format.HTML), "<a href=\"https://en.wikipedia.org/wiki/Test1\">Test2</a>");
-        assertEquals(wl.format(Writable.Format.WIKITEXT), "[[Test1|Test2]]");
+        assertEquals("<a href=\"https://en.wikipedia.org/wiki/Test1\">Test2</a>", wl.format(Writable.Format.HTML));
+        assertEquals("[[Test1|Test2]]", wl.format(Writable.Format.WIKITEXT));
         assertThrows(UnsupportedOperationException.class, () -> wl.format(Writable.Format.CSV), "CSV not supported");
         
         WikitextUtils.WikiLink wl2 = new WikitextUtils.WikiLink(enWiki, "Test1", null);
-        assertEquals(wl2.format(Writable.Format.HTML), "<a href=\"https://en.wikipedia.org/wiki/Test1\"></a>");
-        assertEquals(wl2.format(Writable.Format.WIKITEXT), "[[Test1]]");
+        assertEquals("<a href=\"https://en.wikipedia.org/wiki/Test1\">Test1</a>", wl2.format(Writable.Format.HTML));
+        assertEquals("[[Test1]]", wl2.format(Writable.Format.WIKITEXT));
     }
     
     @Test
     public void formatExternalLink()
     {
         WikitextUtils.ExternalLink el = new WikitextUtils.ExternalLink("https://example.com", "Test2");
-        assertEquals(el.format(Writable.Format.HTML), "<a href=\"https://example.com\">Test2</a>");
-        assertEquals(el.format(Writable.Format.WIKITEXT), "[https://example.com Test2]");
+        assertEquals("<a href=\"https://example.com\">Test2</a>", el.format(Writable.Format.HTML));
+        assertEquals("[https://example.com Test2]", el.format(Writable.Format.WIKITEXT));
         assertThrows(UnsupportedOperationException.class, () -> el.format(Writable.Format.CSV), "CSV not supported");
         
         WikitextUtils.ExternalLink el2 = new WikitextUtils.ExternalLink("https://example.com",  null);
-        assertEquals(el2.format(Writable.Format.HTML), "<a href=\"https://example.com\"></a>");
-        assertEquals(el2.format(Writable.Format.WIKITEXT), "[https://example.com]");
+        assertEquals("<a href=\"https://example.com\"></a>", el2.format(Writable.Format.HTML));
+        assertEquals("[https://example.com]", el2.format(Writable.Format.WIKITEXT));
     }
 }

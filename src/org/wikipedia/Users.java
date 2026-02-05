@@ -35,18 +35,17 @@ import javax.security.auth.login.FailedLoginException;
 public class Users
 {
     private final Wiki wiki;
-    private final Pages pageutils;
     
     private Users(Wiki wiki)
     {
         this.wiki = wiki;
-        pageutils = Pages.of(wiki);
     }
     
     /**
      *  Represents user links of the form <samp>User (talk &middot; contribs)</samp>.
      *  @param wiki the wiki 
      *  @param username the username (may be null, assumed to be RevisionDeleted)
+     *  @see Users.Links
      *  @since 0.02
      */
     public record ShortLinks(Wiki wiki, String username) implements Writable
@@ -71,6 +70,41 @@ public class Users
     }
     
     /**
+     *  Represents user links of the form <samp>User (talk &middot; contribs &middot;
+     *  deleted contribs &middot; logs &middot; block &middot; block log)</samp>.
+     *  @param wiki the wiki 
+     *  @param username the username (may be null, assumed to be RevisionDeleted)
+     *  @see Users.ShortLinks
+     *  @since 0.02
+     */
+    public record Links(Wiki wiki, String username) implements Writable
+    {
+        /**
+         *  Generates user links in wikitext or HTML. CSV or other formats
+         *  are not supported. <strong>Inputs are not sanitized</strong>.
+         *  @param format {@link Writable.Format#WIKITEXT} or {@link
+         *  Writable.Format#HTML}
+         *  @return the formatted user links
+         *  @throws UnsupportedOperationException if other formats are supplied
+         */
+        @Override
+        public String format(Writable.Format format)
+        {
+            if (username == null)
+                return Events.DELETED_EVENT_HTML;
+            String indexPHPURL = wiki.getIndexPhpUrl();
+            String userenc = URLEncoder.encode(username, StandardCharsets.UTF_8);
+            return new WikitextUtils.WikiLink(wiki, "User:" + username, username).format(format) + " (" +
+                new WikitextUtils.WikiLink(wiki, "User talk:" + username, "talk").format(format) + " &middot; " +
+                new WikitextUtils.WikiLink(wiki, "Special:Contributions/" + username, "contribs").format(format) + " &middot; " +
+                new WikitextUtils.WikiLink(wiki, "Special:DeletedContributions/" + username, "deleted contribs").format(format) + " &middot; " +
+                new WikitextUtils.ExternalLink(indexPHPURL + "?title=Special:Log&user=" + userenc, "logs").format(format) + " &middot; " + 
+                new WikitextUtils.WikiLink(wiki, "Special:Block/" + username, "block").format(format) + " &middot; " +
+                new WikitextUtils.ExternalLink(indexPHPURL + "?title=Special:Log&type=block&page=User:" + userenc, "block log").format(format) + ")";
+        }
+    }
+    
+    /**
      *  Creates an instance of this class bound to a particular wiki (required
      *  for methods that make network requests to a wiki).
      * 
@@ -80,46 +114,6 @@ public class Users
     public static Users of(Wiki wiki)
     {
         return new Users(wiki);
-    }
-    
-    /**
-     *  Creates user links in HTML of the form <samp>User (talk | contribs | 
-     *  deletedcontribs | block | block log)</samp>
-     *  @param username the username
-     *  @return the generated HTML
-     *  @see #generateWikitextSummaryLinks(String)
-     */
-    public String generateHTMLSummaryLinks(String username)
-    {
-        String indexPHPURL = wiki.getIndexPhpUrl();
-        username = WikitextUtils.recode(username);
-        String userenc = URLEncoder.encode(username, StandardCharsets.UTF_8);
-        return pageutils.generatePageLink("User:" + username, username) + " ("
-            +  pageutils.generatePageLink("User talk:" + username, "talk") + " | "
-            +  pageutils.generatePageLink("Special:Contributions/" + username, "contribs") + " | "
-            +  pageutils.generatePageLink("Special:DeletedContributions/" + username, "deleted contribs") + " | "
-            +  "<a href=\"" + indexPHPURL + "?title=Special:Log&user=" + userenc + "\">logs</a> | "
-            +  pageutils.generatePageLink("Special:Block/" + username, "block") + " | "
-            +  "<a href=\"" + indexPHPURL + "?title=Special:Log&type=block&page=User:" + userenc + "\">block log</a>)";
-    }
-    
-    /**
-     *  Creates user links in wikitext of the form <samp>User (talk | contribs | 
-     *  deletedcontribs | block | block log)</samp>
-     *  @param username the username
-     *  @return the generated wikitext
-     *  @see #generateHTMLSummaryLinks(String) 
-     */
-    public static String generateWikitextSummaryLinks(String username)
-    {
-        String userenc = URLEncoder.encode(username, StandardCharsets.UTF_8);
-        return "* [[User:" + username + "|" + username + "]] (" 
-            +  "[[User talk:" + username + "|talk]] | "
-            +  "[[Special:Contributions/" + username + "|contribs]] | "
-            +  "[[Special:DeletedContributions/" + username + "|deleted contribs]] | "
-            +  "[{{fullurl:Special:Log|user=" + userenc + "}} logs] | "
-            +  "[[Special:Block/" + username + "|block]] | "
-            +  "[{{fullurl:Special:Log|type=block&page=User:" + userenc + "}} block log])\n";
     }
     
     /**

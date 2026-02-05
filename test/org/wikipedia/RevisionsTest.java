@@ -150,7 +150,7 @@ public class RevisionsTest
             <a href="https://en.wikipedia.org/wiki/Hellenistic_period" title="Hellenistic period">Hellenistic</a> | governing_body =  | \
             designation1 =  | designation1_date =  | designation1_parent =  | designation1_number =  |...&#039;
             <tr class="revision">
-            <td><a href="https://en.wikipedia.org/Special%3ADiff%2F1171939631">prev</a>
+            <td><a href="https://en.wikipedia.org/wiki/Special%3ADiff%2F1171939631">prev</a>
             <td><a href="https://en.wikipedia.org/wiki/Special%3APermanentlink%2F1171939631">2023-08-24T01:56:14Z</a>
             <td>
             <td><b>m</b>

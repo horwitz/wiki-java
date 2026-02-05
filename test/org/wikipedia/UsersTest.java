@@ -92,53 +92,54 @@ public class UsersTest
         Users.ShortLinks sl2 = new Users.ShortLinks(testWiki, null);
         assertEquals(Events.DELETED_EVENT_HTML, sl2.format(Writable.Format.WIKITEXT), "Null user, wikitext");
         assertEquals(Events.DELETED_EVENT_HTML, sl2.format(Writable.Format.HTML), "Null user, HTML");
-    }
-    
-    @Test
-    public void generateUserLinks() throws Exception
-    {
-        String indexPHPURL = testWiki.getIndexPhpUrl();
-        String expected = 
-              "<a href=\"" + testWiki.getPageUrl("User:MER-C") + "\">MER-C</a> ("
-            + "<a href=\"" + testWiki.getPageUrl("User talk:MER-C") + "\">talk</a> | "
-            + "<a href=\"" + testWiki.getPageUrl("Special:Contributions/MER-C") + "\">contribs</a> | "
-            + "<a href=\"" + testWiki.getPageUrl("Special:DeletedContributions/MER-C") + "\">deleted contribs</a> | "
-            + "<a href=\"" + indexPHPURL + "?title=Special:Log&user=MER-C\">logs</a> | "
-            + "<a href=\"" + testWiki.getPageUrl("Special:Block/MER-C") + "\">block</a> | "
-            + "<a href=\"" + indexPHPURL + "?title=Special:Log&type=block&page=User:MER-C\">block log</a>)";
-        assertEquals(expected, testWikiUsers.generateHTMLSummaryLinks("MER-C"));
+        
+        sl2 = new Users.ShortLinks(testWiki, "A B の");
+        expected = "[[User:A B の|A B の]] ([[User talk:A B の|talk]] &middot; "
+            + "[[Special:Contributions/A B の|contribs]])";
+        assertEquals(expected, sl2.format(Writable.Format.WIKITEXT), "Unicode, wikitext");
         
         expected = "<a href=\"" + testWiki.getPageUrl("User:A_B_の") + "\">A B の</a> ("
-            + "<a href=\"" + testWiki.getPageUrl("User_talk:A_B_の") + "\">talk</a> | "
-            + "<a href=\"" + testWiki.getPageUrl("Special:Contributions/A_B_の") + "\">contribs</a> | "
-            + "<a href=\"" + testWiki.getPageUrl("Special:DeletedContributions/A_B_の") + "\">deleted contribs</a> | "
-            + "<a href=\"" + indexPHPURL + "?title=Special:Log&user=A+B+%E3%81%AE\">logs</a> | "
-            + "<a href=\"" + testWiki.getPageUrl("Special:Block/A_B_の") + "\">block</a> | "
-            + "<a href=\"" + indexPHPURL + "?title=Special:Log&type=block&page=User:A+B+%E3%81%AE\">block log</a>)";
-        assertEquals(expected, testWikiUsers.generateHTMLSummaryLinks("A B の"), "special characters");
+            + "<a href=\"" + testWiki.getPageUrl("User_talk:A_B_の") + "\">talk</a> &middot; "
+            + "<a href=\"" + testWiki.getPageUrl("Special:Contributions/A_B_の") + "\">contribs</a>)";
+        assertEquals(expected, sl2.format(Writable.Format.HTML), "Unicode, HTML");
     }
     
     @Test
-    public void generateUserLinksAsWikitext() throws Exception
+    public void formatLinks() throws Exception
     {
-        String expected = """
-            * [[User:MER-C|MER-C]] ([[User talk:MER-C|talk]] | \
-            [[Special:Contributions/MER-C|contribs]] | \
-            [[Special:DeletedContributions/MER-C|deleted contribs]] | \
-            [{{fullurl:Special:Log|user=MER-C}} logs] | \
-            [[Special:Block/MER-C|block]] | \
-            [{{fullurl:Special:Log|type=block&page=User:MER-C}} block log])
-            """;
-        assertEquals(expected, Users.generateWikitextSummaryLinks("MER-C"));
+        Users.Links links = new Users.Links(testWiki, "MER-C");
+        String expected = "[[User:MER-C|MER-C]] ([[User talk:MER-C|talk]] &middot; " +
+            "[[Special:Contributions/MER-C|contribs]] &middot; [[Special:DeletedContributions/MER-C|deleted contribs]] &middot; " +
+            "[https://test.wikipedia.org/w/index.php?title=Special:Log&user=MER-C logs] &middot; " +
+            "[[Special:Block/MER-C|block]] &middot; " +
+            "[https://test.wikipedia.org/w/index.php?title=Special:Log&type=block&page=User:MER-C block log])";
+        assertEquals(expected, links.format(Writable.Format.WIKITEXT), "Simple, wikitext");
         
-        expected = """
-            * [[User:A B の|A B の]] ([[User talk:A B の|talk]] | \
-            [[Special:Contributions/A B の|contribs]] | \
-            [[Special:DeletedContributions/A B の|deleted contribs]] | \
-            [{{fullurl:Special:Log|user=A+B+%E3%81%AE}} logs] | \
-            [[Special:Block/A B の|block]] | \
-            [{{fullurl:Special:Log|type=block&page=User:A+B+%E3%81%AE}} block log])
-            """;
-        assertEquals(expected, Users.generateWikitextSummaryLinks("A B の"), "special characters");
+        String indexPHPURL = testWiki.getIndexPhpUrl();
+        expected = "<a href=\"" + testWiki.getPageUrl("User:MER-C") + "\">MER-C</a> ("
+            + "<a href=\"" + testWiki.getPageUrl("User talk:MER-C") + "\">talk</a> &middot; "
+            + "<a href=\"" + testWiki.getPageUrl("Special:Contributions/MER-C") + "\">contribs</a> &middot; "
+            + "<a href=\"" + testWiki.getPageUrl("Special:DeletedContributions/MER-C") + "\">deleted contribs</a> &middot; "
+            + "<a href=\"" + indexPHPURL + "?title=Special:Log&user=MER-C\">logs</a> &middot; "
+            + "<a href=\"" + testWiki.getPageUrl("Special:Block/MER-C") + "\">block</a> &middot; "
+            + "<a href=\"" + indexPHPURL + "?title=Special:Log&type=block&page=User:MER-C\">block log</a>)";
+        assertEquals(expected, links.format(Writable.Format.HTML), "Simple, HTML");
+        assertThrows(UnsupportedOperationException.class, () -> links.format(Writable.Format.CSV), "Unsupported format");
+
+        Users.Links links2 = new Users.Links(testWiki, "A B の");
+        expected = "[[User:A B の|A B の]] ([[User talk:A B の|talk]] &middot; " +
+            "[[Special:Contributions/A B の|contribs]] &middot; [[Special:DeletedContributions/A B の|deleted contribs]] &middot; " +
+            "[" + indexPHPURL + "?title=Special:Log&user=A+B+%E3%81%AE logs] &middot; [[Special:Block/A B の|block]] &middot; " + 
+            "[" + indexPHPURL + "?title=Special:Log&type=block&page=User:A+B+%E3%81%AE block log])";
+        assertEquals(expected, links2.format(Writable.Format.WIKITEXT), "Unicode, wikitext");
+        
+        expected = "<a href=\"" + testWiki.getPageUrl("User:A_B_の") + "\">A B の</a> ("
+            + "<a href=\"" + testWiki.getPageUrl("User_talk:A_B_の") + "\">talk</a> &middot; "
+            + "<a href=\"" + testWiki.getPageUrl("Special:Contributions/A_B_の") + "\">contribs</a> &middot; "
+            + "<a href=\"" + testWiki.getPageUrl("Special:DeletedContributions/A_B_の") + "\">deleted contribs</a> &middot; "
+            + "<a href=\"" + indexPHPURL + "?title=Special:Log&user=A+B+%E3%81%AE\">logs</a> &middot; "
+            + "<a href=\"" + testWiki.getPageUrl("Special:Block/A_B_の") + "\">block</a> &middot; "
+            + "<a href=\"" + indexPHPURL + "?title=Special:Log&type=block&page=User:A+B+%E3%81%AE\">block log</a>)";
+        assertEquals(expected, links2.format(Writable.Format.HTML), "Unicode, HTML");
     }
 }

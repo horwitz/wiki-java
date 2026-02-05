@@ -118,7 +118,7 @@ public class WikitextUtils
      *  Represents a wikilink. In wikitext, this is [[<code>title</code>|<code>text</code>]].
      *  @param wiki the wiki on which the link exists/is intended for
      *  @param title the title linked to
-     *  @param text the text to display for the link (can be null)
+     *  @param text the text to display for the link (can be null, repeats title)
      *  @since 0.03
      */
     public record WikiLink(Wiki wiki, String title, String text) implements Writable
@@ -136,7 +136,7 @@ public class WikitextUtils
         {
             return switch (format)
             {
-                case HTML -> "<a href=\"" + wiki.getPageUrl(title) + "\">" + (text == null ? "" : text) + "</a>";
+                case HTML -> "<a href=\"" + wiki.getPageUrl(title) + "\">" + (text == null ? title : text) + "</a>";
                 case WIKITEXT -> "[[" + title + (text == null ? "" : "|" + text) + "]]";
                 default -> throw new UnsupportedOperationException("Cannot format a link as this format");
             };
