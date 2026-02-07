@@ -19,6 +19,7 @@
  */
 package org.wikipedia.tools;
 
+import java.util.*;
 import org.junit.jupiter.api.*;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -53,58 +54,50 @@ public class NPPCheckTest
     }
 
     @Test
-    public void outputTableHeader()
+    public void outputTable() throws Exception
     {
-        String wikitableheader = "{| class=\"wikitable sortable\"\n";
+        // Zero row output, tests correct headers only
+        List<String> expected = List.of("Draft", "Title", "Create timestamp", "Review timestamp", "Age at review", "Time between reviews",
+            "Size", "Author", "Author registration timestamp", "Author edit count", "Author blocked", "Author age at creation", "Reviewer", 
+            "Reviewer edit count", "Snippet");
+        check.setMode(NPPCheck.Mode.DRAFTS);
+        check.setReviewer(null);
+        assertEquals(expected, check.outputTable(Collections.EMPTY_LIST).getHeaders(), "Generic header");
+        expected = List.of("betweenreviews");
+        assertEquals(expected, check.outputTable(Collections.EMPTY_LIST).getSkippedCols(), "Patrolled content in draft namespace for all reviewers");
+        check.setMode(NPPCheck.Mode.USERSPACE);
+        assertEquals(expected, check.outputTable(Collections.EMPTY_LIST).getSkippedCols(), "Patrolled content in user namespace for all reviewers");
         
-        // unpatrolled content (no users)
-        String expected = "! Title !! Create timestamp !! Size !! Author !! " +
-            "Author registration timestamp !! Author edit count !! Author age at creation !! " +
-            "Author blocked !! Snippet\n";
-        check.setMode(NPPCheck.Mode.UNPATROLLED);
-        assertEquals(wikitableheader + expected, check.outputTableHeader());
-        check.setMode(NPPCheck.Mode.REDIRECTS);
-        assertEquals(wikitableheader + expected, check.outputTableHeader());
-        
-        // setting user should be irrelevant for patrolled content
-        check.setMode(NPPCheck.Mode.UNPATROLLED);
+        expected = List.of("reviewer", "reviewerec");
+        check.setMode(NPPCheck.Mode.DRAFTS);
         check.setReviewer("MER-C");
-        assertEquals(wikitableheader + expected, check.outputTableHeader());
-        check.setMode(NPPCheck.Mode.REDIRECTS);
-        assertEquals(wikitableheader + expected, check.outputTableHeader());
+        assertEquals(expected, check.outputTable(Collections.EMPTY_LIST).getSkippedCols(), "Patrolled content in draft namespace for a given reviewer");
+        check.setMode(NPPCheck.Mode.USERSPACE);
+        assertEquals(expected, check.outputTable(Collections.EMPTY_LIST).getSkippedCols(), "Patrolled content in user namespace for a given reviewer");
         
-        // mainspace patrolled content for all reviewers
-        expected = "! Title !! Create timestamp !! Review timestamp !! Age at review !! Size !! " +
-            "Author !! Author registration timestamp !! Author edit count !! Author age at creation !! " +
-            "Author blocked !! Reviewer !! Reviewer edit count !! Snippet\n";
+        expected = List.of("draft", "betweenreviews");
         check.setMode(NPPCheck.Mode.PATROLS);
         check.setReviewer(null);
-        assertEquals(wikitableheader + expected, check.outputTableHeader());
-        // mainspace patrolled content for a single reviewers
-        expected = "! Title !! Create timestamp !! Review timestamp !! Age at review !! " +
-            "Time between reviews !! Size !! Author !! Author registration timestamp !! Author edit count !! " +
-            "Author age at creation !! Author blocked !! Snippet\n";
-        check.setReviewer("MER-C");
-        assertEquals(wikitableheader + expected, check.outputTableHeader());
+        assertEquals(expected, check.outputTable(Collections.EMPTY_LIST).getSkippedCols(), "Patrolled content in main namespace for all reviewers");
         
-        // patrolled content in other namespaces for all reviewers
-        expected = "! Draft !! Title !! Create timestamp !! Review timestamp !! Age at review !! Size !! " +
-            "Author !! Author registration timestamp !! Author edit count !! Author age at creation !! " +
-            "Author blocked !! Reviewer !! Reviewer edit count !! Snippet\n";
-        check.setMode(NPPCheck.Mode.DRAFTS);
+        expected = List.of("draft", "reviewer", "reviewerec");
+        check.setReviewer("MER-C");
+        assertEquals(expected, check.outputTable(Collections.EMPTY_LIST).getSkippedCols(), "Patrolled content in main namespace for a given reviewer");
+        
+        expected = List.of("draft", "reviewts", "ageatreview", "betweenreviews", "reviewer", "reviewerec");
+        check.setMode(NPPCheck.Mode.UNPATROLLED);
         check.setReviewer(null);
-        assertEquals(wikitableheader + expected, check.outputTableHeader());
-        check.setMode(NPPCheck.Mode.USERSPACE);
-        assertEquals(wikitableheader + expected, check.outputTableHeader());
+        assertEquals(expected, check.outputTable(Collections.EMPTY_LIST).getSkippedCols(), "Unpatrolled content (no users)");
+        check.setMode(NPPCheck.Mode.REDIRECTS);
+        assertEquals(expected, check.outputTable(Collections.EMPTY_LIST).getSkippedCols(), "Unpatrolled redirects (no users)");
         
-        // patrolled content in other namespaces for a given reviewer
-        expected = "! Draft !! Title !! Create timestamp !! Review timestamp !! Age at review !! " +
-            "Time between reviews !! Size !! Author !! Author registration timestamp !! Author edit count !! " +
-            "Author age at creation !! Author blocked !! Snippet\n";
-        check.setMode(NPPCheck.Mode.DRAFTS);
+        check.setMode(NPPCheck.Mode.UNPATROLLED);
         check.setReviewer("MER-C");
-        assertEquals(wikitableheader + expected, check.outputTableHeader());
-        check.setMode(NPPCheck.Mode.USERSPACE);
-        assertEquals(wikitableheader + expected, check.outputTableHeader());        
+        assertEquals(expected, check.outputTable(Collections.EMPTY_LIST).getSkippedCols(), "Reviewer parameter doesn't matter for unpatrolled content");
+        check.setMode(NPPCheck.Mode.REDIRECTS);
+        assertEquals(expected, check.outputTable(Collections.EMPTY_LIST).getSkippedCols(), "Reviewer parameter doesn't matter for unpatrolled content");
+        
+        // TODO: expand tests to include one row output, timestamp restrictions
+        // and multiple row output
     }
 }

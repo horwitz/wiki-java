@@ -39,7 +39,9 @@ public class DataTable<T extends Record> implements Writable
     private String tableclass;
     private BiFunction<T, Integer, String> rowclass;
     
-    // TODO: remove all instances of WikitextUtils.addTableRow and all dedicated HTML/wikitable exports
+    // TODO: remove all instances of manually constructed HTML/wikitable exports
+    // Sub-tables (for pagination)
+    // Make HTML output sortable
     
     /**
      *  Creates a new data table.
@@ -310,8 +312,6 @@ public class DataTable<T extends Record> implements Writable
     
     private String formatAsHTML()
     {
-        // TODO: make sortable
-
         StringBuilder sb = new StringBuilder();
         if (tableclass == null)
             sb.append("<table>\n");
@@ -361,6 +361,9 @@ public class DataTable<T extends Record> implements Writable
         {
             case null -> "";
             case OffsetDateTime dt -> dt.format(DateTimeFormatter.ISO_DATE_TIME);
+            case Duration dt when format.equals(Writable.Format.HTML)-> MathsAndStats.formatDuration(dt);
+            case Duration dt when format.equals(Writable.Format.WIKITEXT) -> "data-sort-value=" + dt.getSeconds() +
+                " | " + MathsAndStats.formatDuration(dt);
             case Writable w -> w.format(format);
             default -> value.toString();
         };

@@ -1,6 +1,6 @@
 /**
- *  @(#)NPPCheck.java 0.01 11/05/2019
- *  Copyright (C) 2019 - 20xx MER-C
+ *  @(#)NPPCheck.java 0.02 07/02/2026
+ *  Copyright (C) 2019 - 2026 MER-C
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
@@ -108,6 +108,30 @@ public class NPPCheck
     }
     
     /**
+     *  A record representing the tabular output of this program.
+     *  @param draft the name of the draft that was moved into the main namespace
+     *  (if applicable)
+     *  @param title the page that was reviewed
+     *  @param createts the time at which the page was created
+     *  @param reviewts the time at which the page was reviewed
+     *  @param ageatreview how old the page was when it was reviewed
+     *  @param betweenreviews the time since the reviewer's last review
+     *  @param size the size of the page
+     *  @param author the author of the page
+     *  @param regts when the author registered their account
+     *  @param authorec the edit count of the author
+     *  @param blocked whether the author is blocked
+     *  @param ageatcreation
+     *  @param reviewer the reviewer of the page
+     *  @param reviewerec the edit count of the reviewer
+     *  @param snippet a snippet from the page contents
+     *  @since 0.02
+     */
+    public record NPPCheckResult(WikitextUtils.WikiLink draft, WikitextUtils.WikiLink title, OffsetDateTime createts, OffsetDateTime reviewts,
+        Duration ageatreview, Duration betweenreviews, int size, Users.ShortLinks author, OffsetDateTime regts, int authorec, boolean blocked, 
+        Duration ageatcreation, Users.ShortLinks reviewer, int reviewerec, String snippet) {}
+    
+    /**
      *  Runs this program.
      *  @param args args[0] is the username
      *  @throws IOException if a network error occurs
@@ -126,7 +150,7 @@ public class NPPCheck
                 + "(requires one of --patrols, --userspace or --drafts)")
             .addSingleArgumentFlag("--start", "date", "Include patrols made after this date (ISO format).")
             .addSingleArgumentFlag("--end", "date", "Include patrols made before this date (ISO format).")
-            .addVersion("0.01")
+            .addVersion("0.02")
             .addHelp()
             .parse(args);
         String user = parsedargs.get("--user");
@@ -144,7 +168,7 @@ public class NPPCheck
             check.setReviewer(null);
             
             List<? extends Wiki.Event> le = check.fetchLogs(dt);
-            System.out.println(check.outputTable(le));
+            System.out.println(check.outputTable(le).format(Writable.Format.WIKITEXT));
         }
         
         // patrol log
@@ -158,7 +182,7 @@ public class NPPCheck
             if (le.isEmpty())
                 System.out.println("No new pages patrolled.");
             else
-                System.out.println(check.outputTable(le));
+                System.out.println(check.outputTable(le).format(Writable.Format.WIKITEXT));
         }
                 
         // Pages moved from draft to main
@@ -172,7 +196,7 @@ public class NPPCheck
             if (le.isEmpty())
                 System.out.println("No pages moved from draft to main.");
             else
-                System.out.println(check.outputTable(le));
+                System.out.println(check.outputTable(le).format(Writable.Format.WIKITEXT));
         }
 
         // Pages moved from user to main
@@ -186,7 +210,7 @@ public class NPPCheck
             if (le.isEmpty())
                 System.out.println("No pages moved from user to main.");
             else
-                System.out.println(check.outputTable(le));
+                System.out.println(check.outputTable(le).format(Writable.Format.WIKITEXT));
         }
         
         // Expanded redirects
@@ -200,7 +224,7 @@ public class NPPCheck
             if (le.isEmpty())
                 System.out.println("No expanded redirects.");
             else
-                System.out.println(check.outputTable(le));
+                System.out.println(check.outputTable(le).format(Writable.Format.WIKITEXT));
         }
 
 /* 
@@ -468,13 +492,13 @@ public class NPPCheck
     }
     
     /**
-     *  Fetches metadata of reviewers if this is a run that isn't for a single
+     *  Fetches data of reviewers if this is a run that isn't for a single
      *  user. Otherwise returns the empty list.
-     *  @param events the events to fetch metadata for
+     *  @param events the events to fetch data for
      *  @return (see above)
      *  @throws IOException if a network error occurs
      */
-    public List<Wiki.User> fetchReviewerMetadata(List<? extends Wiki.Event> events) throws IOException
+    public List<Wiki.User> fetchReviewerData(List<? extends Wiki.Event> events) throws IOException
     {
         if (reviewer != null)
             return Collections.emptyList();
@@ -484,16 +508,23 @@ public class NPPCheck
         return wiki.getUsers(usernames);
     }
     
-    public String outputTable(List<? extends Wiki.Event> le) throws IOException
+    /**
+     *  Returns the output of this tool in a format-independent table.
+     *  @param le the events to analyse
+     *  @return a DataTable representing the output of this tool
+     *  @throws IOException if a network error occurs
+     *  @see NPPCheck.NPPCheckResult
+     */
+    public DataTable<NPPCheckResult> outputTable(List<? extends Wiki.Event> le) throws IOException
     {
         List<Map<String, Object>> pageinfo = fetchMetadata(le);
         pageinfo = fetchCreatorMetadata(pageinfo);
-        List<Duration> dt_patrol = Events.timeBetweenEvents(le);
+        List<Duration> dt_patrol = le.size() > 1 ? Events.timeBetweenEvents(le) : new ArrayList<>();
         dt_patrol.add(Duration.ofSeconds(-1));
-        List<Wiki.User> reviewerinfo = fetchReviewerMetadata(le);
+        List<Wiki.User> reviewerinfo = fetchReviewerData(le);
         List<String> snippets = fetchSnippets(le);
                 
-        StringBuilder sb = new StringBuilder(outputTableHeader());
+        List<NPPCheckResult> out = new ArrayList<>();
         for (int i = 0; i < pageinfo.size(); i++)
         {
             Map<String, Object> info = pageinfo.get(i);
@@ -505,12 +536,15 @@ public class NPPCheck
             OffsetDateTime registrationdate = null;
             Duration dt_article = Duration.ofDays(-999999);
             Duration dt_account = Duration.ofDays(-999999);
+            Duration dt_review = null;
             
             // author metadata (may be IP address, may be account so old its
             // creation date is null)
             String authorname = "null";
             Wiki.User creator = (Wiki.User)info.get("creator"); 
             int editcount = -1;
+            Users.ShortLinks usl = null;
+            int reviewerec = -1;
             boolean blocked = false;
             
             if (first != null)
@@ -528,72 +562,50 @@ public class NPPCheck
                 }
             }
             
-            List<String> tablecells = new ArrayList<>();
-            // Draft column
-            if (mode.requiresDrafts())
-                tablecells.add("[[:" + le.get(i).getTitle() + "]]");
-            // Article column
-            tablecells.add("[[:" + info.get("pagename") + "]]");
-            // Creation date column
-            tablecells.add(Objects.toString(createdate));
             if (mode.requiresReviews())
             {
-                // Review date column
-                tablecells.add(patroldate.toString());
-                // Article age at review column
-                tablecells.add("data-sort-value=" + dt_article.getSeconds() + " | " 
-                    + MathsAndStats.formatDuration(dt_article));
-                // Time between reviews column                    
-                if (reviewer != null)
+                if (reviewer == null)
                 {
-                    Duration dt_review = dt_patrol.get(i);
-                    tablecells.add("data-sort-value=" + dt_review.getSeconds() + " | " 
-                        + MathsAndStats.formatDuration(dt_review));
-                }                    
+                    usl = new Users.ShortLinks(wiki, reviewerinfo.get(i).getUsername());
+                    reviewerec = reviewerinfo.get(i).countEdits();
+                }
+                else
+                    dt_review = dt_patrol.get(i);
             }
-            // Size column
-            tablecells.add("" + info.getOrDefault("size", -1));
-            // Author column
-            tablecells.add("{{noping2|" + authorname + "}}");              
-            // Author registration date column
-            tablecells.add(Objects.toString(registrationdate));
-            // Author edit count
-            tablecells.add(String.valueOf(editcount));
-            // Author age at creation column
-            tablecells.add("data-sort-value=" + dt_account.getSeconds() + " | " 
-                + MathsAndStats.formatDuration(dt_account));
-            // Author blocked column
-            tablecells.add(String.valueOf(blocked));
-            // Reviewer metadata group
-            if (mode.requiresReviews() && reviewer == null)
-            {
-                Wiki.User reviewer = reviewerinfo.get(i);
-                // Reviewer column
-                tablecells.add("{{noping2|" + reviewer.getUsername() + "}}");
-                // Reviewer edit count column
-                tablecells.add(String.valueOf(reviewer.countEdits()));
-            }
-            // Snippet column
-            tablecells.add(snippets.get(i));
-            sb.append(WikitextUtils.addTableRow(tablecells));
+            
+            out.add(new NPPCheckResult(
+                mode.requiresDrafts() ? new WikitextUtils.WikiLink(wiki, le.get(i).getTitle(), null) : null, // draft title
+                new WikitextUtils.WikiLink(wiki, (String)info.get("pagename"), null), // article title
+                createdate,
+                patroldate,
+                dt_article,
+                dt_review,
+                (Integer)info.getOrDefault("size", -1),
+                new Users.ShortLinks(wiki, authorname), registrationdate, editcount, blocked, dt_account, // author info
+                usl, reviewerec, // reviewer info
+                snippets.get(i)));
         }
-        sb.append("|}\n\n");
-        return sb.toString();
-    }
-    
-    /**
-     *  Outputs a table header in wikitext.
-     *  @return a wikitext table header
-     */
-    public String outputTableHeader()
-    {
-        return """
-            {| class="wikitable sortable"
-            ! %sTitle !! Create timestamp !! %s%sSize !! Author !! Author registration timestamp !! \
-            Author edit count !! Author age at creation !! Author blocked !! %sSnippet
-            """.formatted(mode.requiresDrafts() ? "Draft !! " : "", 
-            mode.requiresReviews() ? "Review timestamp !! Age at review !! " : "",
-            mode.requiresReviews() && reviewer != null ? "Time between reviews !! " : "",
-            mode.requiresReviews() && reviewer == null ? "Reviewer !! Reviewer edit count !! " : "");
+        
+        List<String> headers = List.of("Draft", "Title", "Create timestamp", "Review timestamp",
+            "Age at review", "Time between reviews", "Size", "Author", "Author registration timestamp", 
+            "Author edit count", "Author blocked", "Author age at creation", "Reviewer", "Reviewer edit count", 
+            "Snippet");
+        DataTable<NPPCheckResult> table = DataTable.create(out, headers);
+                
+        List<String> skiphdrs = new ArrayList();
+        if (!mode.requiresDrafts())
+            skiphdrs.add("draft");
+        if (mode.requiresReviews())
+        {
+            if (reviewer == null)
+                skiphdrs.add("betweenreviews");
+            else
+                skiphdrs.addAll(List.of("reviewer", "reviewerec"));
+        }
+        else
+            skiphdrs.addAll(List.of("reviewts", "ageatreview", "betweenreviews", "reviewer", "reviewerec"));
+        table.setSkippedColumns(skiphdrs);
+        
+        return table;
     }
 }

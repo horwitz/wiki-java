@@ -41,13 +41,6 @@ public class WikitextUtilsTest
     }
     
     @Test
-    public void addTableRow()
-    {
-        List<String> cells = List.of("A", "B", "C");
-        assertEquals("|-\n| A || B || C\n", WikitextUtils.addTableRow(cells));
-    }
-    
-    @Test
     public void removeComments()
     {
         assertEquals("A  B",        WikitextUtils.removeComments("A <!-- comment --> B"));
