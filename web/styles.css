@@ -46,19 +46,18 @@ table.wikitable > caption
     font-weight: bold;
 }
 
-/* Data type table styles */
-td.boolean { text-align: center }
-td.difflink { width: 2.5em; }
-td.date { width: 9em; }
-td.flag { width: 1.3em; text-align: center; }
-td.title { width: 12em; }
-td.user { width: 12em; }
-td.revsize { width: 6em; text-align: right; }
-td.revsizediff { width: 3em; text-align: right; }
-
-/* 
- * Styles for ParserUtils.revisionsToHTML() - note: rendered as a wikitable 
- */
+/* Data type table styles - no good CSS works for alignment yet
+   see https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Selectors/Column_combinator */
+col.boolean { text-align: center }
+col.difflink { width: 2.5em; }
+col.date { width: 9em; }
+col.flag { width: 1.3em; text-align: center; }
+col.title { width: 12em; }
+col.user { width: 12em; }
+col.revsize { width: 6em; text-align: right; }
+col.revsizediff { width: 3em; text-align: right; }
+col.duration { width: 7em; text-align: right; }
+col.editcount { width: 7em; text-align: right; }
 tr.revision { font-size: 80%; }
 span.sizeincreased { color: #009900 }
 span.sizedecreased { color: #990000 }

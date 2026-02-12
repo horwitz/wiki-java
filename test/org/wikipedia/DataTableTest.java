@@ -380,5 +380,35 @@ public class DataTableTest
             </table>
             """;
         assertEquals(expected, dt.format(Writable.Format.HTML), "Styled");
+        
+        dt2 = DataTable.create(list3, headers3);
+        classes = new ArrayList<>();
+        classes.add(null);
+        classes.add("skipped");
+        classes.add("column2");
+        dt2.setSkippedColumns(skipcols);
+        dt2.setColumnClasses(classes);
+        expected = """
+            <table>
+            <colgroup>
+            <col />
+            <col class="column2" />
+            </colgroup>
+            <thead>
+            <tr>
+            <th>Test1
+            <th>Test3
+            </thead>
+            <tbody>
+            <tr>
+            <td>A
+            <td>5
+            <tr>
+            <td>B
+            <td>2
+            </tbody>
+            </table>
+            """;
+        assertEquals(expected, dt2.format(Writable.Format.HTML), "Styled three column with skipped columns");
     }
 }

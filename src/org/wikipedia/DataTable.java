@@ -320,12 +320,16 @@ public class DataTable<T extends Record> implements Writable
         if (cssclasses != null)
         {
             sb.append("<colgroup>\n");
-            for (String cls : cssclasses)
+            RecordComponent[] rc = data.get(0).getClass().getRecordComponents();
+            for (int i = 0; i < cssclasses.size(); i++)
             {
-                if (cls == null)
-                    sb.append("<col />\n");
-                else
-                    sb.append("<col class=\"").append(cls.replace("\"", "&quot;")).append("\" />\n");
+                if (skipcols == null || !skipcols.contains(rc[i].getName()))
+                {
+                    if (cssclasses.get(i) == null)
+                        sb.append("<col />\n");
+                    else
+                        sb.append("<col class=\"").append(cssclasses.get(i).replace("\"", "&quot;")).append("\" />\n");
+                }
             }
             sb.append("</colgroup>\n");
         }

@@ -590,6 +590,11 @@ public class NPPCheck
             "Age at review", "Time between reviews", "Size", "Author", "Author registration timestamp", 
             "Author edit count", "Author blocked", "Author age at creation", "Reviewer", "Reviewer edit count", 
             "Snippet");
+        List<String> colclasses = new ArrayList<>();
+        colclasses.addAll(List.of("title", "title", "date", "date"));
+        colclasses.addAll(List.of("duration", "duration", "revsize", "user", "date"));
+        colclasses.addAll(List.of("editcount", "boolean", "duration", "user", "editcount"));
+        colclasses.add(null);
         DataTable<NPPCheckResult> table = DataTable.create(out, headers);
                 
         List<String> skiphdrs = new ArrayList();
@@ -605,7 +610,9 @@ public class NPPCheck
         else
             skiphdrs.addAll(List.of("reviewts", "ageatreview", "betweenreviews", "reviewer", "reviewerec"));
         table.setSkippedColumns(skiphdrs);
-        
+        table.setTableClass("wikitable");
+        table.setRowClasses((i, s) -> "revision");
+        table.setColumnClasses(colclasses);
         return table;
     }
 }
