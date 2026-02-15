@@ -150,5 +150,45 @@ public class WikitextUtils
                 default -> throw new UnsupportedOperationException("Cannot format a link as this format");
             };
         }
-    }   
+    }
+    
+    /**
+     *  Represents a heading.
+     *  @param text the heading text
+     *  @param level the heading level, between 1 and 6 inclusive
+     *  @since 0.03
+     */
+    public record Heading(String text, int level) implements Writable
+    {
+        /**
+         *  Constructs a new format-independent heading.
+         *  @param text the heading text
+         *  @param level the heading level, between 1 and 6 inclusive
+         *  @throws IllegalArgumentException if {@code level} is not between 1 and 6
+         */
+        public Heading
+        {
+            if (level < 1 || level > 6)
+                throw new IllegalArgumentException("Heading level must be between 1 and 6");
+        }
+        
+        /**
+         *  Formats this heading in wikitext or HTML. CSV or other formats are 
+         *  not supported. <strong>Inputs are not sanitized</strong>.
+         *  @param format {@link Writable.Format#WIKITEXT} or {@link
+         *  Writable.Format#HTML}
+         *  @return this heading formatted as wikitext or HTML
+         *  @throws UnsupportedOperationException if other formats are supplied
+         */
+        @Override
+        public String format(Writable.Format format)
+        {
+            return switch (format)
+            {
+                case HTML -> "<h" + level + ">" + text + "</h" + level + ">";
+                case WIKITEXT -> "=".repeat(level) + text + "=".repeat(level);
+                default -> throw new UnsupportedOperationException("Cannot format a heading as this format");    
+            };
+        }
+    }
 }

@@ -76,4 +76,20 @@ public class WikitextUtilsTest
         assertEquals("<a href=\"https://example.com\"></a>", el2.format(Writable.Format.HTML));
         assertEquals("[https://example.com]", el2.format(Writable.Format.WIKITEXT));
     }
+    
+    @Test
+    public void formatHeading()
+    {
+        WikitextUtils.Heading hdr = new WikitextUtils.Heading("Test", 1);
+        assertEquals("=Test=", hdr.format(Writable.Format.WIKITEXT), "Wikitext level 1");
+        assertEquals("<h1>Test</h1>", hdr.format(Writable.Format.HTML), "HTML level 1");
+        
+        WikitextUtils.Heading hdr2 = new WikitextUtils.Heading("Test", 3);
+        assertEquals("===Test===", hdr2.format(Writable.Format.WIKITEXT), "Wikitext level 3");
+        assertEquals("<h3>Test</h3>", hdr2.format(Writable.Format.HTML), "HTML level 3");
+        
+        assertThrows(UnsupportedOperationException.class, () -> hdr2.format(Writable.Format.CSV), "CSV not supported");
+        assertThrows(IllegalArgumentException.class, () -> new WikitextUtils.Heading("Test", 0), "Zero heading level");
+        assertThrows(IllegalArgumentException.class, () -> new WikitextUtils.Heading("Test", 7), "HTML only supports 6 heading levels");
+    }
 }

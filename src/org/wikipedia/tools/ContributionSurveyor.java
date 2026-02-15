@@ -675,7 +675,7 @@ public class ContributionSurveyor
             {
                 Map<String, List<Wiki.Revision>> user_survey = results.get(username);
                 sections.addAll(Pages.toWikitextPaginatedList(user_survey.keySet(), page -> outputNextPage(user_survey, page), 
-                    (start, end) -> "===" + username_hdr + " Pages " + start + " to " + end + "===", 
+                    (start, end) -> new WikitextUtils.Heading(username_hdr + " Pages " + start + " to " + end, 3).format(fmt),
                     articlespersection, false));
             }
             
@@ -684,7 +684,7 @@ public class ContributionSurveyor
             {
                 Map<String, List<Wiki.Revision>> user_survey = delresults.get(username);
                 sections.addAll(Pages.toWikitextPaginatedList(user_survey.keySet(), page -> outputNextPage(user_survey, page), 
-                    (start, end) -> "===" + username_hdr + " Deleted pages " + start + " to " + end + "===", 
+                    (start, end) -> new WikitextUtils.Heading(username_hdr + " Deleted pages " + start + " to " + end, 3).format(fmt),
                     articlespersection, false));
             }
             
@@ -693,13 +693,13 @@ public class ContributionSurveyor
             {
                 Map<String, List<String>> imagesurvey2 = imagesurvey.get(username);
                 sections.addAll(Pages.toWikitextPaginatedList(imagesurvey2.get("local"), Pages.LIST_OF_LINKS, 
-                    (start, end) -> "===" + username_hdr + " Local files " + start + " to " + end + "===", 
+                    (start, end) -> new WikitextUtils.Heading(username_hdr + " Local files " + start + " to " + end, 3).format(fmt), 
                     articlespersection, false));
                 sections.addAll(Pages.toWikitextPaginatedList(imagesurvey2.get("mediarepo"), Pages.LIST_OF_LINKS, 
-                    (start, end) -> "===" + username_hdr + " Foreign repo files " + start + " to " + end + "===", 
+                    (start, end) -> new WikitextUtils.Heading(username_hdr + " Foreign repo files " + start + " to " + end, 3).format(fmt),
                     articlespersection, false));
                 sections.addAll(Pages.toWikitextPaginatedList(imagesurvey2.get("transferred"), Pages.LIST_OF_LINKS, 
-                    (start, end) -> "===" + username_hdr + " Transferred files " + start + " to " + end + "===", 
+                    (start, end) -> new WikitextUtils.Heading(username_hdr + " Transferred files " + start + " to " + end, 3).format(fmt),
                     articlespersection, false));
             }
             
@@ -707,7 +707,7 @@ public class ContributionSurveyor
             // start of every new page
             String header = "";
             if (!comingle)
-                header = "== " + username + " ==\n" + new Users.Links(wiki, username).format(fmt) + "\n";
+                header = new WikitextUtils.Heading(username, 2).format(fmt) + "\n" + new Users.Links(wiki, username).format(fmt) + "\n";
             for (int i = sizebefore; i < sections.size(); i++)
             {
                 if (i == sizebefore || i % sectionsperpage == 0)

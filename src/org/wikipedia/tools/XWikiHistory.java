@@ -34,7 +34,7 @@ public class XWikiHistory
 {
     private final static WMFWikiFarm sessions = WMFWikiFarm.instance();
     
-    public record ArticleData(String domain, String page, OffsetDateTime createdate, String user, int fedits, String snippet) { }
+    public record ArticleData(String domain, String page, OffsetDateTime createdate, Users.ShortLinks user, int fedits, String snippet) { }
     // temporary, likely to move elsewhere
     public record DeletionLog(String project, OffsetDateTime ts, String admin, String action, String title, String reason) { }
     public record GUserInfo(Users.ShortLinks user, Object gedits, Object home, String wikis, Object locked) { }
@@ -100,9 +100,7 @@ public class XWikiHistory
                     + "[" + wiki.getPageUrl(wiki.getTalkPage(page)) + " talk] &middot; "
                     + "[" + wiki.getPageUrl("Special:PageHistory/" + page) + " history])",
                 bottomhistory.get(0).getTimestamp(),
-                "[" + wiki.getPageUrl("User:" + username) + " " + username + "] ("
-                    + "[" + wiki.getPageUrl("User talk:" + username) + " talk] &middot; "
-                    + "[" + wiki.getPageUrl("Special:Contributions/" + username) + " contribs])",
+                new Users.ShortLinks(wiki, username),
                 creator == null ? 0 : creator.countEdits(),
                 snippet == null ? "null" : snippet));
         }
