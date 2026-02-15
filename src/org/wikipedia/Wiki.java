@@ -2565,7 +2565,7 @@ public class Wiki implements Comparable<Wiki>
         Map<String, Object> postparams = new HashMap<>();
         for (String x : constructTitleString(List.of(titles)))
         {
-            postparams.put("title", x);
+            postparams.put("titles", x);
             String response = makeApiCall(getparams, postparams, "purge");
             detectUncheckedErrors(response, null, null);
         }
