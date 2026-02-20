@@ -292,17 +292,16 @@ public class ExternalLinkPopularity
     
     public String exportResultsAsHTML(Map<String, Map<String, List<String>>> urldata, Map<String, Integer> popularity)
     {
-        Pages pageUtils = Pages.of(wiki);
+        Writable.Format fmt = Writable.Format.HTML;
         StringBuilder sb = new StringBuilder();
         urldata.forEach((page, pagedomaintourls) ->
         {
             if (pagedomaintourls.isEmpty())
                 return;
-            sb.append("""
-                <h2>%s</h2>
-                %s
-                <ul>
-                """.formatted(pageUtils.generatePageLink(page), pageUtils.generateSummaryLinks(page)));
+            sb.append(new WikitextUtils.Heading(new WikitextUtils.WikiLink(wiki, page, null).format(fmt), 2).format(fmt));
+            sb.append("\n");
+            sb.append(new Pages.Links(wiki, page).format(fmt));
+            sb.append("<ul>\n");
             DoubleStream.Builder scores = DoubleStream.builder();
             DoubleSummaryStatistics dss = new DoubleSummaryStatistics();
             pagedomaintourls.forEach((domain, listoflinks) ->
@@ -319,17 +318,13 @@ public class ExternalLinkPopularity
                     sb.append(" link; ");
                 else
                     sb.append(" links; ");
-                sb.append(pageUtils.generatePageLink("Special:Linksearch/*." + domain, "Linksearch"));
+                sb.append(new WikitextUtils.WikiLink(wiki, "Special:Linksearch/*." + domain, "Linksearch").format(fmt));
                 sb.append(")\n");
                 scores.accept(numlinks);
                 dss.accept(numlinks);
                 sb.append("<ul>\n");
                 for (String url : listoflinks)
-                {
-                    sb.append("""
-                        <li><a href="%s">%s</a>
-                        """.formatted(url, url));
-                }
+                    sb.append("<li>").append(new WikitextUtils.ExternalLink(url, null).format(fmt)).append("\n");
                 sb.append("</ul>\n");
             });
             sb.append("</ul>\n");

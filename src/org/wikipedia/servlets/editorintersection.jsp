@@ -120,7 +120,6 @@ first in the GUI) apply.
             .collect(Collectors.groupingBy(Wiki.Revision::getTitle));
         bypage.put(key, grouppage);
     });
-    Pages pageUtils = Pages.of(wiki);
     Revisions revisionUtils = Revisions.of(wiki);
 
     String blah = bypage.entrySet().stream()
@@ -141,7 +140,7 @@ first in the GUI) apply.
             {
                 String thisPage = entry2.getKey();
                 List<Wiki.Revision> revs = entry2.getValue();
-                StringBuilder title = new StringBuilder(pageUtils.generateSummaryLinks(thisPage));
+                StringBuilder title = new StringBuilder(new Pages.Links(wiki, thisPage).format(Writable.Format.HTML));
                 title.append(" &ndash; ");
                 title.append(revs.size());
                 title.append(" edit");

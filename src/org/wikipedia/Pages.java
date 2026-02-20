@@ -1,6 +1,6 @@
 /**
- *  @(#)Pages.java 0.01 31/03/2018
- *  Copyright (C) 2018-20XX MER-C and contributors
+ *  @(#)Pages.java 0.02 20/02/2026
+ *  Copyright (C) 2018-2026 MER-C and contributors
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
@@ -29,7 +29,7 @@ import java.util.regex.*;
 /**
  *  Utility methods for lists of wiki pages.
  *  @author MER-C
- *  @version 0.01
+ *  @version 0.02
  */
 public class Pages 
 {
@@ -46,6 +46,40 @@ public class Pages
     private Pages(Wiki wiki)
     {
         this.wiki = wiki;
+    }
+    
+    /**
+     *  Generates summary page links of the form <samp>Page (talk &middot; talk 
+     *  &middot; history &middot; logs)</samp>.
+     *  @param wiki the wiki containing the page
+     *  @param page the page to generate links for
+     *  @since 0.02
+     */
+    public record Links(Wiki wiki, String page) implements Writable
+    {
+        /**
+         *  Generates summary page links in wikitext or HTML. CSV or other formats
+         *  are not supported. <strong>Inputs are not sanitized</strong>.
+         *  @param fmt {@link Writable.Format#WIKITEXT} or {@link
+         *  Writable.Format#HTML}
+         *  @return the formatted page links
+         *  @throws UnsupportedOperationException if other formats are supplied
+         */
+        @Override
+        public String format(Writable.Format fmt)
+        {
+            WikitextUtils.WikiLink wlaux;
+            if (wiki.namespace(page) % 2 == 1)
+                wlaux = new WikitextUtils.WikiLink(wiki, wiki.getContentPage(page), "subject");
+            else
+                wlaux = new WikitextUtils.WikiLink(wiki, wiki.getTalkPage(page), "talk");
+            return new WikitextUtils.WikiLink(wiki, page, null).format(fmt) + " (" +
+                wlaux.format(fmt) + " &middot; " +
+                new WikitextUtils.WikiLink(wiki, "Special:Edit/" + page, "edit").format(fmt) + " &middot; " +
+                new WikitextUtils.WikiLink(wiki, "Special:PageHistory/" + page, "history").format(fmt) + " &middot; " +
+                new WikitextUtils.ExternalLink(wiki.getIndexPhpUrl() + "?title=Special:Log&page=" + 
+                    URLEncoder.encode(page, StandardCharsets.UTF_8), "logs").format(fmt) + ")";
+        }
     }
     
     /**
@@ -294,79 +328,5 @@ public class Pages
             counter++;
         }
         return ret;
-    }
-    
-    /**
-     *  Outputs a hyperlink to the given page. It is assumed the page exists.
-     *  @param page a page to make a link for
-     *  @return HTML for that link
-     */
-    public String generatePageLink(String page)
-    {
-        return generatePageLink(page, WikitextUtils.recode(page), true);
-    }
-    
-    /**
-     *  Outputs a hyperlink to the given page. Tags on a CSS class for red links
-     *  if applicable.
-     *  @param page a page to make a link for
-     *  @param exists whether that page exists
-     *  @return HTML for that link
-     */
-    public String generatePageLink(String page, boolean exists)
-    {
-        return generatePageLink(page, WikitextUtils.recode(page), exists);
-    }
-
-    /**
-     *  Outputs a hyperlink to the given page. It is assumed the page exists.
-     *  @param page a page to make a link for
-     *  @param text the text for that link
-     *  @return HTML for that link
-     */    
-    public String generatePageLink(String page, String text)
-    {
-        return generatePageLink(page, text, true);
-    }
-
-    /**
-     *  Outputs a hyperlink to the given page. Tags on a CSS class for red links
-     *  if applicable.
-     *  @param page a page to make a link for
-     *  @param text the text for that link
-     *  @param exists whether that page exists
-     *  @return HTML for that link
-     */    
-    public String generatePageLink(String page, String text, boolean exists)
-    {
-        // Implementation note: class name chosen to equal MediaWiki
-        StringBuilder sb = new StringBuilder("<a href=\"");
-        sb.append(wiki.getPageUrl(page));
-        sb.append("\"");
-        sb.append(exists ? ">" : " class=\"new\">");
-        sb.append(text);
-        sb.append("</a>");
-        return sb.toString();
-    }
-    
-    /**
-     *  Generates summary page links of the form Page (edit | talk | history | logs)
-     *  as HTML. Doesn't support talk pages yet.
-     *  @param page the page to generate links for
-     *  @return generated HTML
-     */
-    public String generateSummaryLinks(String page)
-    {
-        if (wiki.namespace(page) % 2 == 1)
-            return ""; // no talk pages yet
-
-        String indexPHPURL = wiki.getIndexPhpUrl();
-        String pageenc = URLEncoder.encode(page, StandardCharsets.UTF_8);
-
-        return generatePageLink(page) + " ("
-            + "<a href=\"" + indexPHPURL + "?title=" + pageenc + "&action=edit\">edit</a> | "
-            + generatePageLink(wiki.getTalkPage(page), "talk") + " | "
-            + "<a href=\"" + indexPHPURL + "?title=" + pageenc + "&action=history\">history</a> | "
-            + "<a href=\"" + indexPHPURL + "?title=Special:Log&page=" + pageenc + "\">logs</a>)";
     }
 }

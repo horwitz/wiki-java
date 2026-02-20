@@ -112,12 +112,8 @@ public class ExternalLinks
         for (Wiki.LinksearchResult result : results)
         {
             builder.append(fmt.equals(Writable.Format.WIKITEXT) ? "# " : "<li>");
-            builder.append(new WikitextUtils.WikiLink(result.wiki(), result.page(), null).format(fmt));
-            builder.append(" (");
-            builder.append(new WikitextUtils.WikiLink(result.wiki(), "Special:Edit/" + result.page(), "edit").format(fmt));
-            builder.append(" &middot; ");
-            builder.append(new WikitextUtils.WikiLink(result.wiki(), "Special:PageHistory/" + result.page(), "history").format(fmt));
-            builder.append(") uses link ");
+            builder.append(new Pages.Links(result.wiki(), result.page()).format(fmt));
+            builder.append(" uses link ");
             builder.append(new WikitextUtils.ExternalLink(result.url(), result.url()).format(fmt));
             builder.append("\n");
         }

@@ -31,7 +31,6 @@
     Wiki enWiki = sessions.sharedSession("en.wikipedia.org");
     enWiki.setQueryLimit(20000); // 40 network requests
     Revisions revisionUtils = Revisions.of(enWiki);
-    Pages pageUtils = Pages.of(enWiki);
     
     ServletUtils.renderHeader(request, response, out);
 %>
@@ -57,12 +56,8 @@ Someone # Spam
         <input type=text size=50 name=page required value="<%= inputpage_attribute %>">
         <%
         if (inputpage != null)
-        {
-            out.print("(" + pageUtils.generatePageLink(inputpage, "visit") + " &middot; ");
-        %>
-        <a href="<%= enWiki.getIndexPhpUrl() + "?action=edit&title=" + inputpage_url %>">edit</a>)
-        <%
-        }
+            out.print("(" + new WikitextUtils.WikiLink(enWiki, inputpage_url, "visit").format(Writable.Format.HTML) + " &middot; " +
+                new WikitextUtils.WikiLink(enWiki, "Special:Edit" + inputpage_url, "edit").format(Writable.Format.HTML));
         %>
 
 <tr><td>Show changes from:

@@ -161,38 +161,31 @@ public class PagesTest
             """;
         assertEquals(expected, output.get(2));
     }
-    
-    @Test
-    public void generatePageLink()
-    {
-        assertEquals("<a href=\"https://test.wikipedia.org/wiki/Test\">Test</a>", 
-            testWikiPages.generatePageLink("Test"));
-        assertEquals("<a href=\"https://test.wikipedia.org/wiki/Test\" class=\"new\">Test</a>", 
-            testWikiPages.generatePageLink("Test", false));
-        assertEquals("<a href=\"https://test.wikipedia.org/wiki/Test\">Caption</a>", 
-            testWikiPages.generatePageLink("Test", "Caption"));
-        assertEquals("<a href=\"https://test.wikipedia.org/wiki/Test\" class=\"new\">Caption</a>", 
-            testWikiPages.generatePageLink("Test", "Caption", false));
-    }
 
     @Test
-    public void generateSummaryLinks()
+    public void formatLinks()
     {
         String indexPHPURL = testWiki.getIndexPhpUrl();
-        String expected =
-              "<a href=\"" + testWiki.getPageUrl("Test") + "\">Test</a> ("
-            + "<a href=\"" + indexPHPURL + "?title=Test&action=edit\">edit</a> | "
-            + "<a href=\"" + testWiki.getPageUrl("Talk:Test") + "\">talk</a> | "
-            + "<a href=\"" + indexPHPURL + "?title=Test&action=history\">history</a> | "
+        String expected = "<a href=\"" + testWiki.getPageUrl("Test") + "\">Test</a> ("
+            + "<a href=\"" + testWiki.getPageUrl("Talk:Test") + "\">talk</a> &middot; "
+            + "<a href=\"" + testWiki.getPageUrl("Special:Edit/Test") + "\">edit</a> &middot; "
+            + "<a href=\"" + testWiki.getPageUrl("Special:PageHistory/Test") + "\">history</a> &middot; "
             + "<a href=\"" + indexPHPURL + "?title=Special:Log&page=Test\">logs</a>)";
-        assertEquals(expected, testWikiPages.generateSummaryLinks("Test"));
+        assertEquals(expected, new Pages.Links(testWiki, "Test").format(Writable.Format.HTML));
+        
+        expected = "<a href=\"" + testWiki.getPageUrl("Template talk:Test") + "\">Template talk:Test</a> ("
+            + "<a href=\"" + testWiki.getPageUrl("Template:Test") + "\">subject</a> &middot; "
+            + "<a href=\"" + testWiki.getPageUrl("Special:Edit/Template talk:Test") + "\">edit</a> &middot; "
+            + "<a href=\"" + testWiki.getPageUrl("Special:PageHistory/Template talk:Test") + "\">history</a> &middot; "
+            + "<a href=\"" + indexPHPURL + "?title=Special:Log&page=Template+talk%3ATest\">logs</a>)";
+        assertEquals(expected, new Pages.Links(testWiki, "Template talk:Test").format(Writable.Format.HTML), "talk page");
 
         expected = "<a href=\"" + testWiki.getPageUrl("A B の") + "\">A B の</a> ("
-            + "<a href=\"" + indexPHPURL + "?title=A+B+%E3%81%AE&action=edit\">edit</a> | "
-            + "<a href=\"" + testWiki.getPageUrl("Talk:A B の") + "\">talk</a> | "
-            + "<a href=\"" + indexPHPURL + "?title=A+B+%E3%81%AE&action=history\">history</a> | "
+            + "<a href=\"" + testWiki.getPageUrl("Talk:A B の") + "\">talk</a> &middot; "
+            + "<a href=\"" + testWiki.getPageUrl("Special:Edit/A B の") + "\">edit</a> &middot; "
+            + "<a href=\"" + testWiki.getPageUrl("Special:PageHistory/A B の") + "\">history</a> &middot; "
             + "<a href=\"" + indexPHPURL + "?title=Special:Log&page=A+B+%E3%81%AE\">logs</a>)";
-        assertEquals(expected, testWikiPages.generateSummaryLinks("A B の"), "special characters");
+        assertEquals(expected, new Pages.Links(testWiki, "A B の").format(Writable.Format.HTML), "special characters");
     }
 
     @Test
