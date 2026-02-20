@@ -77,7 +77,7 @@ public class ExternalLinkPopularity
         }
         Map<String, Map<String, List<String>>> results = elp.fetchExternalLinks(pages);
         Map<String, Integer> popresults = elp.determineLinkPopularity(flatten(results));
-        System.out.println(elp.exportResultsAsWikitext(results, popresults));
+        System.out.println(elp.exportResults(results, popresults, Writable.Format.WIKITEXT));
         
         // String[] spampages = enWiki.getCategoryMembers("Category:Wikipedia articles with undisclosed paid content from March 2018", Wiki.MAIN_NAMESPACE);
         // filter down the spam to recently created pages
@@ -232,67 +232,16 @@ public class ExternalLinkPopularity
         return ArrayUtils.sortByValue(lsresults, Comparator.naturalOrder());
     }
     
-    public String exportResultsAsWikitext(Map<String, Map<String, List<String>>> urldata, Map<String, Integer> popularity)
+    /**
+     *  Exports the results of this tool to a string.
+     *  @param urldata the output of {@link #fetchExternalLinks(List)}
+     *  @param popularity the output of {@link #determineLinkPopularity(Collection)}
+     *  @param fmt HTML or Wikitext formats
+     *  @return the formatted results of this tool
+     *  @throws UnsupportedOperationException if CSV format is requested
+     */
+    public String exportResults(Map<String, Map<String, List<String>>> urldata, Map<String, Integer> popularity, Writable.Format fmt)
     {
-        StringBuilder sb = new StringBuilder();
-        urldata.forEach((page, pagedomaintourls) ->
-        {
-            if (pagedomaintourls.isEmpty())
-                return;
-            sb.append("""
-                == [[:%s]]==
-                """.formatted(page));
-            DoubleStream.Builder scores = DoubleStream.builder();
-            DoubleSummaryStatistics dss = new DoubleSummaryStatistics();
-            pagedomaintourls.forEach((domain, listoflinks) ->
-            {
-                Integer numlinks = popularity.get(domain);
-                sb.append("*");
-                sb.append(domain);
-                if (numlinks >= maxlinks)
-                    sb.append(" (at least ");
-                else
-                    sb.append(" (");
-                sb.append(numlinks);
-                if (numlinks == 1)
-                    sb.append(" link");
-                else
-                    sb.append(" links");
-                sb.append("""
-                    ; [[Special:Linksearch/*.%s|Linksearch]])
-                    """.formatted(domain, domain));
-                scores.accept(numlinks);
-                dss.accept(numlinks);
-                for (String url : listoflinks)
-                {
-                    sb.append("** ");
-                    sb.append(url);
-                    sb.append("\n");
-                }
-                sb.append("\n");
-            });
-            // compute summary statistics
-            if (pagedomaintourls.size() > 1)
-            {
-                double[] temp = scores.build().toArray();
-                Arrays.sort(temp);
-                double[] quartiles = MathsAndStats.quartiles(temp);
-                sb.append("""
-                    ;Summary statistics
-                    *COUNT: %d
-                    *MEAN: %.1f
-                    *Q1: %.1f
-                    *MEDIAN: %.1f
-                    *Q3: %.1f
-                """.formatted(temp.length, dss.getAverage(), quartiles[0], MathsAndStats.median(temp), quartiles[1]));
-            }
-        });
-        return sb.toString();
-    }
-    
-    public String exportResultsAsHTML(Map<String, Map<String, List<String>>> urldata, Map<String, Integer> popularity)
-    {
-        Writable.Format fmt = Writable.Format.HTML;
         StringBuilder sb = new StringBuilder();
         urldata.forEach((page, pagedomaintourls) ->
         {
@@ -301,13 +250,15 @@ public class ExternalLinkPopularity
             sb.append(new WikitextUtils.Heading(new WikitextUtils.WikiLink(wiki, page, null).format(fmt), 2).format(fmt));
             sb.append("\n");
             sb.append(new Pages.Links(wiki, page).format(fmt));
-            sb.append("<ul>\n");
+            if (fmt.equals(Writable.Format.HTML))
+                sb.append("<ul>");
+            sb.append("\n");
             DoubleStream.Builder scores = DoubleStream.builder();
             DoubleSummaryStatistics dss = new DoubleSummaryStatistics();
             pagedomaintourls.forEach((domain, listoflinks) ->
             {
                 Integer numlinks = popularity.get(domain);
-                sb.append("<li>");
+                sb.append(fmt.equals(Writable.Format.HTML) ? "<li>" : "*");
                 sb.append(domain);
                 if (numlinks >= maxlinks)
                     sb.append(" (at least ");
@@ -322,20 +273,37 @@ public class ExternalLinkPopularity
                 sb.append(")\n");
                 scores.accept(numlinks);
                 dss.accept(numlinks);
-                sb.append("<ul>\n");
+                if (fmt.equals(Writable.Format.HTML))
+                    sb.append("<ul>\n");
                 for (String url : listoflinks)
-                    sb.append("<li>").append(new WikitextUtils.ExternalLink(url, null).format(fmt)).append("\n");
-                sb.append("</ul>\n");
+                {
+                    sb.append(fmt.equals(Writable.Format.HTML) ? "<li>" : "**");
+                    sb.append(new WikitextUtils.ExternalLink(url, url).format(fmt)).append("\n");
+                }
+                if (fmt.equals(Writable.Format.HTML))
+                    sb.append("</ul>\n");
             });
-            sb.append("</ul>\n");
+            if (fmt.equals(Writable.Format.HTML))
+                sb.append("</ul>\n");
             // compute summary statistics
             if (pagedomaintourls.size() > 1)
             {
                 double[] temp = scores.build().toArray();
                 Arrays.sort(temp);
                 double[] quartiles = MathsAndStats.quartiles(temp);
-                sb.append("""
-                    <b>Summary statistics</b>
+                String str;
+                if (fmt.equals(Writable.Format.WIKITEXT))
+                    str = """
+                    ;Summary statistics
+                    *COUNT: %d
+                    *MEAN: %.1f
+                    *Q1: %.1f
+                    *MEDIAN: %.1f
+                    *Q3: %.1f
+                    """;
+                else
+                    str = """
+                    <h5>Summary statistics</h5>
                     <ul>
                     <li>COUNT: %d
                     <li>MEAN: %.1f
@@ -343,7 +311,8 @@ public class ExternalLinkPopularity
                     <li>MEDIAN: %.1f
                     <li>Q3: %.1f
                     </ul>
-                    """.formatted(temp.length, dss.getAverage(), quartiles[0], MathsAndStats.median(temp), quartiles[1]));
+                    """;
+                sb.append(str.formatted(temp.length, dss.getAverage(), quartiles[0], MathsAndStats.median(temp), quartiles[1]));
             }
         });
         return sb.toString();

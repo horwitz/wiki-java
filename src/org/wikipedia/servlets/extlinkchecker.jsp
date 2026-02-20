@@ -50,7 +50,7 @@ long-standing reference spam.
         {
             Map<String, Integer> popresults = elp.determineLinkPopularity(ExternalLinkPopularity.flatten(results));
             out.println("<hr>");
-            out.println(elp.exportResultsAsHTML(results, popresults));
+            out.println(elp.exportResults(results, popresults, Writable.Format.HTML));
         }
     }
     ServletUtils.renderFooter(request, out);

@@ -74,17 +74,21 @@ public class ExternalLinksTest
             new Wiki.LinksearchResult(enWiki, "Test", "https://example.com"),
             new Wiki.LinksearchResult(enWiki, "Test2", "https://example.org"));
         assertEquals("""
-            # [[Test]] ([[Special:Edit/Test|edit]] &middot; [[Special:PageHistory/Test|history]]) uses link [https://example.com https://example.com]
-            # [[Test2]] ([[Special:Edit/Test2|edit]] &middot; [[Special:PageHistory/Test2|history]]) uses link [https://example.org https://example.org]
+            # [[Test]] ([[Talk:Test|talk]] &middot; [[Special:Edit/Test|edit]] &middot; [[Special:PageHistory/Test|history]] &middot; \
+            [https://en.wikipedia.org/w/index.php?title=Special:Log&page=Test logs]) uses link [https://example.com https://example.com]
+            # [[Test2]] ([[Talk:Test2|talk]] &middot; [[Special:Edit/Test2|edit]] &middot; [[Special:PageHistory/Test2|history]] &middot; \
+            [https://en.wikipedia.org/w/index.php?title=Special:Log&page=Test2 logs]) uses link [https://example.org https://example.org]
             """, ExternalLinks.formatLinksearchResults(input, Writable.Format.WIKITEXT));
         
         assertEquals("""
             <p>
             <ol>
-            <li><a href="https://en.wikipedia.org/wiki/Test">Test</a> (<a href="https://en.wikipedia.org/wiki/Special%3AEdit%2FTest">edit</a> &middot; \
-            <a href="https://en.wikipedia.org/wiki/Special%3APageHistory%2FTest">history</a>) uses link <a href="https://example.com">https://example.com</a>
-            <li><a href="https://en.wikipedia.org/wiki/Test2">Test2</a> (<a href="https://en.wikipedia.org/wiki/Special%3AEdit%2FTest2">edit</a> &middot; \
-            <a href="https://en.wikipedia.org/wiki/Special%3APageHistory%2FTest2">history</a>) uses link <a href="https://example.org">https://example.org</a>
+            <li><a href="https://en.wikipedia.org/wiki/Test">Test</a> (<a href="https://en.wikipedia.org/wiki/Talk%3ATest">talk</a> &middot; \
+            <a href="https://en.wikipedia.org/wiki/Special%3AEdit%2FTest">edit</a> &middot; <a href="https://en.wikipedia.org/wiki/Special%3APageHistory%2FTest">history</a> &middot; \
+            <a href="https://en.wikipedia.org/w/index.php?title=Special:Log&page=Test">logs</a>) uses link <a href="https://example.com">https://example.com</a>
+            <li><a href="https://en.wikipedia.org/wiki/Test2">Test2</a> (<a href="https://en.wikipedia.org/wiki/Talk%3ATest2">talk</a> &middot; \
+            <a href="https://en.wikipedia.org/wiki/Special%3AEdit%2FTest2">edit</a> &middot; <a href="https://en.wikipedia.org/wiki/Special%3APageHistory%2FTest2">history</a> &middot; \
+            <a href="https://en.wikipedia.org/w/index.php?title=Special:Log&page=Test2">logs</a>) uses link <a href="https://example.org">https://example.org</a>
             </ol>""", ExternalLinks.formatLinksearchResults(input, Writable.Format.HTML));
         
         assertEquals("""

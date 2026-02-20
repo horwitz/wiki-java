@@ -43,6 +43,7 @@ public class UserInfo
      *  @param lastedit timestamp of last edit (if the user has edited)
      *  @param editcount MediaWiki edit count with link to [[Special:Contibutions]]
      *  @param articles the number of articles created by this user that are still live
+     *  @param groups the user groups the user belongs to, formatted
      *  @param blocked whether the user is blocked, with links to [[Special:Block]]
      *  and [[Special:Unblock]] if applicable
      *  @param blockexpiry when the block expires

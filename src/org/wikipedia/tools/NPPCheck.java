@@ -121,7 +121,7 @@ public class NPPCheck
      *  @param regts when the author registered their account
      *  @param authorec the edit count of the author
      *  @param blocked whether the author is blocked
-     *  @param ageatcreation
+     *  @param ageatcreation the age of the author's account at page creation
      *  @param reviewer the reviewer of the page
      *  @param reviewerec the edit count of the reviewer
      *  @param snippet a snippet from the page contents
