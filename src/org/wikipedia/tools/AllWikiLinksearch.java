@@ -163,12 +163,12 @@ public class AllWikiLinksearch
         {
             for (String domain2 : domains)
             {
-                Map<WMFWiki, List<String[]>> results = crossWikiLinksearch(Integer.MAX_VALUE, threads, domain2, wikis, false);
+                Map<WMFWiki, List<Wiki.LinksearchResult>> results = crossWikiLinksearch(Integer.MAX_VALUE, threads, domain2, wikis, false);
                 out.write("==" + domain2 + "==\n");
-                for (Map.Entry<WMFWiki, List<String[]>> result : results.entrySet())
+                for (Map.Entry<WMFWiki, List<Wiki.LinksearchResult>> result : results.entrySet())
                 {
                     Wiki wiki = result.getKey();
-                    List<String[]> links = result.getValue();
+                    List<Wiki.LinksearchResult> links = result.getValue();
                     StringBuilder temp = new StringBuilder("=== Results for ");
                     temp.append(wiki.getDomain());
                     temp.append(" ===\n");
@@ -181,7 +181,7 @@ public class AllWikiLinksearch
                     int linknumber = links.size();
                     if (linknumber != 0)
                     {
-                        temp.append(ExternalLinks.of(wiki).linksearchResultsToWikitext(links, domain));
+                        temp.append(ExternalLinks.formatLinksearchResults(links, Writable.Format.WIKITEXT));
                         out.write(temp.toString());
                     }
                 }
@@ -205,14 +205,14 @@ public class AllWikiLinksearch
      *  @return the linksearch results, as in wiki &#8594; results, or null if an
      *  IOException occurred
      */
-    public static <W extends Wiki> Map<W, List<String[]>> crossWikiLinksearch(int querylimit, 
+    public static <W extends Wiki> Map<W, List<Wiki.LinksearchResult>> crossWikiLinksearch(int querylimit, 
         int threads, String domain, Collection<W> wikis, boolean mailto, int... ns)
     {
-        ThrowingFunction<W, List<String[]>> tf = wiki -> 
+        ThrowingFunction<W, List<Wiki.LinksearchResult>> tf = wiki -> 
         {
             wiki.setMaxLag(-1);
             wiki.setQueryLimit(querylimit);
-            List<String[]> temp = wiki.linksearch("*." + domain, null, ns);
+            List<Wiki.LinksearchResult> temp = wiki.linksearch("*." + domain, null, ns);
             if (mailto)
                 temp.addAll(wiki.linksearch("*." + domain, "mailto", ns));
             return temp;

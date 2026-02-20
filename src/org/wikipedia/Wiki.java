@@ -5912,6 +5912,16 @@ public class Wiki implements Comparable<Wiki>
         log(Level.INFO, "getCategoryMembers", "Successfully retrieved contents of Category:" + name + " (" + size + " items)");
         return members;
     }
+    
+    /**
+     *  Represents the results of a linksearch query.
+     *  @param wiki the wiki on which the page resides
+     *  @param page the page on which the link is used
+     *  @param url the url which is linked
+     *  @see #linksearch(String, String, int...) 
+     *  @since 0.39
+     */
+    public record LinksearchResult(Wiki wiki, String page, String url) { }
 
     /**
      *  Searches the wiki for external links. Equivalent to [[Special:Linksearch]].
@@ -5922,10 +5932,10 @@ public class Wiki implements Comparable<Wiki>
      *  @param pattern the pattern (String) to search for (e.g. example.com,
      *  *.example.com)
      *  @throws IOException if a network error occurs
-     *  @return a list of results where each entry is { page, URL }
+     *  @return the linksearch results
      *  @since 0.06
      */
-    public List<String[]> linksearch(String pattern) throws IOException
+    public List<LinksearchResult> linksearch(String pattern) throws IOException
     {
         return linksearch(pattern, null);
     }
@@ -5949,7 +5959,7 @@ public class Wiki implements Comparable<Wiki>
      *  @param protocol one of the protocols listed in the API documentation or
      *  null (equivalent to http and https)
      *  @throws IOException if a network error occurs
-     *  @return a list of results where each entry is { page, URL }
+     *  @return the linksearch results
      *  @since 0.24
      *  @see <a href="https://mediawiki.org/wiki/API:Exturlusage">MediaWiki API
      *  documentation</a>
@@ -5958,7 +5968,7 @@ public class Wiki implements Comparable<Wiki>
      *  @see <a href="https://mediawiki.org/wiki/Manual:Externallinks_table">Externallinks
      *  table</a>
      */
-    public List<String[]> linksearch(String pattern, String protocol, int... ns) throws IOException
+    public List<LinksearchResult> linksearch(String pattern, String protocol, int... ns) throws IOException
     {
         // I'm still not happy with the return type, but I think this is as good
         // as it gets in vanilla JDK.
@@ -5971,14 +5981,14 @@ public class Wiki implements Comparable<Wiki>
         if (ns.length > 0)
             getparams.put("eunamespace", constructNamespaceString(ns));
 
-        List<String[]> links = makeListQuery("eu", getparams, null, "linksearch", -1, (line, results) ->
+        List<LinksearchResult> links = makeListQuery("eu", getparams, null, "linksearch", -1, (line, results) ->
         {
             // xml form: <eu ns="0" title="Main Page" url="http://example.com" />
             for (int x = line.indexOf("<eu"); x > 0; x = line.indexOf("<eu ", ++x))
             {
                 String link = parseAttribute(line, "url", x);
                 String pagename = parseAttribute(line, "title", x);
-                results.add(new String[] { pagename, link });
+                results.add(new LinksearchResult(this, pagename, link));
             }
         });
 

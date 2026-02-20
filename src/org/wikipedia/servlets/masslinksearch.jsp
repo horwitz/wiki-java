@@ -60,12 +60,11 @@ links per domain.
 
         StringBuilder regex = new StringBuilder();
         StringBuilder linksummary = new StringBuilder();
-        ExternalLinks el = ExternalLinks.of(w);
 
         for (String domain : domains)
         {
             domain = domain.trim();
-            List<String[]> temp = w.linksearch("*." + domain);
+            List<Wiki.LinksearchResult> temp = w.linksearch("*." + domain);
 
             // reformat domain list to regex and linksummary
             regex.append("\\b");
@@ -76,7 +75,7 @@ links per domain.
             linksummary.append("}}\n");
 
             out.println("<h3>Results for " + domain + "</h3>");
-            out.println(el.linksearchResultsToHTML(temp, domain));
+            out.println(ExternalLinks.formatLinksearchResults(temp, Writable.Format.HTML));
         }
 %>
 <hr>

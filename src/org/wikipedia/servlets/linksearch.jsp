@@ -79,7 +79,7 @@ reasons, results are limited to <%= limit %> links per wiki.
         ServletUtils.renderFooter(request, out);
         throw new SkipPageException();
     }
-    Map<WMFWiki, List<String[]>> results = null;
+    Map<WMFWiki, List<Wiki.LinksearchResult>> results = null;
     if (mode.equals("multi"))
     {
         results = switch (set)
@@ -103,19 +103,19 @@ reasons, results are limited to <%= limit %> links per wiki.
             List.of(sessions.sharedSession(wikiinput)), mailto, ns);
 
     out.println("<hr>");
-    for (Map.Entry<WMFWiki, List<String[]>> entry : results.entrySet())
+    Writable.Format fmt = Writable.Format.HTML;
+    for (Map.Entry<WMFWiki, List<Wiki.LinksearchResult>> entry : results.entrySet())
     {
         WMFWiki wiki = entry.getKey();
-        Pages pageutils = Pages.of(wiki);   
-        List<String[]> value = entry.getValue();
-        out.println("<h3>" + wiki.getDomain() + "</h3>");
-        out.println(ExternalLinks.of(wiki).linksearchResultsToHTML(value, domain));
+        List<Wiki.LinksearchResult> value = entry.getValue();
+        out.println(new WikitextUtils.Heading(wiki.getDomain(), 3).format(fmt));
+        out.println(ExternalLinks.formatLinksearchResults(value, fmt));
         out.println("<p>");
         if (value.size() == limit)
             out.print("At least ");
         out.print(value.size());
         out.print(" links found (");
-        out.print(pageutils.generatePageLink("Special:Linksearch/*." + domain, "linksearch") + ").");
+        out.print(new WikitextUtils.WikiLink(wiki, "Special:Linksearch/*." + domain, "linksearch").format(fmt) + ").");
     }
     ServletUtils.renderFooter(request, out);
 %>

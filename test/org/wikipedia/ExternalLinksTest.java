@@ -19,6 +19,7 @@
  */
 package org.wikipedia;
 
+import java.util.List;
 import org.junit.jupiter.api.*;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -64,5 +65,32 @@ public class ExternalLinksTest
         assertTrue(el.isLocallyBlacklisted("youtu.be")); // local includes global blacklist
         assertTrue(el.isLocallyBlacklisted("roblox.com")); // local only
         assertTrue(el.isLocallyBlacklisted("testinvalid.invalid")); // blocked external domains
+    }
+    
+    @Test
+    public void formatLinkseachResults() throws Exception
+    {
+        List<Wiki.LinksearchResult> input = List.of(
+            new Wiki.LinksearchResult(enWiki, "Test", "https://example.com"),
+            new Wiki.LinksearchResult(enWiki, "Test2", "https://example.org"));
+        assertEquals("""
+            # [[Test]] ([[Special:Edit/Test|edit]] &middot; [[Special:PageHistory/Test|history]]) uses link [https://example.com https://example.com]
+            # [[Test2]] ([[Special:Edit/Test2|edit]] &middot; [[Special:PageHistory/Test2|history]]) uses link [https://example.org https://example.org]
+            """, ExternalLinks.formatLinksearchResults(input, Writable.Format.WIKITEXT));
+        
+        assertEquals("""
+            <p>
+            <ol>
+            <li><a href="https://en.wikipedia.org/wiki/Test">Test</a> (<a href="https://en.wikipedia.org/wiki/Special%3AEdit%2FTest">edit</a> &middot; \
+            <a href="https://en.wikipedia.org/wiki/Special%3APageHistory%2FTest">history</a>) uses link <a href="https://example.com">https://example.com</a>
+            <li><a href="https://en.wikipedia.org/wiki/Test2">Test2</a> (<a href="https://en.wikipedia.org/wiki/Special%3AEdit%2FTest2">edit</a> &middot; \
+            <a href="https://en.wikipedia.org/wiki/Special%3APageHistory%2FTest2">history</a>) uses link <a href="https://example.org">https://example.org</a>
+            </ol>""", ExternalLinks.formatLinksearchResults(input, Writable.Format.HTML));
+        
+        assertEquals("""
+            wiki,page,url
+            en.wikipedia.org,Test,https://example.com
+            en.wikipedia.org,Test2,https://example.org
+            """, ExternalLinks.formatLinksearchResults(input, Writable.Format.CSV));
     }
 }

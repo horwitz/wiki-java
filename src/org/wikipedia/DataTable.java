@@ -369,6 +369,7 @@ public class DataTable<T extends Record> implements Writable
             case Duration dt when format.equals(Writable.Format.WIKITEXT) -> "data-sort-value=" + dt.getSeconds() +
                 " | " + MathsAndStats.formatDuration(dt);
             case Writable w -> w.format(format);
+            case Wiki w -> w.getDomain();
             default -> value.toString();
         };
     }

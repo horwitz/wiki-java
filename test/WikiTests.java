@@ -162,9 +162,9 @@ public class WikiTests
             System.out.println("[[:" + entry.getKey() + ":" + entry.getValue() + "]]");
 */            
         // linksearch
-        List<String[]> blah4 = enWiki.linksearch("*.docs.oracle.com");
-        for (String[] result : blah4)
-            System.out.println(result[0] + " --- " + result[1]);
+        List<Wiki.LinksearchResult> blah4 = enWiki.linksearch("*.docs.oracle.com");
+        for (Wiki.LinksearchResult result : blah4)
+            System.out.println(result);
 /*
 
         // getOldImage/image history

@@ -31,7 +31,6 @@ import java.util.*;
 public class ExternalLinks
 {
     private final Wiki wiki;
-    private final Pages pageutils;
     private static final List<String> globalblacklist = new ArrayList<>();
     private final List<String> localblacklist = new ArrayList<>();
     private final List<String> blocked_domains = new ArrayList<>();
@@ -40,7 +39,6 @@ public class ExternalLinks
     private ExternalLinks(Wiki wiki)
     {
         this.wiki = wiki;
-        pageutils = Pages.of(wiki);
     }
     
     /**
@@ -98,55 +96,34 @@ public class ExternalLinks
     }
 
     /**
-     *  Renders output of {@link Wiki#linksearch} in wikitext.
+     *  Renders output of {@link Wiki#linksearch} in the given format.
      *  @param results the results to render
-     *  @param domain the domain that was searched
-     *  @return the rendered wikitext
+     *  @param fmt the format to render in
+     *  @return the rendered results
      */
-    public static String linksearchResultsToWikitext(List<String[]> results, String domain)
+    public static String formatLinksearchResults(List<Wiki.LinksearchResult> results, Writable.Format fmt)
     {
+        if (fmt.equals(Writable.Format.CSV))
+            return DataTable.create(results, List.of("wiki", "page", "url")).format(fmt);
+        
         StringBuilder builder = new StringBuilder(100);
-        for (String[] result : results)
+        if (fmt.equals(Writable.Format.HTML))
+            builder.append("<p>\n<ol>\n");
+        for (Wiki.LinksearchResult result : results)
         {
-            builder.append("# [[:");
-            builder.append(result[0]);
-            builder.append("]] ([[Special:Edit/");
-            builder.append(result[0]);
-            builder.append("|edit]] | [[Special:PageHistory/");
-            builder.append(result[0]);
-            builder.append("|history]]) uses link [");
-            builder.append(result[1]);
-            builder.append("]\n");
+            builder.append(fmt.equals(Writable.Format.WIKITEXT) ? "# " : "<li>");
+            builder.append(new WikitextUtils.WikiLink(result.wiki(), result.page(), null).format(fmt));
+            builder.append(" (");
+            builder.append(new WikitextUtils.WikiLink(result.wiki(), "Special:Edit/" + result.page(), "edit").format(fmt));
+            builder.append(" &middot; ");
+            builder.append(new WikitextUtils.WikiLink(result.wiki(), "Special:PageHistory/" + result.page(), "history").format(fmt));
+            builder.append(") uses link ");
+            builder.append(new WikitextUtils.ExternalLink(result.url(), result.url()).format(fmt));
+            builder.append("\n");
         }
+        if (fmt.equals(Writable.Format.HTML))
+            builder.append("</ol>");
         return builder.toString();
-    }
-
-    /**
-     *  Renders output of {@link Wiki#linksearch} in HTML.
-     *  @param results the results to render
-     *  @param domain the domain that was searched
-     *  @return the rendered HTML
-     */
-    public String linksearchResultsToHTML(List<String[]> results, String domain)
-    {
-        StringBuilder buffer = new StringBuilder(1000);
-        buffer.append("<p>\n<ol>\n");
-        for (String[] result : results)
-        {
-            buffer.append("\t<li>");
-            buffer.append(pageutils.generatePageLink(result[0]));
-            buffer.append(" (");
-            buffer.append(pageutils.generatePageLink("Special:Edit/" + result[0], "edit"));
-            buffer.append(" | ");
-            buffer.append(pageutils.generatePageLink("Special:PageHistory/" + result[0], "history"));
-            buffer.append(") uses link <a href=\"");
-            buffer.append(result[1]);
-            buffer.append("\">");
-            buffer.append(result[1]);
-            buffer.append("</a>\n");
-        }
-        buffer.append("</ol>");
-        return buffer.toString();
     }
     
     /**
