@@ -40,6 +40,7 @@ public class PrefixContribs
     {
         Wiki enWiki = Wiki.newSession("en.wikipedia.org");
         enWiki.setMaxLag(-1);
+        enWiki.setUserAgent(WMFWikiFarm.TOOL_USER_AGENT);
         String prefix = JOptionPane.showInputDialog(null, "Enter query string");
         if (prefix == null)
             System.exit(0);

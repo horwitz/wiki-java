@@ -44,6 +44,7 @@ public class XWikiContributionSurveyor
     public static void main(String[] args) throws Exception
     {
         WMFWikiFarm sessions = WMFWikiFarm.instance();
+        sessions.setInitializer(wiki -> wiki.setUserAgent(WMFWikiFarm.TOOL_USER_AGENT));
         WMFWiki enWiki = sessions.sharedSession("en.wikipedia.org");
         WMFWiki meta = sessions.sharedSession("meta.wikimedia.org");
 

@@ -84,6 +84,7 @@ public class ArticleEditorIntersector
             .parse(args);
         
         Wiki wiki = Wiki.newSession(parsedargs.getOrDefault("--wiki", "en.wikipedia.org"));
+        wiki.setUserAgent(WMFWikiFarm.TOOL_USER_AGENT);
         String category = parsedargs.get("--category");
         String user = parsedargs.get("--contribs");
         boolean adminmode = parsedargs.containsKey("--adminmode");

@@ -41,6 +41,10 @@
     
     // stuff here is only here because it gets executed first
     WMFWikiFarm sessions = WMFWikiFarm.instance();
-    sessions.setInitializer(wiki_ -> wiki_.setMaxLag(-1));
+    sessions.setInitializer(wiki ->
+    {
+        wiki.setMaxLag(-1);
+        wiki.setUserAgent(WMFWikiFarm.TOOL_USER_AGENT);
+    });
     response.setCharacterEncoding("UTF-8");
 %>

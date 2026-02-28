@@ -80,7 +80,6 @@ public class ContributionSurveyorServlet extends BaseServlet
         String bytefloor = ServletUtils.sanitizeForAttributeOrDefault(request.getParameter("bytefloor"), "150");
     
         Wiki wiki = WMFWikiFarm.instance().sharedSession(homewiki);
-        wiki.setMaxLag(-1);
         wiki.setQueryLimit(10000); // 20 network requests, GAE only allows run time of 15s
 
         // TODO: consolidate front-end user processing code

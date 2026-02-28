@@ -35,8 +35,7 @@ import org.wikipedia.*;
  */
 public class FeaturedPictureCuration
 {
-    private static final Wiki enWiki = Wiki.newSession("en.wikipedia.org");
-    private static final Wiki commons = Wiki.newSession("commons.wikimedia.org");
+    private static Wiki enWiki, commons;
     
     /**
      *  Runs this program.
@@ -56,13 +55,18 @@ public class FeaturedPictureCuration
             .addSingleArgumentFlag("--wiki", "example.org", "Fetch FPs from this wiki (see --checkusage), default en.wikipedia.org.")
             .parse(args);
         
+        WMFWikiFarm sessions = WMFWikiFarm.instance();
+        sessions.setInitializer(wiki -> wiki.setUserAgent(WMFWikiFarm.TOOL_USER_AGENT));
+        enWiki = sessions.sharedSession("en.wikipedia.org");
+        commons = sessions.sharedSession("commons.wikimedia.org");
+        
         if (parsedargs.containsKey("--checktags"))
             checkFPTags();
         if (parsedargs.containsKey("--checkusage"))
         {
             if (!parsedargs.containsKey("--wiki"))
                 System.err.println("WARNING: No wiki specified, defaulting to en.wikipedia.org.");
-            Wiki wiki = Wiki.newSession(parsedargs.getOrDefault("--wiki", "en.wikipedia.org"));
+            Wiki wiki = sessions.sharedSession(parsedargs.getOrDefault("--wiki", "en.wikipedia.org"));
             Set<String> fpcanonical = getFeaturedPicturesFromList(wiki);
             
             // NOTE 1: API imageusage does not take into account file redirects

@@ -22,7 +22,7 @@ package org.wikipedia.tools;
 
 import java.util.*;
 import java.time.format.DateTimeFormatter;
-import org.wikipedia.Wiki;
+import org.wikipedia.*;
 
 /**
  *  Quick userspace search/analysis tool for finding misuse of Wikipedia as a
@@ -50,6 +50,7 @@ public class UserspaceAnalyzer
             .parse(args);
         
         Wiki wiki = Wiki.newSession("en.wikipedia.org");
+        wiki.setUserAgent(WMFWikiFarm.TOOL_USER_AGENT);
         List<Map<String, Object>> results = wiki.search(args[0], Wiki.USER_NAMESPACE);
         LinkedHashSet<String> users = new LinkedHashSet<>(500);
         for (Map<String, Object> result : results)

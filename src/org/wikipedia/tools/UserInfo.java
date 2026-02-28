@@ -70,6 +70,7 @@ public class UserInfo
             .addHelp()
             .parse(args);
         String wikistring = parsedargs.getOrDefault("--wiki", "en.wikipedia.org");
+        sessions.setInitializer(wiki -> wiki.setUserAgent(WMFWikiFarm.TOOL_USER_AGENT));
         Wiki wiki = sessions.sharedSession(wikistring);
         List<String> socks = CommandLineParser.parseUserOptions(parsedargs, wiki);
 

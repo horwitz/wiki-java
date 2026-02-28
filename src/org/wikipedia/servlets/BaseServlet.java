@@ -23,6 +23,8 @@ import jakarta.servlet.http.*;
 import java.io.*;
 import java.util.*;
 
+import org.wikipedia.WMFWikiFarm;
+
 /**
  *  Common, stateful servlet code.
  *  @author MER-C
@@ -30,6 +32,15 @@ import java.util.*;
  */
 public abstract class BaseServlet extends HttpServlet
 {
+    static
+    {
+        WMFWikiFarm.instance().setInitializer(wiki ->
+        {
+            wiki.setMaxLag(-1);
+            wiki.setUserAgent(WMFWikiFarm.TOOL_USER_AGENT);
+        });
+    }
+    
     /**
      *  Responds to GET requests. Before it does so, it sets common headers,
      *  checks if the request is allowed, and shows a CAPTCHA if there are any

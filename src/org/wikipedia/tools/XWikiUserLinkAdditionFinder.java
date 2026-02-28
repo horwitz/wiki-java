@@ -58,6 +58,7 @@ public class XWikiUserLinkAdditionFinder
         var rm = parsedargs.containsKey("--removeblacklisted") ? UserLinkAdditionFinder.RemovalMode.GLOBAL_BLACKLIST : UserLinkAdditionFinder.RemovalMode.NO_BLACKLISTS;
         
         WMFWikiFarm wmf = WMFWikiFarm.instance();
+        wmf.setInitializer(w -> w.setUserAgent(WMFWikiFarm.TOOL_USER_AGENT));
         WMFWiki thiswiki = wmf.sharedSession(parsedargs.getOrDefault("--wiki", "en.wikipedia.org"));
         List<String> users = CommandLineParser.parseUserOptions(parsedargs, thiswiki);
         TreeMap<String, Integer> domains = new TreeMap<>();

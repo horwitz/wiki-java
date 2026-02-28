@@ -88,6 +88,7 @@ public class CCIAnalyzer
         Wiki enWiki = Wiki.newSession("en.wikipedia.org");
         enWiki.setMaxLag(-1);
         enWiki.setLogLevel(Level.WARNING);
+        enWiki.setUserAgent(WMFWikiFarm.TOOL_USER_AGENT);
         String ccipage = parsedargs.get("default");
         List<CCIPage> pages;
         if (ccipage != null)

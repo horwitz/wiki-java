@@ -73,12 +73,8 @@ public class ImageCCI extends BaseServlet
         Wiki.Interval interval = ServletUtils.parseIntervalParams(request);
         boolean comingled = false; // (request.getParameter("comingled") != null);
         
-        WMFWikiFarm sessions = WMFWikiFarm.instance();
-        sessions.setInitializer(w -> { 
-            w.setMaxLag(-1);
-            w.setQueryLimit(3500); // 7 network requests, GAE only allows run time of 15s
-        });
-        Wiki wiki = sessions.sharedSession(homewiki);
+        Wiki wiki = WMFWikiFarm.instance().sharedSession(homewiki);
+        wiki.setQueryLimit(3500); // 7 network requests, GAE only allows run time of 15s
 
         // TODO: consolidate front-end user processing code
         // see also CommandLineParser.parseUserOptions2

@@ -395,6 +395,7 @@ public class StringSimilarityFinder
         
         String textA = null, textB = null;
         WMFWikiFarm wmf = WMFWikiFarm.instance();
+        wmf.setInitializer(wiki -> wiki.setUserAgent(WMFWikiFarm.TOOL_USER_AGENT));
         if (parsedargs.containsKey("--page1"))
         {
             WMFWiki wiki = wmf.sharedSession(parsedargs.getOrDefault("--wiki1", "en.wikipedia.org"));

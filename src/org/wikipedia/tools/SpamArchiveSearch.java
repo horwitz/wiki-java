@@ -40,6 +40,12 @@ public class SpamArchiveSearch
         String query = JOptionPane.showInputDialog(null, "Enter query string");
         if (query == null)
             System.exit(0);
+        WMFWikiFarm sessions = WMFWikiFarm.instance();
+        sessions.setInitializer(wiki -> 
+        {
+            wiki.setMaxLag(-1);
+            wiki.setUserAgent(WMFWikiFarm.TOOL_USER_AGENT);
+        });
         StringBuilder buffer = new StringBuilder(10000);
         ArrayList<Map<String, Object>> results = archiveSearch(query);
         buffer.append("""
@@ -85,8 +91,6 @@ public class SpamArchiveSearch
         WMFWikiFarm sessions = WMFWikiFarm.instance();
         Wiki enWiki = sessions.sharedSession("en.wikipedia.org");
         Wiki meta = sessions.sharedSession("meta.wikimedia.org");
-        enWiki.setMaxLag(-1);
-        meta.setMaxLag(-1);
         
         // there's some silly api bugs
         ArrayList<Map<String, Object>> results = new ArrayList<>(20);

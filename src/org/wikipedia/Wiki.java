@@ -405,7 +405,11 @@ public class Wiki implements Comparable<Wiki>
         unknown;
     }
 
-    private static final String version = "0.39";
+    /**
+     *  The version of this bot framework.
+     *  @since 0.39
+     */
+    public static final String VERSION = "0.39";
 
     // fundamental URL strings
     private final String protocol, domain, articlePath, scriptPath;
@@ -460,7 +464,7 @@ public class Wiki implements Comparable<Wiki>
     private int assertion = ASSERT_NONE; // assertion mode
     private int statusinterval = 100; // status check
     private int querylimit = Integer.MAX_VALUE;
-    private String useragent = "Wiki.java/" + version + " (https://codeberg.org/MER-C/wiki-java/)";
+    private String useragent = "Wiki.java/" + VERSION + " (https://codeberg.org/MER-C/wiki-java)";
     private boolean markminor = false, markbot = false;
     private boolean resolveredirect = false;
     private Level loglevel = Level.ALL;
@@ -500,7 +504,7 @@ public class Wiki implements Comparable<Wiki>
         defaultApiParams.put("maxlag", String.valueOf(maxlag));
 
         logger.setLevel(loglevel);
-        logger.log(Level.CONFIG, "[{0}] Using Wiki.java {1}", new Object[] { domain, version });
+        logger.log(Level.CONFIG, "[{0}] Using Wiki.java {1}", new Object[] { domain, VERSION });
         
         // read in config
         Properties props = new Properties();
@@ -962,8 +966,9 @@ public class Wiki implements Comparable<Wiki>
 
     /**
      *  Sets the user agent HTTP header to be used for requests. Default is
-     *  <samp>"Wiki.java " + version</samp>.
+     *  <samp>"Wiki.java " + version + " (https://codeberg.org/MER-C/wiki-java)"</samp>.
      *  @param useragent the new user agent
+     *  @see #VERSION
      *  @since 0.22
      */
     public void setUserAgent(String useragent)
@@ -973,8 +978,9 @@ public class Wiki implements Comparable<Wiki>
 
     /**
      *  Gets the user agent HTTP header to be used for requests. Default is
-     *  <samp>"Wiki.java " + version</samp>.
+     *  <samp>"Wiki.java " + version + " (https://codeberg.org/MER-C/wiki-java)"</samp>.
      *  @return useragent the user agent
+     *  @see #VERSION
      *  @since 0.22
      */
     public String getUserAgent()

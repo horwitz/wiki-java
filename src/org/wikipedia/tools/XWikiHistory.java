@@ -62,6 +62,7 @@ public class XWikiHistory
             .parse(args);
         String article = parsedargs.get("--article");
         
+        sessions.setInitializer(wiki -> wiki.setUserAgent(WMFWikiFarm.TOOL_USER_AGENT));
         WMFWiki wikidata = sessions.sharedSession("www.wikidata.org");
         Map<WMFWiki, String> wikiarticles = new LinkedHashMap<>();
         //if (item != null)

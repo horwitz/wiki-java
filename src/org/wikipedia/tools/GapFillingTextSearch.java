@@ -60,6 +60,7 @@ public class GapFillingTextSearch
             .addBooleanFlag("--case-sensitive", "Treat the query as case sensitive")
             .parse(args);
         Wiki thiswiki = Wiki.newSession(parsedargs.getOrDefault("--wiki", "en.wikipedia.org"));
+        thiswiki.setUserAgent(WMFWikiFarm.TOOL_USER_AGENT);
         boolean regex = parsedargs.containsKey("--regex");
         boolean casesensitive = parsedargs.containsKey("--case-sensitive");
         GapFillingTextSearch gfs = new GapFillingTextSearch(thiswiki);

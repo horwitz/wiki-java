@@ -72,6 +72,7 @@ public class AllWikiLinksearch
      */
     static
     {
+        sessions.setInitializer(wiki -> wiki.setUserAgent(WMFWikiFarm.TOOL_USER_AGENT));
         List<String> temp = List.of(
             // top 25 Wikipedias (by number of admins, see 
             "en", "de", "fr", "it", "pl", "ru", "sv", "zh", "es", "pt", "uk", 
@@ -210,7 +211,6 @@ public class AllWikiLinksearch
     {
         ThrowingFunction<W, List<Wiki.LinksearchResult>> tf = wiki -> 
         {
-            wiki.setMaxLag(-1);
             wiki.setQueryLimit(querylimit);
             List<Wiki.LinksearchResult> temp = wiki.linksearch("*." + domain, null, ns);
             if (mailto)

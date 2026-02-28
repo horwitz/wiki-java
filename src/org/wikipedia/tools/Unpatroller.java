@@ -30,8 +30,8 @@ import org.wikipedia.*;
  */
 public class Unpatroller
 {
-    static WMFWikiFarm sessions = WMFWikiFarm.instance();
-    static WMFWiki enWiki = sessions.sharedSession("en.wikipedia.org");
+    private static WMFWikiFarm sessions = WMFWikiFarm.instance();
+    private static WMFWiki enWiki;
     
     // TODO: 
     // (1) formalise command line arguments
@@ -47,6 +47,8 @@ public class Unpatroller
      */
     public static void main(String[] args) throws Exception
     {
+        sessions.setInitializer(wiki -> wiki.setUserAgent(WMFWikiFarm.TOOL_USER_AGENT));
+        sessions.sharedSession("en.wikipedia.org");
         org.wikiutils.LoginUtils.guiLogin(enWiki);
         String username = args[0];
         

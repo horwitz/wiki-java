@@ -49,6 +49,13 @@ public class WMFWikiFarm
         "wikimediafoundation.org", "mediawiki.org", "toolforge.org");
     
     /**
+     *  A common tool user agent string specific to my tools. Change this if you
+     *  have your own suite.
+     */
+    public static final String TOOL_USER_AGENT = 
+        "MER-C's-tools (https://codeberg.org/MER-C/wiki-java; https://enwp.org/User:MER-C) Wiki.java/" + Wiki.VERSION;
+    
+    /**
      *  Computes the domain name (to use in {@link WMFWiki#newSession}) the 
      *  WMF wiki that has the given database name (e.g. "enwiki" for the English 
      *  Wikipedia, "nlwikisource"  for the Dutch Wikisource and "wikidatawiki" 
@@ -109,6 +116,15 @@ public class WMFWikiFarm
         ret.put("www.wikidata.org", "d");
         ret.put("www.mediawiki.org", "mw");
         return ret;
+    }
+    
+    /**
+     *  Creates a new session manager.
+     *  @see #instance()
+     */
+    public WMFWikiFarm()
+    {
+        
     }
     
     /**

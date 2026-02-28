@@ -157,6 +157,7 @@ public class NPPCheck
         Wiki.Interval dt = CommandLineParser.parseInterval(parsedargs, "--start", "--end");
         
         WMFWikiFarm sessions = WMFWikiFarm.instance();
+        sessions.setInitializer(wiki -> wiki.setUserAgent(WMFWikiFarm.TOOL_USER_AGENT));
         WMFWiki enWiki = sessions.sharedSession("en.wikipedia.org");
         NPPCheck check = new NPPCheck(enWiki);
         

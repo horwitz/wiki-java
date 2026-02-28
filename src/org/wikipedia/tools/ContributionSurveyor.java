@@ -93,9 +93,13 @@ public class ContributionSurveyor
             .parse(args);
 
         Wiki homewiki = Wiki.newSession(parsedargs.getOrDefault("--wiki", "en.wikipedia.org"));
+        homewiki.setUserAgent(WMFWikiFarm.TOOL_USER_AGENT);
         Wiki sourcewiki = homewiki;
         if (parsedargs.containsKey("--sourcewiki"))
+        {
             sourcewiki = Wiki.newSession(parsedargs.get("--sourcewiki"));
+            sourcewiki.setUserAgent(WMFWikiFarm.TOOL_USER_AGENT);
+        }
         if (parsedargs.containsKey("--login"))
             Users.of(homewiki).cliLogin();
         String blockedafterstring = parsedargs.get("--blockedafter");
@@ -528,6 +532,7 @@ public class ContributionSurveyor
     public Map<String, Map<String, List<String>>> imageContributionSurvey(Iterable<String> users) throws IOException
     {
         Wiki repowiki = Wiki.newSession(mediarepo);
+        repowiki.setUserAgent(WMFWikiFarm.TOOL_USER_AGENT);
         Wiki.RequestHelper rh = wiki.new RequestHelper().withinInterval(interval);
         Map<String, Map<String, List<String>>> ret = new HashMap<>();
         

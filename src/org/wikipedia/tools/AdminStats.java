@@ -34,16 +34,11 @@ import org.wikipedia.*;
  */
 public class AdminStats
 {
-    private static final Wiki metaWiki;
+    private static final WMFWikiFarm sessions = WMFWikiFarm.instance();
     private final Wiki wiki;
     private Wiki.Interval interval;
     private List<Wiki.LogEntry> deletions, blocks, locks, protections, gblocks;
 
-    static
-    {
-        metaWiki = Wiki.newSession("meta.wikimedia.org");
-    }
-    
     /**
      *  An entry in a histogram.
      *  @param key the label/object
@@ -76,7 +71,8 @@ public class AdminStats
         Wiki.Interval interval = CommandLineParser.parseInterval(options, "--start", "--end");
         boolean printfull = options.containsKey("--printfull");
 
-        Wiki enWiki = Wiki.newSession("en.wikipedia.org");
+        sessions.setInitializer(wiki -> wiki.setUserAgent(WMFWikiFarm.TOOL_USER_AGENT));
+        Wiki enWiki = sessions.sharedSession("en.wikipedia.org");
         if (options.containsKey("--login"))
             Users.of(enWiki).cliLogin();
         
@@ -385,6 +381,7 @@ public class AdminStats
     {
         if (locks.isEmpty())
         {
+            WMFWiki metaWiki = sessions.sharedSession("meta.wikimedia.org");
             Wiki.RequestHelper rh = metaWiki.new RequestHelper().withinInterval(interval);
             locks = metaWiki.getLogEntries(WMFWiki.GLOBAL_AUTH_LOG, null, rh);
             locks.removeIf(log -> log.getTitle() == null || log.getComment() == null);
@@ -693,6 +690,7 @@ public class AdminStats
     {
         if (gblocks.isEmpty())
         {
+            WMFWiki metaWiki = sessions.sharedSession("meta.wikimedia.org");
             Wiki.RequestHelper rh = metaWiki.new RequestHelper().withinInterval(interval);
             gblocks = metaWiki.getLogEntries(WMFWiki.GLOBAL_BLOCK_LOG, "gblock2", rh);
             gblocks.removeIf(log -> log.getTitle() == null || log.getComment() == null);
