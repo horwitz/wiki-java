@@ -222,8 +222,7 @@ public class ContributionSurveyor
     }
 
     /**
-     *  Returns the home wiki of users that can be surveyed by this instance.
-     *  @return (see above)
+     *  {@return the home wiki of users that can be surveyed by this instance}
      *  @since 0.03
      */
     public Wiki getWiki()
@@ -243,8 +242,7 @@ public class ContributionSurveyor
     }
 
     /**
-     *  Gets whether surveys ignore minor edits. Default = true.
-     *  @return (see above)
+     *  {@return {@code true} if surveys ignore minor edits} Default = true.
      *  @see #setIgnoringMinorEdits(boolean)
      *  @since 0.04
      */
@@ -269,9 +267,8 @@ public class ContributionSurveyor
     }
     
     /**
-     *  Gets whether surveys ignore reverts. Currently ignores rollbacks only. 
-     *  Default = true.
-     *  @return (see above)
+     *  {@return {@code true} if surveys ignore reverts} Currently ignores  
+     *  rollbacks only. Default = true.
      *  @see #setIgnoringReverts(boolean)
      *  @see Revisions#removeReverts
      *  @since 0.05
@@ -294,9 +291,8 @@ public class ContributionSurveyor
     }
 
     /**
-     *  Sets the dates/times at which surveys start and finish; no edits will be 
-     *  returned outside this interval. 
-     *  @return (see above)
+     *  {@return the dates/times at which surveys start and finish} No edits 
+     *  will be returned outside this interval. 
      *  @see #setInterval(Wiki.Interval)
      *  @since 0.04
      */
@@ -318,8 +314,7 @@ public class ContributionSurveyor
     }
 
     /**
-     *  Gets the minimum change size to include in surveys.
-     *  @return the minimum change size, in bytes
+     *  {@return the minimum change size to include in surveys, in bytes}
      *  @see #setMinimumSizeDiff(int)
      *  @since 0.04
      */
@@ -329,8 +324,8 @@ public class ContributionSurveyor
     }
     
     /**
-     *  If there are multiple users in a particular survey, treat them as one
-     *  user as part of the output.
+     *  If multiple users in a survey, present them as one user as part of the 
+     *  output.
      *  @param comingle whether to combine listings for users into one
      *  @see #isComingled
      *  @since 0.07
@@ -341,9 +336,8 @@ public class ContributionSurveyor
     }
     
     /**
-     *  If there are multiple users in a particular survey, fetches whether they 
-     *  treated as one user as part of the output.
-     *  @return (see above)
+     *  {@return {@code true} if multiple users in a survey are to be presented 
+     *  as a single user in output}
      *  @see #setComingled(boolean)
      *  @since 0.07
      */
@@ -364,8 +358,7 @@ public class ContributionSurveyor
     }
     
     /**
-     *  Returns whether this surveyor surveys page creations only.
-     *  @return (see above)
+     *  {@return {@code true} if this surveyor surveys page creations only}
      *  @see #setNewOnly(boolean)
      *  @since 0.07
      */
@@ -388,11 +381,10 @@ public class ContributionSurveyor
     }
     
     /**
-     *  Returns whether this surveyor includes files uploaded by the user on a 
-     *  local wiki but later transferred to in image contribution surveys. This 
-     *  can be prone to inaccuracies because it performs a search of file 
-     *  namespace for the  username of the surveyed user.
-     *  @return (see above)
+     *  {@return {@code true} this surveyor includes files uploaded by the user 
+     *  on a local wiki but later transferred to in image contribution surveys} 
+     *  This can be prone to inaccuracies because it performs a search of file 
+     *  namespace for the username of the surveyed user.
      *  @since 0.09
      */
     public boolean isSurveyingTransferredFiles()
@@ -404,8 +396,7 @@ public class ContributionSurveyor
      *  Sets a custom footer to appear after the time the survey was generated.
      *  @param footer a footer
      *  @since 0.08
-     *  @see #generateWikitextFooter()
-     *  @see #generateHTMLFooter()
+     *  @see #generateFooter(Writable.Format)
      */
     public void setFooter(String footer)
     {
@@ -731,7 +722,7 @@ public class ContributionSurveyor
             out.append(sections.get(i));
             if (i == sections.size() - 1 || i % sectionsperpage == sectionsperpage - 1)
             {
-                out.append(generateWikitextFooter());
+                out.append(generateFooter(fmt));
                 ret.add(out.toString());
                 out.setLength(0);
             }
@@ -759,30 +750,18 @@ public class ContributionSurveyor
     }
 
     /**
-     *  Generates a wikitext footer for contribution surveys.
-     *  @return (see above)
+     *  {@return a footer for contribution surveys in the given format}
+     *  @param fmt {@link Writable.Format#WIKITEXT} or 
+     *  {@link Writable.Format#HTML} only
+     *  @throws UnsupportedOperationException if any other format is provided
      *  @since 0.04
-     *  @see #setFooter(java.lang.String)
-     *  @see #generateHTMLFooter()
+     *  @see #setFooter(String)
      */
-    public String generateWikitextFooter()
+    public String generateFooter(Writable.Format fmt)
     {
         OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
-        return "This report generated by [https://codeberg.org/MER-C/wiki-java ContributionSurveyor.java] at "
-            + now.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME) + ". " + footer;
-    }
-    
-    /**
-     *  Generates a HTML footer for contribution surveys.
-     *  @return (see above)
-     *  @since 0.08
-     *  @see #setFooter(java.lang.String) 
-     *  @see #generateWikitextFooter() 
-     */
-    public String generateHTMLFooter()
-    {
-        OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
-        return "This report generated by <a href=\"https://codeberg.org/MER-C/wiki-java\">ContributionSurveyor.java</a> at "
-            + now.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME) + ". " + footer;
+        return "This report generated by "
+             + new WikitextUtils.ExternalLink("https://codeberg.org/MER-C/wiki-java", "ContributionSurveyor.java").format(fmt)
+             + " at " + now.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME) + ". " + footer;
     }
 }

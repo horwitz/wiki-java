@@ -20,7 +20,7 @@ package org.wikipedia.tools;
 import java.util.*;
 import org.junit.jupiter.api.*;
 import static org.junit.jupiter.api.Assertions.*;
-import org.wikipedia.Wiki;
+import org.wikipedia.*;
 
 /**
  *  Unit tests for {@link ContributionSurveyor}.
@@ -109,10 +109,9 @@ public class ContributionSurveyorTest
     @Test
     public void setInterval() throws Exception
     {        
-        // verify get/set works
         Wiki.Interval interval = Wiki.Interval.parse("2017-12-07T00:00:00Z", "2018-01-23T00:00:00Z");
         surveyor.setInterval(interval);
-        assertEquals(interval, surveyor.getInterval());
+        assertEquals(interval, surveyor.getInterval(), "verify get/set");
         
         // https://en.wikipedia.org/w/index.php?title=Special%3AContributions&contribs=user&target=Jimbo+Wales&namespace=0&start=2017-12-01&end=2018-01-24
         // https://en.wikipedia.org/w/index.php?title=Special%3AContributions&contribs=user&target=Jimbo+Wales&namespace=0&start=2017-12-07&end=2018-01-17
@@ -129,17 +128,15 @@ public class ContributionSurveyorTest
     @Test
     public void setIgnoreMinorEdits() throws Exception
     {
-        // minor edits are ignored by default
-        assertTrue(surveyor.isIgnoringMinorEdits()); 
+        assertTrue(surveyor.isIgnoringMinorEdits(), "minor edits are ignored by default"); 
 
         // https://en.wikipedia.org/wiki/Special:Contributions/Jjdevine2
         List<String> users = List.of("Jjdevine2");
         var results = surveyor.contributionSurvey(users, Wiki.MAIN_NAMESPACE);
         assertTrue(results.get(users.get(0)).isEmpty());
         
-        // verify get/set works
         surveyor.setIgnoringMinorEdits(false);
-        assertFalse(surveyor.isIgnoringMinorEdits()); 
+        assertFalse(surveyor.isIgnoringMinorEdits(), "verify get/set"); 
         
         // check functionality
         results = surveyor.contributionSurvey(users, Wiki.MAIN_NAMESPACE);
@@ -149,20 +146,17 @@ public class ContributionSurveyorTest
     @Test
     public void setIgnoringReverts() throws Exception
     {
-        // reverts are ignored by default
-        assertTrue(surveyor.isIgnoringReverts()); 
+        assertTrue(surveyor.isIgnoringReverts(), "reverts are ignored by default"); 
         
-        // rollbacks with tag mw-rollback
         // https://en.wikipedia.org/w/index.php?title=Special:Contributions&dir=prev&offset=20191109040135&target=Dl2000
         List<String> users = List.of("Dl2000");
         surveyor.setIgnoringMinorEdits(false);
         surveyor.setInterval(Wiki.Interval.parse("2019-11-09T16:00:00Z", "2019-11-09T16:21:00Z"));
         var results = surveyor.contributionSurvey(users, Wiki.MAIN_NAMESPACE);
-        assertTrue(results.get(users.get(0)).isEmpty());
+        assertTrue(results.get(users.get(0)).isEmpty(), "rollbacks with tag mw-rollback");
         
-        // verify get/set works
         surveyor.setIgnoringReverts(false);
-        assertFalse(surveyor.isIgnoringReverts());
+        assertFalse(surveyor.isIgnoringReverts(), "verify get/set");
         
         // check functionality
         results = surveyor.contributionSurvey(users, Wiki.MAIN_NAMESPACE);
@@ -183,8 +177,7 @@ public class ContributionSurveyorTest
     @Test
     public void setMinimumSizeDiff() throws Exception
     {
-        // default is addition of at least 150 bytes
-        assertEquals(150, surveyor.getMinimumSizeDiff());
+        assertEquals(150, surveyor.getMinimumSizeDiff(), "default is an addition of at least 150 bytes");
         
         // https://en.wikipedia.org/wiki/Special:Contributions/Cyprumande
         List<String> users = List.of("Cyprumande");
@@ -192,9 +185,8 @@ public class ContributionSurveyorTest
         var results = surveyor.contributionSurvey(users, Wiki.MAIN_NAMESPACE);
         assertTrue(results.get(users.get(0)).isEmpty());
         
-        // verify get/set works
         surveyor.setMinimumSizeDiff(0);
-        assertEquals(0, surveyor.getMinimumSizeDiff());
+        assertEquals(0, surveyor.getMinimumSizeDiff(), "verify get/set");
         
         // check functionality
         results = surveyor.contributionSurvey(users, Wiki.MAIN_NAMESPACE);
@@ -204,8 +196,7 @@ public class ContributionSurveyorTest
     @Test
     public void setNewOnly() throws Exception
     {
-        // default is false
-        assertFalse(surveyor.newOnly());
+        assertFalse(surveyor.newOnly(), "default is false");
         
         // https://en.wikipedia.org/w/index.php?title=Special%3AContributions&target=GarciaB&start=2005-03-14&end=2005-03-15
         List<String> users = List.of("GarciaB");
@@ -215,9 +206,8 @@ public class ContributionSurveyorTest
         assertEquals(2, results2.size());
         assertTrue(results2.keySet().containsAll(List.of("Akan people", "Lists of volcanoes")));
         
-        // verify get/set works
         surveyor.setNewOnly(true);
-        assertTrue(surveyor.newOnly());
+        assertTrue(surveyor.newOnly(), "verify get/set");
         
         // check functionality
         results = surveyor.contributionSurvey(users, Wiki.MAIN_NAMESPACE);
@@ -229,8 +219,7 @@ public class ContributionSurveyorTest
     @Test
     public void setComingled() throws Exception
     {
-        // default is false
-        assertFalse(surveyor.isComingled());
+        assertFalse(surveyor.isComingled(), "default is false");
         
         // https://en.wikipedia.org/w/index.php?title=Special%3AContributions&target=Dhouston45&start=2022-07-06&end=2022-07-07
         // https://en.wikipedia.org/w/index.php?title=Special%3AContributions&target=Dhouston17&start=2022-07-06&end=2022-07-07
@@ -246,9 +235,8 @@ public class ContributionSurveyorTest
         assertTrue(results2.containsKey("NHL on ESPN"));
         assertTrue(results2.containsKey("NHL on ESPN2"));
         
-        // verify get/set works
         surveyor.setComingled(true);
-        assertTrue(surveyor.isComingled());
+        assertTrue(surveyor.isComingled(), "verify get/set");
         
         // check functionality
         results = surveyor.contributionSurvey(users, Wiki.MAIN_NAMESPACE);
@@ -262,8 +250,7 @@ public class ContributionSurveyorTest
     @Test
     public void setSurveyingTransferredFiles() throws Exception
     {
-        // default is false
-        assertFalse(surveyor.isSurveyingTransferredFiles());
+        assertFalse(surveyor.isSurveyingTransferredFiles(), "default is false");
         
         // https://en.wikipedia.org/wiki/Special:CentralAuth/Pochta
         // no uploads but pochta (Почта) is Russian for post, which means this
@@ -272,9 +259,8 @@ public class ContributionSurveyorTest
         List<String> users = List.of(un);
         assertTrue(surveyor.imageContributionSurvey(users).get(un).get("transferred").isEmpty());
         
-        // verify get/set works
         surveyor.setSurveyingTransferredFiles(true);
-        assertTrue(surveyor.isSurveyingTransferredFiles());
+        assertTrue(surveyor.isSurveyingTransferredFiles(), "verify get/set");
         
         assertFalse(surveyor.imageContributionSurvey(users).get(un).get("transferred").isEmpty());
     }
@@ -284,7 +270,7 @@ public class ContributionSurveyorTest
     {
         String f = "Test123";
         surveyor.setFooter(f);
-        assertTrue(surveyor.generateHTMLFooter().endsWith(f));
-        assertTrue(surveyor.generateWikitextFooter().endsWith(f));
+        assertTrue(surveyor.generateFooter(Writable.Format.HTML).endsWith(f));
+        assertTrue(surveyor.generateFooter(Writable.Format.WIKITEXT).endsWith(f));
     }
 }
