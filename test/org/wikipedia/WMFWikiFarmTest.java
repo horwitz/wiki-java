@@ -103,6 +103,11 @@ public class WMFWikiFarmTest
         // IP address (throws UnknownError)
         // guserinfo = sessions.getGlobalUserInfo("127.0.0.1");
         // assertNull(guserinfo);
+        
+        // Expired temporary account - no special features
+        guserinfo = sessions.getGlobalUserInfo("~2025-39100");
+        luserinfo = (Map)((Map)guserinfo.get("wikis")).get("testwiki");
+        assertEquals(7, luserinfo.get("editcount"));
     }
 
     @Test

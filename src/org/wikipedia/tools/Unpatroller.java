@@ -31,7 +31,6 @@ import org.wikipedia.*;
 public class Unpatroller
 {
     private static WMFWikiFarm sessions = WMFWikiFarm.instance();
-    private static WMFWiki enWiki;
     
     // TODO: 
     // (1) formalise command line arguments
@@ -48,7 +47,7 @@ public class Unpatroller
     public static void main(String[] args) throws Exception
     {
         sessions.setInitializer(wiki -> wiki.setUserAgent(WMFWikiFarm.TOOL_USER_AGENT));
-        sessions.sharedSession("en.wikipedia.org");
+        WMFWiki enWiki = sessions.sharedSession("en.wikipedia.org");
         org.wikiutils.LoginUtils.guiLogin(enWiki);
         String username = args[0];
         
@@ -106,6 +105,7 @@ public class Unpatroller
     {
         // The newpages API query does not list pages that were moved into the
         // main namespace.
+        WMFWiki enWiki = sessions.sharedSession("en.wikipedia.org");
         Wiki.RequestHelper rh2 = rh.inNamespaces(118); // 118 = Draft namespace
         List<Wiki.LogEntry> logs = enWiki.getLogEntries(Wiki.MOVE_LOG, null, rh2);
         rh2 = rh.inNamespaces(Wiki.USER_NAMESPACE);

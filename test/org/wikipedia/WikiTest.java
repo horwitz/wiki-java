@@ -298,11 +298,12 @@ public class WikiTest
     @Test
     public void userExists() throws Exception
     {
-        boolean[] temp = testWiki.userExists(List.of("MER-C", "127.0.0.1", "Djskgh;jgsd", "::/1"));
+        boolean[] temp = testWiki.userExists(List.of("MER-C", "127.0.0.1", "Djskgh;jgsd", "::/1", "~2025-39100"));
         assertTrue(temp[0], "user that exists");
         assertFalse(temp[1], "IP address");
         assertFalse(temp[2], "nonsense input");
         assertFalse(temp[3], "IPv6 range");
+        assertTrue(temp[4], "expired temporary account");
     }
 
     @Test
@@ -1242,7 +1243,8 @@ public class WikiTest
             "Frank234234",
             "Dsdlgfkjsdlkfdjilgsujilvjcl", // should not exist
             "0.0.0.0", // IP address
-            "Allancake" // revision deleted
+            "Allancake", // revision deleted
+            "~2025-31031-14" // expired temporary account
         );
         List<List<Wiki.Revision>> edits = enWiki.contribs(users, null, null);
 
@@ -1252,6 +1254,7 @@ public class WikiTest
         assertEquals(921259981L, contribs.get(0).getID());
         assertEquals(918474023L, contribs.get(1).getID());
         assertEquals(List.of("visualeditor"), contribs.get(0).getTags());
+        assertEquals(1320694005L, edits.get(4).get(0).getID(), "Expired temporary account");
         
         // edge cases
         assertTrue(edits.get(1).isEmpty(), "non-existent user");
@@ -1293,6 +1296,7 @@ public class WikiTest
         usernames.add("DKdsf;lksd"); // should be non-existent...
         usernames.add("ZZRBrenda08"); // blocked spambot with 2 edits
         usernames.add("127.0.0.0/24"); // IP range
+        usernames.add("~2025-31031-14"); // expired temporary account
         List<Wiki.User> users = enWiki.getUsers(usernames);
         assertNull(users.get(0), "null input");
         assertNull(users.get(1), "IP address");
@@ -1311,7 +1315,11 @@ public class WikiTest
         List<String> groups = users.get(2).getGroups();
         List<String> temp = List.of("*", "autoconfirmed", "user", "sysop");
         assertTrue(groups.containsAll(temp));
-
+        groups = users.get(6).getGroups();
+        temp = List.of("temp");
+        assertTrue(groups.containsAll(temp));
+        assertTrue(users.get(6).isExpired());
+        
         // check (subset of) rights
         List<String> rights = users.get(2).getRights();
         temp = List.of("apihighlimits", "delete", "block", "editinterface");

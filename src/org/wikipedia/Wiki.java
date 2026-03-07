@@ -4837,7 +4837,10 @@ public class Wiki implements Comparable<Wiki>
     /**
      *  Gets the users with the given usernames and fills all {@linkplain Wiki.User 
      *  available metadata and properties}. If a user doesn't exist, the result
-     *  is {@code null}. Output array is in the same order as the input array.
+     *  is {@code null}. Temporary accounts are treated as existing users (to
+     *  determine whether a user is a temporary account, call 
+     *  {@link Wiki.User#isA(String) User.isA("temp")}. Output array is in the 
+     *  same order as the input array.
      * 
      *  <p><b>Warnings:</b>
      *  <ul>
@@ -4856,7 +4859,7 @@ public class Wiki implements Comparable<Wiki>
         Map<String, String> getparams = new HashMap<>();
         getparams.put("action", "query");
         getparams.put("list", "users");
-        getparams.put("usprop", "editcount|groups|rights|emailable|blockinfo|gender|registration");
+        getparams.put("usprop", "editcount|groups|rights|emailable|blockinfo|gender|registration|tempexpired");
         Map<String, Object> postparams = new HashMap<>();
         Map<String, User> metamap = new HashMap<>();
         for (String fragment : constructTitleString(usernames))
@@ -4897,6 +4900,7 @@ public class Wiki implements Comparable<Wiki>
                 int editcount = Integer.parseInt(parseAttribute(result, "editcount", 0));
                 boolean emailable = result.contains("emailable=\"");
                 Gender gender = Gender.valueOf(parseAttribute(result, "gender", 0));
+                boolean tempexpired = result.contains("tempexpired=\"");
                 
                 // parse block information
                 LogEntry block = null;
@@ -4919,7 +4923,7 @@ public class Wiki implements Comparable<Wiki>
                             BLOCK_LOG, "block", namespaceIdentifier(USER_NAMESPACE) + ":" + parsedname, details);
                 }
 
-                User user = new User(parsedname, registration, rights, groups, gender, emailable, block, editcount);
+                User user = new User(parsedname, registration, rights, groups, gender, emailable, block, editcount, tempexpired);
                 metamap.put(parsedname, user);
             }
         }
@@ -6772,6 +6776,8 @@ public class Wiki implements Comparable<Wiki>
         private List<String> rights;
         private List<String> groups;
         private LogEntry blockinfo;
+        // temporary account expiry (changes once)
+        private boolean tempexpired;
         // user preferences (volatile, changes rarely)
         private Gender gender;
         private boolean emailable;
@@ -6792,10 +6798,12 @@ public class Wiki implements Comparable<Wiki>
          *  @param blockinfo a block log entry containing the details of this user's
          *  block if they are blocked, otherwise null
          *  @param editcount the internal edit count of this user
+         *  @param tempexpired true if this is a temporary account, and it has
+         *  expired
          *  @since 0.05
          */
         protected User(String username, OffsetDateTime registration, List<String> rights, List<String> groups,
-            Gender gender, boolean emailable, LogEntry blockinfo, int editcount)
+            Gender gender, boolean emailable, LogEntry blockinfo, int editcount, boolean tempexpired)
         {
             this.username = Objects.requireNonNull(username);
             // can be null per https://phabricator.wikimedia.org/T24097
@@ -6806,6 +6814,7 @@ public class Wiki implements Comparable<Wiki>
             this.emailable = emailable;
             this.blockinfo = blockinfo;
             this.editcount = editcount;
+            this.tempexpired = tempexpired;
         }
         
         /**
@@ -6944,6 +6953,17 @@ public class Wiki implements Comparable<Wiki>
         public int countEdits()
         {
             return editcount;
+        }
+        
+        /**
+         *  {@return true if this is a temporary account that has expired}. Use
+         *  {@link Wiki.User#isA(String) User.isA("temp")} to determine whether
+         *  this is a temporary account.
+         *  @since 0.39
+         */
+        public boolean isExpired()
+        {
+            return tempexpired;
         }
 
         /**
