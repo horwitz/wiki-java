@@ -650,6 +650,8 @@ public class WikiTest
         assertEquals("TonyBallioni", le.get(0).getUser());
         assertEquals("User:Bodiadub", le.get(0).getTitle());
         assertEquals("{{checkuserblock-account}}", le.get(0).getComment());
+        assertEquals("infinity", le.get(0).getDetails().get("expiry"), "block parameters");
+        assertEquals("true", le.get(0).getDetails().get("nocreate"), "block parameters");
         
         // https://en.wikipedia.org/wiki/Special:Blocklist/Nimimaan
         // see also getLogEntries() below
@@ -660,12 +662,12 @@ public class WikiTest
         assertEquals("block", le.get(1).getAction());
         assertEquals("User:Nimimaan", le.get(1).getTitle());
         assertEquals("spambot", le.get(1).getComment());
-//        assertEquals(new Object[] {
-//            false, true, // hard block (not anon only), account creation disabled,
-//            false, true, // autoblock enabled, email disabled
-//            true, "indefinite" // talk page access revoked, expiry
-//        }, le[0].getDetails(), "block parameters");
-
+        assertEquals("infinity", le.get(1).getDetails().get("expiry"), "block parameters");
+        assertEquals("true", le.get(1).getDetails().get("nocreate"), "block parameters");
+        assertEquals("true", le.get(1).getDetails().get("noemail"), "block parameters");
+        assertEquals("true", le.get(1).getDetails().get("nousertalk"), "block parameters");
+        // remaining details: anononly = false, noautoblock = false
+        
         // What happens if there are no blocked users in the list? 
         le = enWiki.getBlockList(List.of("0.0.0.0"), null); // Reserved IPs should never be blocked. 
         assertTrue(le.isEmpty());
@@ -1333,12 +1335,10 @@ public class WikiTest
         assertEquals("2018-04-18T18:46:05Z", entry.getTimestamp().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
         assertEquals("spammer", entry.getComment());
         Map<String, String> details = entry.getDetails();
-        assertEquals("infinite", details.get("expiry"));
-        assertFalse(details.containsKey("noautoblock"));
-        assertTrue(details.containsKey("nocreate"));
-        // https://phabricator.wikimedia.org/T329426
-        // assertTrue(details.containsKey("noemail"));
-        // assertTrue(details.containsKey("notalk"));
+        assertEquals("infinite", details.get("expiry"), "block parameters");
+        assertEquals("true", details.get("nocreate"), "block parameters");
+        assertEquals("true", details.get("noemail"), "block parameters");
+        assertEquals("true", details.get("nousertalk"), "block parameters");
     }
 
     @Test

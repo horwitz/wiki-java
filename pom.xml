@@ -84,6 +84,13 @@
                         <sourceFileExcludes>
                             <sourceFileInclude>org/wikipedia/servlets/ServletFirewall.java</sourceFileInclude>
                         </sourceFileExcludes>
+                        <tags>
+                            <tag>
+                                <name>warning</name>
+                                <placement>a</placement>
+                                <head>Warnings:</head>
+                            </tag>
+                        </tags>
                     </configuration>
                 </plugin>
                 <!-- TEST PLUGINS -->
