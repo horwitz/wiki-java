@@ -36,6 +36,23 @@ public class EventsTest
     public EventsTest()
     {
     }
+    
+    @Test
+    public void renderEvent() throws Exception
+    {
+        List<Wiki.Revision> revisions = enWiki.getRevisions(new long[] { 1165014330L, 1171939631L });
+        Wiki.Revision rev = revisions.get(0);
+        Events.Comment cmt = new Events.Comment(rev);
+        assertEquals(rev.getParsedComment(), cmt.format(Writable.Format.HTML), "normal comment, html");
+        assertEquals("<nowiki>" + rev.getComment() + "</nowiki>", cmt.format(Writable.Format.WIKITEXT), "normal comment, wikitext");
+        assertEquals(rev.getComment(), cmt.format(Writable.Format.CSV), "normal comment, csv");
+        
+        rev = revisions.get(1);
+        cmt = new Events.Comment(rev);
+        assertEquals(Events.DELETED_EVENT_HTML, cmt.format(Writable.Format.HTML), "deleted comment, html");
+        assertEquals(Events.DELETED_EVENT_HTML, cmt.format(Writable.Format.WIKITEXT), "deleted comment, wikitext");
+        assertEquals("[DELETED]", cmt.format(Writable.Format.CSV), "deleted comment, csv");
+    }
 
     @Test
     public void timeBetweenEvents() throws Exception

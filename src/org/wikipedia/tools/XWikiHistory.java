@@ -36,7 +36,7 @@ public class XWikiHistory
     
     public record ArticleData(String domain, Pages.Links page, OffsetDateTime createdate, Users.ShortLinks user, int fedits, String snippet) { }
     // temporary, likely to move elsewhere
-    public record DeletionLog(String project, OffsetDateTime ts, String admin, String action, String title, String reason) { }
+    public record DeletionLog(String project, OffsetDateTime ts, String admin, String action, String title, Events.Comment reason) { }
     public record GUserInfo(Users.ShortLinks user, Object gedits, Object home, String wikis, Object locked) { }
 
     /**
@@ -119,7 +119,7 @@ public class XWikiHistory
                 for (Wiki.LogEntry le : entries)
                     rows2.add(new DeletionLog(domain, le.getTimestamp(),
                         le.getUser(), le.getAction(), le.getTitle(),
-                        "<nowiki>" + le.getComment() + "</nowiki>"));
+                        new Events.Comment(le)));
             });
             System.out.println(DataTable.create(rows2, headers).format(Writable.Format.WIKITEXT));
         }

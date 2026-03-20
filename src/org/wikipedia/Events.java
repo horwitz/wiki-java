@@ -1,6 +1,6 @@
 /**
- *  @(#)Events.java 0.01 26/06/2018
- *  Copyright (C) 2018-20XX MER-C and contributors
+ *  @(#)Events.java 0.02 20/03/2026
+ *  Copyright (C) 2018-2026 MER-C and contributors
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
@@ -27,7 +27,7 @@ import java.time.*;
  *  Utility class for {@link Wiki.Event}s. For utility methods and data specific 
  *  to {@link Wiki.Revision}s, see {@link Revisions}.
  *  @author MER-C
- *  @version 0.01
+ *  @version 0.02
  */
 public class Events
 {
@@ -36,6 +36,39 @@ public class Events
      *  <code>history-deleted</code>, comes from MediaWiki.)
      */
     public static final String DELETED_EVENT_HTML = "<span class=\"history-deleted\">deleted</span>";
+    
+    /**
+     *  A format-independent representation of an event comment.
+     *  @param event the underlying event
+     *  @see Wiki.Event#getComment() 
+     *  @see Wiki.Event#getParsedComment()
+     *  @since 0.02
+     */
+    public record Comment(Wiki.Event event) implements Writable
+    {
+        /**
+         *  {@return a string representation of this comment in the appropriate
+         *  format}. For HTML, return the parsed comment. For wikitext, return
+         *  the comment surrounded in nowiki tags. Else return the comment.
+         *  @param fmt a format to render the comment in
+         */
+        @Override
+        public String format(Writable.Format fmt)
+        {
+            String comment = event.getComment();
+            String pc = event.getParsedComment();
+            return switch (fmt)
+            {
+                case Writable.Format.HTML:
+                    yield pc == null || event.isCommentDeleted() ? DELETED_EVENT_HTML : pc;
+                case Writable.Format.WIKITEXT:
+                    yield comment == null || event.isCommentDeleted() ? DELETED_EVENT_HTML : "<nowiki>" + comment + "</nowiki>";
+                case Writable.Format.CSV:
+                default:
+                    yield comment == null || event.isCommentDeleted() ? "[DELETED]" : comment;
+            };
+        }
+    }
     
     /**
      *  Computes the time elapsed between each of a list of {@link Wiki.Event}s.

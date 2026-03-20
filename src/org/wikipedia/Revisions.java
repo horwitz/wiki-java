@@ -51,7 +51,7 @@ public class Revisions
      *  @since 0.02
      */
     public record RevisionRecord(WikitextUtils.WikiLink diff, WikitextUtils.WikiLink revlink, String flag_new, String flag_minor, String flag_bot,
-        WikitextUtils.WikiLink title, Users.ShortLinks user, int size, String sizediff, String comment) { }
+        WikitextUtils.WikiLink title, Users.ShortLinks user, int size, String sizediff, Events.Comment comment) { }
     
     private Revisions(Wiki wiki)
     {
@@ -124,10 +124,7 @@ public class Revisions
         for (Wiki.Revision rev : revisions)
         {
             String user = rev.getUser();
-            String comment = format.equals("html") ? rev.getParsedComment() : rev.getComment();
             int sizediff = rev.getSizeDiff();
-            String commenthtml = comment == null || comment.equals(Wiki.Event.COMMENT_DELETED)
-                ? Events.DELETED_EVENT_HTML : (format.equals("html") ? comment : "<nowiki>" + comment + "</nowiki>");
             rows.add(new RevisionRecord(
                 new WikitextUtils.WikiLink(wiki, "Special:Diff/" + rev.getID(), "prev"), 
                 new WikitextUtils.WikiLink(wiki, "Special:Permanentlink/" + rev.getID(), DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(rev.getTimestamp())),
@@ -138,7 +135,7 @@ public class Revisions
                 new Users.ShortLinks(wiki, user == null || user.equals(Wiki.Event.USER_DELETED) ? null : user), 
                 rev.getSize(),
                 "<span class=\"" + (sizediff > 0 ? "sizeincreased" : "sizedecreased") + "\">" + sizediff + "</span>",
-                commenthtml));
+                new Events.Comment(rev)));
         }
         DataTable dt = DataTable.create(rows, null);
         dt.setTableClass(format.equals("html") ? "wikitable revisions" : "revisions");

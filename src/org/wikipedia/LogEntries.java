@@ -75,16 +75,7 @@ public class LogEntries
             }
             
             // comment
-            String summary = log.getComment();
-            if (summary == null || summary.equals(Wiki.Event.COMMENT_DELETED))
-                buffer.append(Events.DELETED_EVENT_HTML);
-            else
-            {
-                // kill wikimarkup
-                buffer.append("(<nowiki>");
-                buffer.append(summary);
-                buffer.append("</nowiki>)");
-            }
+            buffer.append(new Events.Comment(log).format(Writable.Format.WIKITEXT));
             
             // details
             Map details = log.getDetails();
