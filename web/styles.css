@@ -24,7 +24,8 @@ table.wikitable
     border: 1px #aaa solid;
     border-collapse: collapse;
     color: black;
-    width: 100%
+    width: 100%;
+    overflow: scroll;
 }
 table.wikitable > tr > th,
 table.wikitable > tr > td,

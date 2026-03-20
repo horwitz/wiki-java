@@ -19,6 +19,7 @@
  */
 package org.wikipedia.tools;
 
+import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
@@ -49,7 +50,7 @@ public class UserInfo
      *  @param blockexpiry when the block expires
      *  @param blockts when the user was blocked
      *  @param blockcomment why the user was blocked
-     *  @see UserInfo#userInfoTable(Wiki, List)
+     *  @see UserInfo#userInfoTable(Wiki, List, Writable.Format)
      *  @since 0.02
      */
     public record UserInfoRecord(String user, String actions, OffsetDateTime regts, OffsetDateTime firstedit,
@@ -74,12 +75,11 @@ public class UserInfo
         Wiki wiki = sessions.sharedSession(wikistring);
         List<String> socks = CommandLineParser.parseUserOptions(parsedargs, wiki);
 
-        System.out.println(userInfoTable(wiki, socks).format(Writable.Format.WIKITEXT));
+        System.out.println(userInfoTable(wiki, socks, Writable.Format.WIKITEXT).format(Writable.Format.WIKITEXT));
         //lockFinder(socks);
         //staleScreener(wiki, socks);
         
         // TODO: a servlet and offline version overhauling the above.
-        // Servlet Input = user list, category or page
         // options: show only unblocked, show only accounts < X old (default: 90 days)
         // highlight non-stale
         // pipe to other tools (e.g. ContributionSurveyor)
@@ -91,12 +91,13 @@ public class UserInfo
      *  their contributions, and presents it in one table.
      *  @param wiki the wiki to get information from
      *  @param usernames a list of usernames, non-existing allowed
+     *  @param fmt {@link Writable.Format#WIKITEXT} or {@link Writable.Format#WIKITEXT}
      *  @return the user information
      *  @see UserInfoRecord
-     *  @throws Exception if a network error occurs
+     *  @throws IOException if a network error occurs
      *  @since 0.02
      */
-    public static DataTable<UserInfoRecord> userInfoTable(Wiki wiki, List<String> usernames) throws Exception
+    public static DataTable<UserInfoRecord> userInfoTable(Wiki wiki, List<String> usernames, Writable.Format fmt) throws IOException
     {
         List<Wiki.User> users = wiki.getUsers(usernames);
         // somewhat slow, there could be tens of thousands of edits
@@ -114,7 +115,7 @@ public class UserInfo
             if (user == null)
             {
                 rows.add(new UserInfoRecord(usernames.get(i), "", null, null,
-                    null, "0", 0, "unregistered", "", "", null, ""));
+                    null, "0", 0, "unregistered", "", "", null, null));
                 continue;
             }
             
@@ -139,34 +140,37 @@ public class UserInfo
             String un = user.getUsername();
             String unenc = URLEncoder.encode(un, StandardCharsets.UTF_8);
             
-            String usercell = "[[User:" + un + "|" + un + "]] ([[User talk:" + un + "|talk]])";
-            String actioncell = "[{{fullurl:Special:Log|user=" + unenc + "}} logs]"; // TODO: add more summary links/actions
+            String usercell = new WikitextUtils.WikiLink(wiki, "User:" + un, un).format(fmt) + " (" +
+                new WikitextUtils.WikiLink(wiki, "User talk:" + un, "talk").format(fmt) + ")";
+            String actioncell = new WikitextUtils.ExternalLink(wiki.getIndexPhpUrl() + "?title=Special:Log&user=" + unenc, "logs").format(fmt); // TODO: add more summary links/actions
             OffsetDateTime firstedit = null, lastedit = null;
             if (!usercontribs.isEmpty())
             {
                 firstedit = usercontribs.get(0).getTimestamp();
                 lastedit = usercontribs.get(usercontribs.size() - 1).getTimestamp();
             }
-            String editcount = "[[Special:Contributions/" + un + "|" + user.countEdits() + "]]";
+            String editcount = new WikitextUtils.WikiLink(wiki, "Special:Contributions/" + un, "" + user.countEdits()).format(fmt);
 
             List<String> groups = user.getGroups();
             String groupcell;
             groups.removeAll(boring_groups);
             if (groups.isEmpty())
-                groupcell = "none ([[Special:Userrights/" + un + "|add]])";
+                groupcell = "none (" + new WikitextUtils.WikiLink(wiki, "Special:Userrights/" + un, "add").format(fmt) + ")";
             else
-                groupcell = "[[Special:Userrights/" + un + "|" + String.join(", ", groups) + "]]";
+                groupcell = new WikitextUtils.WikiLink(wiki, "Special:Userrights/" + un, String.join(", ", groups)).format(fmt);
             String blocked, bexpiry = null, bcomment = null;
             if (blockinfo == null)
-                blocked = "No ([[Special:Block/" + un + "|block]])";
+                blocked = "No (" + new WikitextUtils.WikiLink(wiki, "Special:Block/" + un, "block").format(fmt) + ")";
             else
             {
-                blocked = "[[Special:Block/" + un + "|Yes]] ([[Special:Unblock/" + un + "|unblock]])";
+                blocked = new WikitextUtils.WikiLink(wiki, "Special:Block/" + un, "Yes").format(fmt) + " (" + 
+                    new WikitextUtils.WikiLink(wiki, "Special:Unblock/" + un, "unblock").format(fmt) + ")";
                 bexpiry = blockdetails.get("expiry") == null ? "indefinite" : blockdetails.get("expiry");
-                bcomment = "<nowiki>" + blockinfo.getComment() + "</nowiki>";
+                // force wikitext because parsedcomment is absent, see warning at Wiki.User.getBlockDetails()
+                bcomment = new Events.Comment(blockinfo).format(Writable.Format.WIKITEXT);
             }
-            rows.add(new UserInfoRecord(usercell, actioncell, user.getRegistrationDate(),
-                firstedit, lastedit, editcount, articles, groupcell, blocked, bexpiry, blockts, bcomment));
+            rows.add(new UserInfoRecord(usercell, actioncell, user.getRegistrationDate(), firstedit, lastedit, 
+                editcount, articles, groupcell, blocked, bexpiry, blockts, bcomment));
             
             // TODO: add locks, lock timestamp and lock reason - not possible currently due to:
             // 1. T261752
@@ -174,6 +178,7 @@ public class UserInfo
             // 3. Wiki.getLogEntries("globalauth", null, null) doesn't return the details because it
             //    is not a native Wiki log type
             // Any will result in this bug being fixed.
+            // Also the way formatting is handled leaves something to be desired
         }
         return DataTable.create(rows, headers);
         // once lock information is available, then this should be the minimum of block and lock timestamps
