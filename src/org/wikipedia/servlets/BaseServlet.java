@@ -11,7 +11,7 @@
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU Affero General Public License for more details.
-
+ *
  *  You should have received a copy of the GNU Affero General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -47,16 +47,21 @@ public abstract class BaseServlet extends HttpServlet
      *  parameters.
      *  @param request the servlet request
      *  @param response the servlet response
-     *  @throws ServletException if the request could not be handled
-     *  @throws IOException if a network error occurs
      */
     @Override
-    public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
+    public void doGet(HttpServletRequest request, HttpServletResponse response)
     {
         ServletUtils.setHeaders(request, response);
-        if (ServletFirewall.isAllowed(request, response))
-            if (ServletUtils.showCaptcha(request, response, getCaptchaParams(), 4))
-                processRequest(request, response);
+        try
+        {
+            if (ServletFirewall.isAllowed(request, response))
+                if (ServletUtils.showCaptcha(request, response, getCaptchaParams(), 4))
+                    processRequest(request, response);
+        }
+        catch (Exception ex)
+        {
+            ServletUtils.renderErrorMessage(ex, request, response);
+        }
     }
     
     /**
@@ -64,21 +69,25 @@ public abstract class BaseServlet extends HttpServlet
      *  checks if the request is allowed.
      *  @param request the servlet request
      *  @param response the servlet response
-     *  @throws ServletException if the request could not be handled
-     *  @throws IOException if a network error occurs
      */
     @Override
-    public void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
+    public void doPost(HttpServletRequest request, HttpServletResponse response)
     {
         ServletUtils.setHeaders(request, response);
-        if (ServletFirewall.isAllowed(request, response))
-            processRequest(request, response);
+        try
+        {
+            if (ServletFirewall.isAllowed(request, response))
+                processRequest(request, response);
+        }
+        catch (Exception ex)
+        {
+            ServletUtils.renderErrorMessage(ex, request, response);
+        }
     }
     
     /**
-     *  Returns the HTTP parameters used to calculate a CAPTCHA challenge string
-     *  when a CAPTCHA is shown.
-     *  @return (see above) 
+     *  {@return the HTTP parameters used to calculate a CAPTCHA challenge 
+     *  string when a CAPTCHA is shown}
      *  @see ServletUtils#showCaptcha(HttpServletRequest, HttpServletResponse, List, int)
      */
     public List<String> getCaptchaParams()

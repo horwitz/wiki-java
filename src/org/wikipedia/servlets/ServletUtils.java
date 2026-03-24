@@ -29,7 +29,7 @@ import java.util.*;
 
 import jakarta.servlet.http.*;
 
-import org.wikipedia.Wiki;
+import org.wikipedia.*;
 
 /**
  *  Common servlet code so that I can maintain it easier.
@@ -382,6 +382,72 @@ public class ServletUtils
             </body>
             </html>""".formatted(request.getAttribute("toolname"), OffsetDateTime.now().getYear()));
         out.flush();
+    }
+    
+    /**
+     *  Shows an error message to the user.
+     *  @param ex the {@code Exception} that occurred
+     *  @param request the HTTP servlet request that resulted in the error
+     *  @param response the HTTP servlet response for serving the error response
+     *  @since 0.03
+     */
+    public static void renderErrorMessage(Exception ex, HttpServletRequest request, HttpServletResponse response)
+    {
+        try
+        {
+            PrintWriter out = response.getWriter();
+            ServletUtils.renderHeader(request, response, out);
+            out.print("""
+                <p><span class="error">ERROR</span>
+                <p>
+                An error occurred. Possible causes, as hinted to in the debug information:
+
+                <ul>
+                    <li>Miscommunication between the servers of this site and the 
+                        wiki. Please check <a href="https://status.wikimedia.org">Wikimedia status</a>
+                        and try again later.
+                    <li>Bad input. Please check your input for invalid titles/users
+                        and try again.
+                </ul>
+                <h5>Your input:</h5>
+                <ul>
+                """);  
+            Map<String, String[]> params = request.getParameterMap();
+            for (var entry : params.entrySet())
+                out.println("<li>" + entry.getKey() + ": " + HTMLUtils.sanitizeForHTML(Arrays.toString(entry.getValue())));
+            out.print("""
+                </ul>
+                <p>
+                Here is a <a href="javascript:void(0);" onclick="history.back();">convenience link</a> to the previous page.
+
+                <p>
+                If that doesn't solve your problem, please consider reporting the 
+                issue on <a href="https://codeberg.org/MER-C/wiki-java">Codeberg</a>
+                or <a href="https://en.wikipedia.org/wiki/User_talk:MER-C">my talk page</a>
+                quoting your input and the following debug information (if reasonable to
+                do so).
+
+                <h5>Debug information:</h5>
+                <pre>
+                """);
+            out.println(ex.getMessage());
+            // only print the org.wikipedia elements of the stack trace to hide which HTTP server was used 
+            // and limit the information shown to what is actionable
+            for (StackTraceElement el : ex.getStackTrace())
+            {
+                if (el.getClassName().contains("org.wikipedia"))
+                    out.println("    at " + el.toString());
+                else
+                    break;
+            }
+            out.println("</pre>");
+
+            ServletUtils.renderFooter(request, out);
+        }
+        catch (IOException e)
+        {
+            // who knows?
+        }
     }
     
     /**
