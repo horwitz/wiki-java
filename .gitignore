@@ -1,5 +1,4 @@
 src/org/wikipedia/sekrit/
-src/org/wikipedia/servlets/ServletFirewall.java
 spam.sh
 
 ### Maven ###
@@ -15,7 +14,7 @@ buildNumber.properties
 
 
 ### NetBeans ###
-nbproject/private/
+nbproject/
 build/
 nbbuild/
 dist/
