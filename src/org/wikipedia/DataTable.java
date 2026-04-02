@@ -66,8 +66,7 @@ public class DataTable<T extends Record> implements Writable
     }
     
     /**
-     *  Returns a read-only view of the table's headers.
-     *  @return the list of headers
+     *  {@return a read-only view of the table's headers}
      *  @see #setHeaders(List)
      */
     public List<String> getHeaders()
@@ -99,8 +98,7 @@ public class DataTable<T extends Record> implements Writable
     }
 
     /**
-     *  Returns a read-only view of skipped columns on export.
-     *  @return the skipped columns
+     *  {@return a read-only view of skipped columns on export}
      *  @see #setSkippedColumns(List)
      *  @since 0.02
      */
@@ -136,9 +134,8 @@ public class DataTable<T extends Record> implements Writable
     }
     
     /**
-     *  Returns a read-only view of the names of CSS classes to be used when 
-     *  exporting the table as HTML.
-     *  @return the CSS class names
+     *  {@return a read-only view of the names of CSS classes to be used when 
+     *  exporting the table as HTML}
      *  @see #setColumnClasses(List)
      *  @since 0.02
      */
@@ -174,9 +171,8 @@ public class DataTable<T extends Record> implements Writable
     }
     
     /**
-     *  Gets the CSS class to be applied to the table as a whole or {@code null}
-     *  if unstyled.
-     *  @return (see above)
+     *  {@return the CSS class to be applied to the table as a whole or 
+     *  {@code null} if unstyled}
      *  @see #setTableClass(String) 
      *  @since 0.02
      */
@@ -198,9 +194,8 @@ public class DataTable<T extends Record> implements Writable
     }
     
     /**
-     *  Gets the two-parameter function that computes the CSS class to be 
-     *  applied to each row of the data table.
-     *  @return (see above)
+     *  {@return the two-parameter function that computes the CSS class to be 
+     *  applied to each row of the data table}
      *  @see #setRowClasses(BiFunction) 
      *  @since 0.02
      */
@@ -301,6 +296,8 @@ public class DataTable<T extends Record> implements Writable
                 String sval = render(values.get(i), Writable.Format.WIKITEXT);
                 if (i == 0)
                     sb.append("| ").append(sval);
+                else if (sval.isBlank())
+                    sb.append(" ||");
                 else
                     sb.append(" || ").append(sval);
             }

@@ -53,13 +53,17 @@ public class DataTableTest
             new TwoColRecord("Value2", 20));
         list2 = List.of(
             new TwoColRecord("Simple key", "Simple value"),
+            new TwoColRecord("Ending blank", null),
             new TwoColRecord(null, "Has \"Quotes\" inside"),
             new TwoColRecord("<script>alert('PWNED');</script>", "Simple"),
             new TwoColRecord("Carriage\r\nReturn", "With, Comma"),
             new TwoColRecord("Multi\nLine", "Easy"));
+
         list3 = List.of(
             new MultiColRecord("A", OffsetDateTime.parse("2020-01-01T00:00:00Z"), 5),
-            new MultiColRecord("B", OffsetDateTime.parse("2025-06-21T00:05:05Z"), 2));
+            new MultiColRecord("B", OffsetDateTime.parse("2025-06-21T00:05:05Z"), 2),
+            new MultiColRecord("C", null, 3)
+            );
     }
     
     @Test
@@ -160,6 +164,7 @@ public class DataTableTest
         expected = """
             Column1,Column2
             Simple key,Simple value
+            Ending blank,            
             ,"Has ""Quotes"" inside"
             <script>alert('PWNED');</script>,Simple
             "Carriage\r
@@ -174,6 +179,7 @@ public class DataTableTest
             Test1,Test2,Test3
             A,2020-01-01T00:00:00Z,5
             B,2025-06-21T00:05:05Z,2
+            C,,3
             """;
         assertEquals(expected, dt.format(Writable.Format.CSV), "Three column");
         
@@ -182,6 +188,7 @@ public class DataTableTest
             Test1,Test3
             A,5
             B,2
+            C,3
             """;
         assertEquals(expected, dt.format(Writable.Format.CSV), "Three column with skipped columns");
     }
@@ -212,12 +219,14 @@ public class DataTableTest
             """;
         assertEquals(expected, dt.format(Writable.Format.WIKITEXT), "Null header");
         
-        dt = DataTable.create(list2.subList(0, 2), headers2);
+        dt = DataTable.create(list2.subList(0, 3), headers2);
         expected = """
             {| class="wikitable sortable"
             ! Column1 !! Column2
             |-
             | Simple key || Simple value
+            |-
+            | Ending blank ||
             |-
             |  || Has "Quotes" inside
             |}
@@ -232,6 +241,8 @@ public class DataTableTest
             | A || 2020-01-01T00:00:00Z || 5
             |-
             | B || 2025-06-21T00:05:05Z || 2
+            |-
+            | C || || 3
             |}
             """;
         assertEquals(expected, dt2.format(Writable.Format.WIKITEXT), "Three column");
@@ -244,6 +255,8 @@ public class DataTableTest
             | A || 5
             |-
             | B || 2
+            |-
+            | C || 3
             |}
             """;
         assertEquals(expected, dt2.format(Writable.Format.WIKITEXT), "Three column with skipped columns");
@@ -285,7 +298,7 @@ public class DataTableTest
             """;
         assertEquals(expected, dt.format(Writable.Format.HTML), "Simple");
         
-        dt = DataTable.create(list2.subList(0, 3), headers2);
+        dt = DataTable.create(list2.subList(0, 4), headers2);
         expected = """
             <table>
             <thead>
@@ -297,6 +310,9 @@ public class DataTableTest
             <tr>
             <td>Simple key
             <td>Simple value
+            <tr>
+            <td>Ending blank
+            <td>
             <tr>
             <td>
             <td>Has "Quotes" inside
@@ -326,6 +342,10 @@ public class DataTableTest
             <td>B
             <td>2025-06-21T00:05:05Z
             <td>2
+            <tr>
+            <td>C
+            <td>
+            <td>3
             </tbody>
             </table>
             """;
@@ -346,6 +366,9 @@ public class DataTableTest
             <tr>
             <td>B
             <td>2
+            <tr>
+            <td>C
+            <td>3
             </tbody>
             </table>
             """;
@@ -406,6 +429,9 @@ public class DataTableTest
             <tr>
             <td>B
             <td>2
+            <tr>
+            <td>C
+            <td>3
             </tbody>
             </table>
             """;

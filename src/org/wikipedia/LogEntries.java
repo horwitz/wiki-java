@@ -1,6 +1,6 @@
 /**
- *  @(#)LogEntries.java 0.01 02/06/2024
- *  Copyright (C) 2024-20XX MER-C and contributors
+ *  @(#)LogEntries.java 0.02 29/03/2026
+ *  Copyright (C) 2024-2026 MER-C and contributors
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
@@ -20,73 +20,60 @@
 
 package org.wikipedia;
 
-import java.time.format.DateTimeFormatter;
+import java.time.OffsetDateTime;
 import java.util.*;
 
 /**
  *  Utility class for {@link Wiki.LogEntry}. For utility methods and data specific 
  *  to {@link Wiki.Revision}s, see {@link Revisions}.
  *  @author MER-C
- *  @version 0.01
+ *  @version 0.02
  */
 public class LogEntries
 {
     /**
-     *  Turns a list of revisions into human-readable wikitext. Be careful, as
-     *  slowness may result when copying large amounts of wikitext produced by
-     *  this method, or by the wiki trying to parse it. Takes the form of:
-     *
-     *  <p>*2009-01-01 00:00 User (talk | contribs) [action] [target] (comment)
-     *  @param logs a bunch of log entries
-     *  @return those log entries formatted as wikitext
+     *  A representation of a {@link Wiki.LogEntry} for output in tabular format.
+     *  @param domain the domain of the wiki this log occurred in
+     *  @param timestamp when the relevant action occurred
+     *  @param user a formatted rendering of the user performing the action
+     *  @param log the log type (e.g. {@link Wiki#DELETION_LOG})
+     *  @param action the action that was performed
+     *  @param title the title of the relevant page
+     *  @param comment the log comment
+     *  @param details any extra log information, see {@link Wiki.LogEntry#getDetails()}
+     *  @see DataTable
+     *  @see Wiki.LogEntry
+     *  @since 0.02
      */
-    public static String toWikitext(Iterable<Wiki.LogEntry> logs)
+    public record LogRecord(String domain, OffsetDateTime timestamp, Users.ShortLinks user, String log, String action, 
+        WikitextUtils.WikiLink title, Events.Comment comment, String details) { }
+    
+    /**
+     *  Turns a list of revisions into a format-independent table. 
+     *  @param logs a bunch of log entries
+     *  @return those log entries formatted as a DataTable
+     */
+    public static DataTable<LogRecord> toDataTable(Iterable<Wiki.LogEntry> logs)
     {
-        StringBuilder buffer = new StringBuilder(100000);
-        buffer.append("<div style=\"font-family: monospace; font-size: 120%\">\n");
+        List<LogRecord> rows = new ArrayList<>();
         for (Wiki.LogEntry log : logs)
         {
-            // timestamp
-            buffer.append("*");
-            buffer.append(DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(log.getTimestamp()));
-            buffer.append(" ");
-            
-            // user
-            String user2 = log.getUser();
-            if (user2 == null || user2.equals(Wiki.Event.USER_DELETED))
-                buffer.append(Events.DELETED_EVENT_HTML);
-            else
-            {
-                buffer.append(new Users.ShortLinks(Wiki.newSession("en.wikipedia.org"), user2).format(Writable.Format.WIKITEXT)); // hack
-                buffer.append(" ");
-            }
-            
-            // action
-            buffer.append(log.getAction());
-            buffer.append(" ");
-            
-            // target
-            String target = log.getTitle();
-            if (target != null)
-            {
-                buffer.append("[[:");
-                buffer.append(target);
-                buffer.append("]] ");
-            }
-            
-            // comment
-            buffer.append(new Events.Comment(log).format(Writable.Format.WIKITEXT));
-            
-            // details
+            String user = log.getUser();
+            Wiki wiki = log.getWiki();
             Map details = log.getDetails();
-            if (details != null && !details.isEmpty())
-            {
-                buffer.append(" ");
-                buffer.append(details.toString());
-            }
-            buffer.append("\n");
+            rows.add(new LogRecord(
+                wiki.getDomain(),
+                log.getTimestamp(),
+                new Users.ShortLinks(wiki, user == null || user.equals(Wiki.Event.USER_DELETED) ? null : user), 
+                log.getType(),
+                log.getAction(),
+                new WikitextUtils.WikiLink(wiki, log.getTitle(), null),
+                new Events.Comment(log),
+                (details == null || details.isEmpty()) ? "" : details.toString()));
         }
-        buffer.append("</div>");
-        return buffer.toString();
+        DataTable dt = DataTable.create(rows, null);
+        dt.setHeaders(List.of("Domain", "Timestamp", "User", "Log", "Action", "Target", "Comment", "Details"));
+        dt.setColumnClasses(List.of("", "date", "user", "", "", "title", "comment", ""));
+        return dt;
     }
 }

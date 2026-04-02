@@ -62,7 +62,11 @@ public class Events
                 case Writable.Format.HTML:
                     yield pc == null || event.isCommentDeleted() ? DELETED_EVENT_HTML : pc;
                 case Writable.Format.WIKITEXT:
-                    yield comment == null || event.isCommentDeleted() ? DELETED_EVENT_HTML : "<nowiki>" + comment + "</nowiki>";
+                    if (comment == null || event.isCommentDeleted())
+                        yield DELETED_EVENT_HTML;
+                    else if (comment.isBlank())
+                        yield "";
+                    yield "<nowiki>" + comment + "</nowiki>";
                 case Writable.Format.CSV:
                 default:
                     yield comment == null || event.isCommentDeleted() ? "[DELETED]" : comment;

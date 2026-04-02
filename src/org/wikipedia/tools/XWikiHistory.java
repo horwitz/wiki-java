@@ -34,9 +34,8 @@ public class XWikiHistory
 {
     private final static WMFWikiFarm sessions = WMFWikiFarm.instance();
     
+    // temporary?
     public record ArticleData(String domain, Pages.Links page, OffsetDateTime createdate, Users.ShortLinks user, int fedits, String snippet) { }
-    // temporary, likely to move elsewhere
-    public record DeletionLog(String project, OffsetDateTime ts, String admin, String action, String title, Events.Comment reason) { }
     public record GUserInfo(Users.ShortLinks user, Object gedits, Object home, String wikis, Object locked) { }
 
     /**
@@ -110,18 +109,13 @@ public class XWikiHistory
         if (wdtitle != null)
         {
             Map<WMFWiki, List<Wiki.LogEntry>> deletions = getCrossWikiDeletionLogs(wdtitle);
-            List<DeletionLog> rows2 = new ArrayList<>();
-            headers = List.of("Project", "Date", "Admin", "Action", "Title", "Reason");
+            List<Wiki.LogEntry> rows2 = new ArrayList<>();
             System.out.println("===Cross-wiki deletion log===");
             deletions.forEach((wiki, entries) ->
             {
-                String domain = wiki.getDomain();
-                for (Wiki.LogEntry le : entries)
-                    rows2.add(new DeletionLog(domain, le.getTimestamp(),
-                        le.getUser(), le.getAction(), le.getTitle(),
-                        new Events.Comment(le)));
+                rows2.addAll(entries);
             });
-            System.out.println(DataTable.create(rows2, headers).format(Writable.Format.WIKITEXT));
+            System.out.println(LogEntries.toDataTable(rows2).format(Writable.Format.WIKITEXT));
         }
         
         // global user information

@@ -182,16 +182,16 @@ public class RevisionsTest
             {| class="wikitable sortable revisions"
             ! Previous !! Timestamp !! New !! Minor !! Bot !! Title !! User !! Size (bytes) !! Size change !! Comment
             |-
-            | [[Special:Diff/1165014330|prev]] || [[Special:Permanentlink/1165014330|2023-07-12T13:04:44Z]] ||  ||  ||  ||\
+            | [[Special:Diff/1165014330|prev]] || [[Special:Permanentlink/1165014330|2023-07-12T13:04:44Z]] || || || ||\
              [[Phoenician sanctuary of Kharayeb]] || [[User:Elias Ziade|Elias Ziade]] ([[User talk:Elias Ziade|talk]] &middot;\
              [[Special:Contributions/Elias Ziade|contribs]]) || 27768 || <span class="sizedecreased">0</span> ||\
              <nowiki>%s</nowiki>
             |-
-            | [[Special:Diff/1171939631|prev]] || [[Special:Permanentlink/1171939631|2023-08-24T01:56:14Z]] ||  || '''m''' ||  ||\
+            | [[Special:Diff/1171939631|prev]] || [[Special:Permanentlink/1171939631|2023-08-24T01:56:14Z]] || || '''m''' || ||\
              [[Hun Manet]] || [[User:Gobonobo|Gobonobo]] ([[User talk:Gobonobo|talk]] &middot; [[Special:Contributions/Gobonobo|contribs]]) ||\
              19234 || <span class="sizedecreased">0</span> || <span class="history-deleted">deleted</span>
             |-
-            | [[Special:Diff/1171939466|prev]] || [[Special:Permanentlink/1171939466|2023-08-24T01:55:09Z]] ||  || '''m''' ||  ||\
+            | [[Special:Diff/1171939466|prev]] || [[Special:Permanentlink/1171939466|2023-08-24T01:55:09Z]] || || '''m''' || ||\
              [[Hun Manet]] || <span class="history-deleted">deleted</span> || 107696 || <span class="sizedecreased">0</span> ||\
              <nowiki>%s</nowiki>
             |}

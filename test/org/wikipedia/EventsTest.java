@@ -40,7 +40,7 @@ public class EventsTest
     @Test
     public void renderEvent() throws Exception
     {
-        List<Wiki.Revision> revisions = enWiki.getRevisions(new long[] { 1165014330L, 1171939631L });
+        List<Wiki.Revision> revisions = enWiki.getRevisions(new long[] { 1165014330L, 1171939631L, 1346059881L });
         Wiki.Revision rev = revisions.get(0);
         Events.Comment cmt = new Events.Comment(rev);
         assertEquals(rev.getParsedComment(), cmt.format(Writable.Format.HTML), "normal comment, html");
@@ -52,6 +52,12 @@ public class EventsTest
         assertEquals(Events.DELETED_EVENT_HTML, cmt.format(Writable.Format.HTML), "deleted comment, html");
         assertEquals(Events.DELETED_EVENT_HTML, cmt.format(Writable.Format.WIKITEXT), "deleted comment, wikitext");
         assertEquals("[DELETED]", cmt.format(Writable.Format.CSV), "deleted comment, csv");
+        
+        rev = revisions.get(2);
+        cmt = new Events.Comment(rev);
+        assertEquals("", cmt.format(Writable.Format.HTML), "empty comment, html");
+        assertEquals("", cmt.format(Writable.Format.WIKITEXT), "empty comment, wikitext");
+        assertEquals("", cmt.format(Writable.Format.CSV), "empty comment, csv");
     }
 
     @Test
