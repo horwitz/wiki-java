@@ -38,10 +38,10 @@ If you want to search a domain name, please enclose it in quotation marks.
 <hr>
 <ul>
 <%
-        ArrayList<Map<String, Object>> results = SpamArchiveSearch.archiveSearch(query);
-        for (Map<String, Object> result : results)
+        List<Wiki.SearchResult> results = SpamArchiveSearch.archiveSearch(query);
+        for (Wiki.SearchResult result : results)
         {
-            String title = (String)result.get("title");
+            String title = result.title();
             String blahwiki = title.contains("Talk:Spam blacklist") ? "meta.wikimedia" : "en.wikipedia";
 %>
     <li><a href="//<%= blahwiki %>.org/wiki/<%= title %>"><%= title %></a>

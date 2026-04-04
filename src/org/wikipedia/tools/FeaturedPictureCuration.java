@@ -35,6 +35,7 @@ import org.wikipedia.*;
  */
 public class FeaturedPictureCuration
 {
+    // TODO: stuff here could be generalised to be not specific to featured pictures?
     private static Wiki enWiki, commons;
     
     /**
@@ -203,10 +204,10 @@ public class FeaturedPictureCuration
         return results;
     }
     
-    public static List<Map<String, Object>> fpSearch(String query) throws IOException
+    public static List<Wiki.SearchResult> fpSearch(String query) throws IOException
     {
         // maybe useful for helping people search for existing FPs before nominating...?
-        List<Map<String, Object>> results = new ArrayList<>();
+        List<Wiki.SearchResult> results = new ArrayList<>();
         results.addAll(enWiki.search(query + " prefix:Wikipedia:Featured_pictures/"));
         results.addAll(enWiki.search(query + " prefix:Wikipedia:Featured_picture_candidates/"));
         results.addAll(commons.search(query + " prefix:Commons:Featured_pictures/"));

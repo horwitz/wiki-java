@@ -1416,18 +1416,18 @@ public class WikiTest
     @Test
     public void search() throws Exception
     {
-        List<Map<String, Object>> results = testWiki.search("dlgsjdglsjdgljsgljsdlg", Wiki.MEDIAWIKI_NAMESPACE);
+        List<Wiki.SearchResult> results = testWiki.search("dlgsjdglsjdgljsgljsdlg", Wiki.MEDIAWIKI_NAMESPACE);
         assertTrue(results.isEmpty(), "no results");
         // https://test.wikipedia.org/w/api.php?action=query&list=search&srsearch=User:%20subpageof:MER-C/UnitTests%20revision%20delete
         results = testWiki.search("User: subpageof:MER-C/UnitTests revision delete", Wiki.USER_NAMESPACE);
         assertEquals(2, results.size(), "result count");
-        Map<String, Object> result = results.get(0);
-        assertEquals("User:MER-C/UnitTests/Delete", result.get("title"), "title");
+        Wiki.SearchResult result = results.get(0);
+        assertEquals("User:MER-C/UnitTests/Delete", result.title(), "title");
         assertEquals("This <span class=\"searchmatch\">revision</span> is not <span class=\"searchmatch\">deleted</span>!",
-            result.get("snippet"), "snippet");
-        assertEquals(29, result.get("size"), "page size");
-        assertEquals(5, result.get("wordcount"), "word count");
-        assertEquals(OffsetDateTime.parse("2016-06-16T08:40:17Z"), result.get("lastedittime"), "last edit time");
+            result.snippet(), "snippet");
+        assertEquals(29, result.size(), "page size");
+        assertEquals(5, result.words(), "word count");
+        assertEquals(OffsetDateTime.parse("2016-06-16T08:40:17Z"), result.lastedit(), "last edit time");
     }
 
     @Test

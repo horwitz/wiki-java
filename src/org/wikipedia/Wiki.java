@@ -5293,6 +5293,7 @@ public class Wiki implements Comparable<Wiki>
     }
 
     // WATCHLIST METHODS
+    // TODO: watchlist labels
 
     /**
      *  Adds a page to the watchlist. You need to be logged in to use this.
@@ -5488,31 +5489,33 @@ public class Wiki implements Comparable<Wiki>
     // LISTS
 
     /**
+     *  A result from the MediaWiki search engine.
+     *  @param title the page name
+     *  @param section the matching section title, may not be present
+     *  @param snippet a snippet of the matching text
+     *  @param size the size of the page in bytes
+     *  @param words the number of words in the matching page
+     *  @param lastedit when the page was last edited
+     *  @since 0.39
+     *  @see #search(String, int[])
+     */
+    public record SearchResult(String title, String section, String snippet, int size, int words, OffsetDateTime lastedit) { }
+    
+    /**
      *  Performs a full text search of the wiki. Equivalent to
      *  [[Special:Search]], or that little textbox in the sidebar. Returns an
-     *  array of search results in decreasing order of relevance, where each
-     *  result has the form:
-     *
-     *  <ul>
-     *  <li><b>title</b>: (String) the page name
-     *  <li><b>sectiontitle</b>: (String) the matching section title, may not be
-     *    present
-     *  <li><b>snippet</b>: (String) a snippet of the matching text
-     *  <li><b>size</b>: (Integer) the size of the page in bytes
-     *  <li><b>wordcount</b>: (Integer) the number of words in the matching page
-     *  <li><b>lastedittime</b>: (OffsetDateTime) when the page was last edited
-     *  </ul>
+     *  array of search results in decreasing order of relevance.
      *
      *  @param search a search string
      *  @param namespaces the namespaces to search. If not present, search
      *  {@link #MAIN_NAMESPACE} only.
-     *  @return the search results as detailed above
+     *  @return the search results
      *  @throws IOException if a network error occurs
      *  @since 0.14
      *  @see <a href="https://mediawiki.org/wiki/API:Search">MediaWiki
      *  documentation</a>
      */
-    public List<Map<String, Object>> search(String search, int... namespaces) throws IOException
+    public List<SearchResult> search(String search, int... namespaces) throws IOException
     {
         // default to main namespace
         if (namespaces.length == 0)
@@ -5524,23 +5527,18 @@ public class Wiki implements Comparable<Wiki>
         getparams.put("srsearch", search);
         getparams.put("srnamespace", constructNamespaceString(namespaces));
 
-        List<Map<String, Object>> results = makeListQuery("sr", getparams, null, "search", -1, (line, list) ->
+        List<SearchResult> results = makeListQuery("sr", getparams, null, "search", -1, (line, list) ->
         {
             // xml form: <p ns="0" title="Main Page" snippet="Blah blah blah" sectiontitle="Section"/>
             for (int x = line.indexOf("<p "); x > 0; x = line.indexOf("<p ", ++x))
             {
-                Map<String, Object> result = new HashMap<>();
-                result.put("title", parseAttribute(line, "title", x));
-                result.put("snippet", parseAttribute(line, "snippet", x));
-                result.put("wordcount", Integer.valueOf(parseAttribute(line, "wordcount", x)));
-                result.put("size", Integer.valueOf(parseAttribute(line, "size", x)));
-                result.put("lastedittime", OffsetDateTime.parse(parseAttribute(line, "timestamp", x)));
-
-                // section title (if available). Stupid API documentation is misleading.
-                if (line.contains("sectionsnippet=\""))
-                    result.put("sectiontitle", parseAttribute(line, "sectionsnippet", x));
-
-                list.add(result);
+                list.add(new SearchResult(
+                    parseAttribute(line, "title", x),
+                    parseAttribute(line, "sectionsnippet", x),
+                    parseAttribute(line, "snippet", x),
+                    Integer.parseInt(parseAttribute(line, "size", x)),
+                    Integer.parseInt(parseAttribute(line, "wordcount", x)),
+                    OffsetDateTime.parse(parseAttribute(line, "timestamp", x))));
             }
         });
 

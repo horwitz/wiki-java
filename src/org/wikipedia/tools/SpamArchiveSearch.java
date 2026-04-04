@@ -47,14 +47,14 @@ public class SpamArchiveSearch
             wiki.setUserAgent(WMFWikiFarm.TOOL_USER_AGENT);
         });
         StringBuilder buffer = new StringBuilder(10000);
-        ArrayList<Map<String, Object>> results = archiveSearch(query);
+        List<Wiki.SearchResult> results = archiveSearch(query);
         buffer.append("""
             <h2>Results for "%s"</h2>
             <ul>
             """.formatted(query));
         results.forEach(result ->
         {
-            String page = (String)result.get("title");
+            String page = result.title();
             buffer.append("""
                 <li><a href="//%s.org/wiki/%s">%s</a>
                 """.formatted(page.contains("Talk:Spam blacklist") ? "meta.wikimedia" : "en.wikipedia", page, page));
@@ -87,12 +87,12 @@ public class SpamArchiveSearch
      *  @return the spam archive search results for that query
      *  @throws IOException if a network error occurs
      */
-    public static ArrayList<Map<String, Object>> archiveSearch(String query) throws IOException
+    public static List<Wiki.SearchResult> archiveSearch(String query) throws IOException
     {
         WMFWikiFarm sessions = WMFWikiFarm.instance();
         Wiki enWiki = sessions.sharedSession("en.wikipedia.org");
         Wiki meta = sessions.sharedSession("meta.wikimedia.org");
-        ArrayList<Map<String, Object>> results = new ArrayList<>(20);
+        ArrayList<Wiki.SearchResult> results = new ArrayList<>(20);
         
         results.addAll(meta.search(query + " prefix:Spam_blacklist", Wiki.MAIN_NAMESPACE));
         results.addAll(meta.search(query + " prefix:Talk:Spam_blacklist", Wiki.TALK_NAMESPACE));

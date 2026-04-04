@@ -44,6 +44,17 @@ import org.wikipedia.*;
  */
 public class ContributionSurveyor
 {
+    // TODO:
+    // * make output format independent
+    // * gallery output
+    // * show HTML output on servlet pages or via command line
+    // * reload and carry forward results via POST
+    // * continue Wiki.java partially fetched objects to speed load time (no need to load e.g. edit summaries)
+    // * configurable pagination
+    // * more structure of outputs (e.g. records)
+    // * consolidate user inputs in servlets
+    // * uploads that are overwrites?
+    
     private final Wiki wiki;
     private Wiki.Interval interval;
     private String footer;
@@ -381,10 +392,10 @@ public class ContributionSurveyor
     }
     
     /**
-     *  {@return {@code true} this surveyor includes files uploaded by the user 
-     *  on a local wiki but later transferred to in image contribution surveys} 
-     *  This can be prone to inaccuracies because it performs a search of file 
-     *  namespace for the username of the surveyed user.
+     *  {@return {@code true} if this surveyor includes files uploaded by the 
+     *  user on a local wiki but later transferred to in image contribution 
+     *  surveys} This can be prone to inaccuracies because it performs a search 
+     *  of file namespace for the username of the surveyed user.
      *  @since 0.09
      */
     public boolean isSurveyingTransferredFiles()
@@ -543,9 +554,9 @@ public class ContributionSurveyor
             HashSet<String> repoTransfer = new HashSet<>(10000);
             if (transferredfiles)
             {
-                List<Map<String, Object>> temp = repowiki.search("\"" + user + "\"", Wiki.FILE_NAMESPACE);
-                for (Map<String, Object> x : temp)
-                    repoTransfer.add((String)x.get("title"));
+                List<Wiki.SearchResult> temp = repowiki.search("\"" + user + "\"", Wiki.FILE_NAMESPACE);
+                for (Wiki.SearchResult x : temp)
+                    repoTransfer.add(x.title());
             }
 
             // remove all files that have been reuploaded to the foreign repository

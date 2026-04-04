@@ -51,11 +51,11 @@ public class UserspaceAnalyzer
         
         Wiki wiki = Wiki.newSession("en.wikipedia.org");
         wiki.setUserAgent(WMFWikiFarm.TOOL_USER_AGENT);
-        List<Map<String, Object>> results = wiki.search(args[0], Wiki.USER_NAMESPACE);
+        List<Wiki.SearchResult> results = wiki.search(args[0], Wiki.USER_NAMESPACE);
         LinkedHashSet<String> users = new LinkedHashSet<>(500);
-        for (Map<String, Object> result : results)
+        for (Wiki.SearchResult result : results)
         {
-            String username = (String)result.get("title");
+            String username = result.title();
             if (username.contains("/Books/"))
                 continue;
             username = wiki.getRootPage(username);
