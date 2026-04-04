@@ -1,6 +1,6 @@
 /**
  *  @(#)SpamArchiveSearch.java 0.01 06/07/2011
- *  Copyright (C) 2011 - 2022 MER-C
+ *  Copyright (C) 2011 - 2026 MER-C
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -74,6 +74,7 @@ public class SpamArchiveSearch
      *  <li><a href="//meta.wikimedia.org/wiki/WM:SBL">Global spam blacklist</a>
      *  <li><a href="//meta.wikimedia.org/wiki/Wikiproject:Antispam">Wikiproject Antispam</a>
      *  <li><a href="//en.wikipedia.org/wiki/WP:SBL">en.wikipedia spam blacklist</a>
+     *  <li><a href="//en.wikipedia.org/wiki/WP:BED">en.wikipedia blocked external domains</a>
      *  <li><a href="//en.wikipedia.org/wiki/MediaWiki_talk:Spam-whitelist">en.wikipedia spam whitelist</a>
      *  <li><a href="//en.wikipedia.org/wiki/WT:WPSPAM">en.wikipedia WikiProject Spam</a>
      *  <li><a href="//en.wikipedia.org/wiki/WP:RSN">en.wikipedia reliable sources noticeboard</a>
@@ -91,16 +92,24 @@ public class SpamArchiveSearch
         WMFWikiFarm sessions = WMFWikiFarm.instance();
         Wiki enWiki = sessions.sharedSession("en.wikipedia.org");
         Wiki meta = sessions.sharedSession("meta.wikimedia.org");
-        
-        // there's some silly api bugs
         ArrayList<Map<String, Object>> results = new ArrayList<>(20);
-        results.addAll(meta.search(query + " \"spam blacklist\"", Wiki.TALK_NAMESPACE));
-        results.addAll(meta.search(query + " wikiproject antispam", Wiki.MAIN_NAMESPACE, Wiki.TALK_NAMESPACE));
-        results.addAll(enWiki.search(query + " \"spam blacklist\"", Wiki.MEDIAWIKI_TALK_NAMESPACE));
-        results.addAll(enWiki.search(query + " \"spam whitelist\"", Wiki.MEDIAWIKI_TALK_NAMESPACE));
-        results.addAll(enWiki.search(query + " \"wikiproject spam\"", Wiki.PROJECT_TALK_NAMESPACE));
-        results.addAll(enWiki.search(query + " \"reliable sources noticeboard\"", Wiki.PROJECT_NAMESPACE));
-        results.addAll(enWiki.search(query + " \"external links noticeboard\"", Wiki.PROJECT_NAMESPACE));
+        
+        results.addAll(meta.search(query + " prefix:Spam_blacklist", Wiki.MAIN_NAMESPACE));
+        results.addAll(meta.search(query + " prefix:Talk:Spam_blacklist", Wiki.TALK_NAMESPACE));
+        results.addAll(meta.search(query + " prefix:Wikiproject:Antispam", Wiki.MAIN_NAMESPACE));
+        results.addAll(meta.search(query + " prefix:Talk:Wikiproject:Antispam", Wiki.TALK_NAMESPACE));
+        
+        // TODO: allow any local project (if not en.wp, then skip third group which is en.wp specific)
+        results.addAll(enWiki.search(query + " prefix:MediaWiki:Spam-blacklist", Wiki.MEDIAWIKI_NAMESPACE));
+        results.addAll(enWiki.search(query + " prefix:MediaWiki_talk:Spam-blacklist", Wiki.MEDIAWIKI_TALK_NAMESPACE));
+        results.addAll(enWiki.search(query + " prefix:MediaWiki:Spam-whitelist", Wiki.MEDIAWIKI_NAMESPACE));
+        results.addAll(enWiki.search(query + " prefix:MediaWiki_talk:Spam-whitelist", Wiki.MEDIAWIKI_TALK_NAMESPACE));
+        results.addAll(enWiki.search(query + " prefix:MediaWiki:BlockedExternalDomains.json", Wiki.MEDIAWIKI_NAMESPACE));
+        
+        results.addAll(enWiki.search(query + " prefix:Wikipedia:WikiProject_Spam", Wiki.PROJECT_NAMESPACE));
+        results.addAll(enWiki.search(query + " prefix:Wikipedia_talk:WikiProject_Spam", Wiki.PROJECT_TALK_NAMESPACE));
+        results.addAll(enWiki.search(query + " prefix:Wikipedia:Reliable_sources/Noticeboard", Wiki.PROJECT_NAMESPACE));
+        results.addAll(enWiki.search(query + " prefix:Wikipedia:External_links/Noticeboard", Wiki.PROJECT_NAMESPACE));
 
         return results;
     }
