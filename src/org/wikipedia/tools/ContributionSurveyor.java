@@ -520,23 +520,33 @@ public class ContributionSurveyor
         }
         return ret;
     }
+    
+    /** 
+     *  An image contribution survey for a user.
+     *  @param local a list of images uploaded locally by the user
+     *  @param mediarepo uploads on the foreign media repository wiki (default: 
+     *  Wikimedia Commons) by the user
+     *  @param transferred A list of images transferred to the foreign media 
+     *  repository wiki (may be inaccurate depending on username or empty/{@code null} 
+     *  if disabled).
+     *  @see #imageContributionSurvey(Iterable)
+     *  @since 0.10
+     */
+    public record ImageContributions(List<String> local, List<String> mediarepo, List<String> transferred) { }
 
     /**
      *  Performs an image contribution survey on a list of users. (Date/time 
      *  limits do not apply to, nor do they make sense for transferred images.)
      *  @param users a list of users on the wiki
-     *  @return for each user: first element = local uploads, second element = 
-     *  uploads on the foreign media repository wiki (default: Wikimedia Commons)
-     *  by the user, third element = images transferred to the repository wiki
-     *  (may be inaccurate depending on username or empty if disabled).
+     *  @return the survey results
      *  @throws IOException if a network error occurs
      */
-    public Map<String, Map<String, List<String>>> imageContributionSurvey(Iterable<String> users) throws IOException
+    public Map<String, ImageContributions> imageContributionSurvey(Iterable<String> users) throws IOException
     {
         Wiki repowiki = Wiki.newSession(mediarepo);
         repowiki.setUserAgent(WMFWikiFarm.TOOL_USER_AGENT);
         Wiki.RequestHelper rh = wiki.new RequestHelper().withinInterval(interval);
-        Map<String, Map<String, List<String>>> ret = new HashMap<>();
+        Map<String, ImageContributions> ret = new HashMap<>();
         
         for (String user : users)
         {
@@ -567,23 +577,23 @@ public class ContributionSurveyor
             if (comingle)
             {
                 if (ret.isEmpty())
-                    ret.put("", Map.of(
-                        "local", new ArrayList<>(localuploads), 
-                        "mediarepo", new ArrayList<>(repouploads),
-                        "transferred", new ArrayList<>(repoTransfer)));
+                    ret.put("", new ImageContributions(
+                        new ArrayList<>(localuploads), 
+                        new ArrayList<>(repouploads),
+                        new ArrayList<>(repoTransfer)));
                 else
                 {
-                    var comingled = ret.get("");
-                    comingled.get("local").addAll(localuploads);
-                    comingled.get("mediarepo").addAll(repouploads);
-                    comingled.get("transferred").addAll(repoTransfer);
+                    ImageContributions comingled = ret.get("");
+                    comingled.local().addAll(localuploads);
+                    comingled.mediarepo().addAll(repouploads);
+                    comingled.transferred().addAll(repoTransfer);
                 }
             }
             else
-                ret.put(user, Map.of(
-                    "local", new ArrayList<>(localuploads), 
-                    "mediarepo", new ArrayList<>(repouploads),
-                    "transferred", new ArrayList<>(repoTransfer)));
+                ret.put(user, new ImageContributions(
+                    new ArrayList<>(localuploads), 
+                    new ArrayList<>(repouploads),
+                    new ArrayList<>(repoTransfer)));
         }
         return ret;
     }
@@ -600,6 +610,7 @@ public class ContributionSurveyor
     {
         StringBuilder out = new StringBuilder(10000);
         List<Wiki.Revision> edits = user_survey.get(article);
+        Writable.Format fmt = Writable.Format.WIKITEXT;
 
         StringBuilder temp = new StringBuilder();
         boolean newpage = false;
@@ -612,12 +623,11 @@ public class ContributionSurveyor
                 newpage = true;
             }
             // generate the diff strings now to avoid a second iteration
-            temp.append("[[Special:Diff/%d|(%+d)]]".formatted(edit.getID(), edit.getSizeDiff()));
+            temp.append(new WikitextUtils.WikiLink(wiki, "Special:Diff/" + edit.getID(), "(%+d)".formatted(edit.getSizeDiff())).format(fmt));
         }
         int numedits = edits.size();
-        out.append("[[:");
-        out.append(article);
-        out.append("]] (");
+        out.append(new WikitextUtils.WikiLink(wiki, article, null).format(fmt));
+        out.append(" (");
         if (numedits == 1)
             out.append("1 edit): ");
         else
@@ -649,7 +659,7 @@ public class ContributionSurveyor
         List<String> sections = new ArrayList<>();
         int sectionsperpage = articlesperpage / articlespersection;  
         Map<String, Map<String, List<Wiki.Revision>>> results = null, delresults = null;
-        Map<String, Map<String, List<String>>> imagesurvey = null;
+        Map<String, ImageContributions> imagesurvey = null;
         Writable.Format fmt = Writable.Format.WIKITEXT;
         
         if (contribs)
@@ -698,14 +708,14 @@ public class ContributionSurveyor
             // output image contribution survey for this user
             if (imagesurvey != null && imagesurvey.containsKey(username))
             {
-                Map<String, List<String>> imagesurvey2 = imagesurvey.get(username);
-                sections.addAll(Pages.toWikitextPaginatedList(imagesurvey2.get("local"), Pages.LIST_OF_LINKS, 
+                ImageContributions imagesurvey2 = imagesurvey.get(username);
+                sections.addAll(Pages.toWikitextPaginatedList(imagesurvey2.local(), Pages.LIST_OF_LINKS, 
                     (start, end) -> new WikitextUtils.Heading(username_hdr + " Local files " + start + " to " + end, 3).format(fmt), 
                     articlespersection, false));
-                sections.addAll(Pages.toWikitextPaginatedList(imagesurvey2.get("mediarepo"), Pages.LIST_OF_LINKS, 
+                sections.addAll(Pages.toWikitextPaginatedList(imagesurvey2.mediarepo(), Pages.LIST_OF_LINKS, 
                     (start, end) -> new WikitextUtils.Heading(username_hdr + " Foreign repo files " + start + " to " + end, 3).format(fmt),
                     articlespersection, false));
-                sections.addAll(Pages.toWikitextPaginatedList(imagesurvey2.get("transferred"), Pages.LIST_OF_LINKS, 
+                sections.addAll(Pages.toWikitextPaginatedList(imagesurvey2.transferred(), Pages.LIST_OF_LINKS, 
                     (start, end) -> new WikitextUtils.Heading(username_hdr + " Transferred files " + start + " to " + end, 3).format(fmt),
                     articlespersection, false));
             }

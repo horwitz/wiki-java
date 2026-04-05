@@ -91,10 +91,10 @@ public class ContributionSurveyorTest
         // note search for transferred uploads is not stable enough for testing
         List<String> users = List.of("Helga The Great Kyiv", "Lozouhg");
         var results = surveyor.imageContributionSurvey(users);
-        assertTrue(results.get(users.get(0)).get("local").isEmpty(), "User with no uploads (local)");
-        assertTrue(results.get(users.get(0)).get("mediarepo").isEmpty(), "User with no uploads (commons)");
-        assertTrue(results.get(users.get(1)).get("local").isEmpty(), "User with only commons uploads");
-        assertEquals(List.of("File:Infinum logo.jpg"), results.get(users.get(1)).get("mediarepo"));
+        assertTrue(results.get(users.get(0)).local().isEmpty(), "User with no uploads (local)");
+        assertTrue(results.get(users.get(0)).mediarepo().isEmpty(), "User with no uploads (commons)");
+        assertTrue(results.get(users.get(1)).local().isEmpty(), "User with only commons uploads");
+        assertEquals(List.of("File:Infinum logo.jpg"), results.get(users.get(1)).mediarepo());
     }
     
     @Test
@@ -122,7 +122,7 @@ public class ContributionSurveyorTest
         // images
         users = List.of("Lozouhg");
         var results2 = surveyor.imageContributionSurvey(users);
-        assertTrue(results2.get(users.get(0)).get("mediarepo").isEmpty(), "Check interval functionality (images)");
+        assertTrue(results2.get(users.get(0)).mediarepo().isEmpty(), "Check interval functionality (images)");
     }
     
     @Test
@@ -257,12 +257,12 @@ public class ContributionSurveyorTest
         // is one of the cases where transferred files do not work well
         String un = "Pochta";
         List<String> users = List.of(un);
-        assertTrue(surveyor.imageContributionSurvey(users).get(un).get("transferred").isEmpty());
+        assertTrue(surveyor.imageContributionSurvey(users).get(un).transferred().isEmpty());
         
         surveyor.setSurveyingTransferredFiles(true);
         assertTrue(surveyor.isSurveyingTransferredFiles(), "verify get/set");
         
-        assertFalse(surveyor.imageContributionSurvey(users).get(un).get("transferred").isEmpty());
+        assertFalse(surveyor.imageContributionSurvey(users).get(un).transferred().isEmpty());
     }
     
     @Test

@@ -1,6 +1,6 @@
 /**
- *  @(#)XWikiLinksearch.js 0.01 18/08/2018
- *  Copyright (C) 2016 MER-C
+ *  @(#)ContributionSurveyor.js 0.01 18/08/2018
+ *  Copyright (C) 2018 MER-C
  *
  *  This is free software: you are free to change and redistribute it under the 
  *  Affero GNU GPL version 3 or later, see <https://www.gnu.org/licenses/agpl.html> 
