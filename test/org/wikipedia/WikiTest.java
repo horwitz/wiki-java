@@ -637,6 +637,16 @@ public class WikiTest
             () -> testWiki.revisionDelete(Boolean.TRUE, Boolean.TRUE, Boolean.TRUE, "Not a reason", Boolean.FALSE, List.of(revision)),
             "attempted to RevisionDelete while logged out");
     }
+    
+    @Test
+    public void watch() throws Exception
+    {
+        List<String> pages = List.of("Main Page", "Blah");
+        assertThrows(IllegalArgumentException.class, () -> enWiki.watch(pages, OffsetDateTime.now().minusDays(1), null),
+            "Watchlist expiry time in the past");
+        assertThrows(SecurityException.class, () -> enWiki.watch(pages), "Must be logged in to watch pages");
+        assertThrows(SecurityException.class, () -> enWiki.unwatch(pages), "Must be logged in to unwatch pages");
+    }
 
     @Test
     public void getBlockList() throws Exception

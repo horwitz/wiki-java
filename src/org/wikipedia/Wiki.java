@@ -5293,19 +5293,42 @@ public class Wiki implements Comparable<Wiki>
     }
 
     // WATCHLIST METHODS
-    // TODO: watchlist labels
 
     /**
-     *  Adds a page to the watchlist. You need to be logged in to use this.
+     *  Adds pages to the watchlist. You need to be logged in to use this.
      *  @param titles the pages to add to the watchlist
      *  @throws IOException if a network error occurs
      *  @throws SecurityException if not logged in
      *  @see #unwatch
      *  @since 0.18
      */
-    public void watch(List<String> titles) throws IOException
+    public void watch(SequencedCollection<String> titles) throws IOException
     {
-        watchInternal(titles, false);
+        watchInternal(titles, false, null, null);
+        watchlist.addAll(titles);
+    }
+    
+    /**
+     *  Adds pages to the watchlist with the given expiry time and labels. You
+     *  need to be logged in to use this.
+     * 
+     *  @param titles the pages to add to the watchlist
+     *  @param expiry the time at which all pages in <var>titles</var> are 
+     *  automatically removed from the watchlist. Overwrites previous values. Use
+     *  {@code null} to leave current values unmodified.
+     *  @param labels apply these labels (up to 50 or 500 if higher limits are
+     *  enabled) to all pages in <var>titles</var>. Overwrites previous values.
+     *  Use {@code null} to leave current values unmodified.
+     *  @warning <a href="https://phabricator.wikimedia.org/T416615">Watchlist 
+     *  labels have limited usability.</a>
+     *  @throws IOException if a network error occurs
+     *  @throws IllegalArgumentException if the expiry time is in the past
+     *  @throws SecurityException if not logged in
+     *  @since 0.39
+     */
+    public void watch(SequencedCollection<String> titles, OffsetDateTime expiry, SequencedCollection<String> labels) throws IOException
+    {
+        watchInternal(titles, false, expiry, labels);
         watchlist.addAll(titles);
     }
 
@@ -5319,9 +5342,9 @@ public class Wiki implements Comparable<Wiki>
      *  @see #watch
      *  @since 0.18
      */
-    public void unwatch(List<String> titles) throws IOException
+    public void unwatch(SequencedCollection<String> titles) throws IOException
     {
-        watchInternal(titles, true);
+        watchInternal(titles, true, null, null);
         watchlist.removeAll(titles);
     }
 
@@ -5331,14 +5354,26 @@ public class Wiki implements Comparable<Wiki>
      *
      *  @param titles the titles to (un)watch
      *  @param unwatch whether we should unwatch these pages
+     *  @param expiry the time at which all pages in <var>titles</var> are 
+     *  automatically removed from the watchlist. Overwrites previous values. Use
+     *  {@code null} to leave current values unmodified.
+     *  @param labels apply these labels (up to 50 or 500 if higher limits are
+     *  enabled) to all pages in <var>titles</var>. Overwrites previous values.
+     *  Use {@code null} to leave current values unmodified.
+     *  @warning <a href="https://phabricator.wikimedia.org/T416615">Watchlist 
+     *  labels have limited usability.</a>
      *  @throws IOException if a network error occurs
+     *  @throws IllegalArgumentException if the expiry time is in the past
      *  @throws SecurityException if not logged in
      *  @see #watch
      *  @see #unwatch
      *  @since 0.18
      */
-    protected void watchInternal(SequencedCollection<String> titles, boolean unwatch) throws IOException
+    protected void watchInternal(SequencedCollection<String> titles, boolean unwatch, OffsetDateTime expiry, 
+        SequencedCollection<String> labels) throws IOException
     {
+        if (expiry != null && expiry.isBefore(OffsetDateTime.now()))
+            throw new IllegalArgumentException("Cannot set watchlist items to expire in the past!");
         // create the watchlist cache
         if (watchlist == null)
             getRawWatchlist();
@@ -5351,6 +5386,10 @@ public class Wiki implements Comparable<Wiki>
         for (String titlestring : constructTitleString(titles))
         {
             postparams.put("titles", titlestring);
+            if (!unwatch && expiry != null)
+                postparams.put("expiry", expiry.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+            if (!unwatch && labels != null)
+                postparams.put("labels", constructTitleString(labels).get(0));
             postparams.put("token", getToken("watch"));
             String response = makeApiCall(getparams, postparams, state);
             detectUncheckedErrors(response, null, null);
@@ -5364,6 +5403,8 @@ public class Wiki implements Comparable<Wiki>
      *  @return the contents of the watchlist
      *  @throws IOException if a network error occurs
      *  @throws SecurityException if not logged in
+     *  @warning <a href="https://phabricator.wikimedia.org/T271173">Watchlist 
+     *  expiries are not available</a>.
      *  @since 0.18
      */
     public List<String> getRawWatchlist() throws IOException
@@ -5379,6 +5420,8 @@ public class Wiki implements Comparable<Wiki>
      *  @return the contents of the watchlist
      *  @throws IOException or UncheckedIOException if a network error occurs
      *  @throws SecurityException if not logged in
+     *  @warning <a href="https://phabricator.wikimedia.org/T271173">Watchlist 
+     *  expiries are not available</a>.
      *  @since 0.18
      */
     public List<String> getRawWatchlist(boolean cache) throws IOException
