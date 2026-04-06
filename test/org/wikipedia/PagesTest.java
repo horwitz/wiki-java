@@ -90,14 +90,14 @@ public class PagesTest
             *Not a link]]""";
         List<String> expected = List.of("File:Example.png", "Main Page",
             "*-algebra", "Cape Town#Economy", "Nested list", "Link");
-        assertEquals(expected, Pages.parseWikitextList(list), "unnumbered list");
+        assertEquals(expected, testWikiPages.parseWikitextList(list), "unnumbered list");
 
         list = """
             #[[:File:Example.png]]
             #[[*-algebra]]
             #[[Cape Town#Economy]]""";
         expected = List.of("File:Example.png", "*-algebra", "Cape Town#Economy");
-        assertEquals(expected, Pages.parseWikitextList(list), "numbered list");
+        assertEquals(expected, testWikiPages.parseWikitextList(list), "numbered list");
     }
 
     @Test

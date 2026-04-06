@@ -579,15 +579,12 @@ public class CCIAnalyzer
      *  defined as something that adds more than the specified number of words.
      *  A higher word count is a more aggressive setting. The default of 9 is 
      *  sensible as in it has few false negatives. 
-     *
-     *  <p>
-     *  <b>Warning:</b> this method is very good at removing song lyrics!
-     *  Be careful.
      * 
      *  @param delta the delta to check
      *  @param wordcount label all edits that add no more than this many words
      *  as minor
      *  @return whether this is a major edit
+     *  @warning this method is very good at removing song lyrics! Be careful.
      *  @since 0.02
      */
     public boolean wordCountCull(String delta, int wordcount)
@@ -599,15 +596,15 @@ public class CCIAnalyzer
             int j = temp.indexOf("]]", i);
             if (j < 0) // unbalanced brackets
                 break;
-            List<String> parsedlink = WikitextUtils.parseWikilink(temp.substring(i, j + 2));
-            if (parsedlink.get(0).length() > 100)
+            WikitextUtils.WikiLink parsedlink = WikitextUtils.parseWikiLink(wiki, temp.substring(i, j + 2));
+            if (parsedlink.title().length() > 100)
                 // something has gone wrong here
                 break;
-            else if (wiki.namespace(parsedlink.get(0)) == Wiki.CATEGORY_NAMESPACE)
+            else if (wiki.namespace(parsedlink.title()) == Wiki.CATEGORY_NAMESPACE)
                 // I'm not interested in the category sortkey
                 temp.delete(i, j + 2);
             else
-                temp.replace(i, j + 2, parsedlink.get(1));
+                temp.replace(i, j + 2, Objects.requireNonNullElse(parsedlink.text(), parsedlink.title()));
         }
         
         StringTokenizer tk = new StringTokenizer(temp.toString(), "<>{}|=");
@@ -830,8 +827,7 @@ public class CCIAnalyzer
         }
         
        /**
-        *  Returns the list of edits flagged as minor.
-        *  @return (see above)
+        *  {@return the list of edits flagged as minor}
         *  @since 0.02
         */
        public List<String> getMinorEdits()

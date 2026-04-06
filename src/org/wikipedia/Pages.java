@@ -116,7 +116,7 @@ public class Pages
      *  @return a list of parsed titles
      *  @since Wiki.java 0.11
      */
-    public static List<String> parseWikitextList(String wikitext)
+    public List<String> parseWikitextList(String wikitext)
     {
         String[] lines = wikitext.split("\n");
         List<String> titles = new ArrayList<>();
@@ -126,7 +126,7 @@ public class Pages
             int wikilinkend = line.indexOf("]]");
             if (wikilinkstart < 0 || wikilinkend < 0)
                 continue;
-            titles.add(WikitextUtils.parseWikilink(line.substring(wikilinkstart, wikilinkend + 2)).get(0));
+            titles.add(WikitextUtils.parseWikiLink(wiki, line.substring(wikilinkstart, wikilinkend + 2)).title());
         }
         return titles;
     }

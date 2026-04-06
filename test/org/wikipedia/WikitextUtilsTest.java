@@ -20,8 +20,6 @@
 
 package org.wikipedia;
 
-import java.util.*;
-
 import org.junit.jupiter.api.*;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -34,10 +32,11 @@ public class WikitextUtilsTest
     @Test
     public void parseWikilink()
     {
-        assertEquals(List.of("Link", "Link"), WikitextUtils.parseWikilink("[[ Link ]]"));
-        assertEquals(List.of("Link", "Link"), WikitextUtils.parseWikilink("[[:Link]]"));
-        assertEquals(List.of("Link", "Description"), WikitextUtils.parseWikilink("[[ Link | Description ]]"));
-        assertEquals(List.of("Link", "Description"), WikitextUtils.parseWikilink("[[:Link|Description]]"));
+        Wiki wiki = Wiki.newSession("en.wikipedia.org");
+        assertEquals(new WikitextUtils.WikiLink(wiki, "Link", null), WikitextUtils.parseWikiLink(wiki, "[[ Link ]]"));
+        assertEquals(new WikitextUtils.WikiLink(wiki, "Link", null), WikitextUtils.parseWikiLink(wiki, "[[:Link]]"));
+        assertEquals(new WikitextUtils.WikiLink(wiki, "Link", "Description"), WikitextUtils.parseWikiLink(wiki, "[[ Link | Description ]]"));
+        assertEquals(new WikitextUtils.WikiLink(wiki, "Link", "Description"), WikitextUtils.parseWikiLink(wiki, "[[:Link|Description]]"));
     }
     
     @Test

@@ -30,17 +30,45 @@ import java.util.*;
 public class WikitextUtils
 {
     /**
-     *  Parses a wikilink into its target and linked text. Example: <kbd>[[Link]]</kbd>
-     *  returns {@code { "Link", "Link" }} and <kbd>[[Link|Test]]</kbd> returns
-     *  {@code { "Link", "Test" }}. Can also be used to get sortkeys from 
+     *  Represents a wikilink. In wikitext, this is [[<code>title</code>|<code>text</code>]].
+     *  @param wiki the wiki on which the link exists/is intended for
+     *  @param title the title linked to
+     *  @param text the text to display for the link (can be {@code null}, 
+     *  renders as title)
+     *  @since 0.03
+     */
+    public record WikiLink(Wiki wiki, String title, String text) implements Writable
+    {
+        /**
+         *  Formats this wikilink in wikitext or HTML. CSV or other formats are
+         *  not supported. <strong>Inputs are not sanitized</strong>.
+         *  @param format {@link Writable.Format#WIKITEXT} or {@link
+         *  Writable.Format#HTML}
+         *  @return this link formatted as wikitext or HTML
+         *  @throws UnsupportedOperationException if other formats are supplied
+         */
+        @Override
+        public String format(Writable.Format format)
+        {
+            return switch (format)
+            {
+                case HTML -> "<a href=\"" + wiki.getPageUrl(title) + "\">" + Objects.requireNonNullElse(text, title) + "</a>";
+                case WIKITEXT -> "[[" + title + (text == null ? "" : "|" + text) + "]]";
+                default -> throw new UnsupportedOperationException("Cannot format a link as this format");
+            };
+        }
+    }
+    
+    /**
+     *  Parses a wikilink. Can also be used to get sortkeys from 
      *  categorizations. Use with caution on file uses because they can
      *  contain their own wikilinks.
+     *  @param wiki the wiki on which the link appears
      *  @param wikitext the wikitext to parse
-     *  @return first element = the target of the link, the second being the
-     *  description
+     *  @return the parsed wikilink
      *  @throws IllegalArgumentException if wikitext is not a valid wikilink
      */
-    public static List<String> parseWikilink(String wikitext)
+    public static WikiLink parseWikiLink(Wiki wiki, String wikitext)
     {
         int wikilinkstart = wikitext.indexOf("[[");
         int wikilinkend = wikitext.indexOf("]]", wikilinkstart);
@@ -53,12 +81,9 @@ public class WikitextUtils
         // check for description, if not there then set it to the target
         int pipe = linktext.indexOf('|');
         if (pipe >= 0)
-            return List.of(linktext.substring(0, pipe).trim(), linktext.substring(pipe + 1).trim());
+            return new WikiLink(wiki, linktext.substring(0, pipe).trim(), linktext.substring(pipe + 1).trim());
         else
-        {
-            String temp = linktext.trim();
-            return List.of(temp, temp);
-        }        
+            return new WikiLink(wiki, linktext.trim(), null);
     }
         
     /**
@@ -93,35 +118,6 @@ public class WikitextUtils
                 delta = delta.substring(0, a) + delta.substring(b + 3);
         }
         return delta;
-    }
-    
-    /**
-     *  Represents a wikilink. In wikitext, this is [[<code>title</code>|<code>text</code>]].
-     *  @param wiki the wiki on which the link exists/is intended for
-     *  @param title the title linked to
-     *  @param text the text to display for the link (can be null, repeats title)
-     *  @since 0.03
-     */
-    public record WikiLink(Wiki wiki, String title, String text) implements Writable
-    {
-        /**
-         *  Formats this wikilink in wikitext or HTML. CSV or other formats are
-         *  not supported. <strong>Inputs are not sanitized</strong>.
-         *  @param format {@link Writable.Format#WIKITEXT} or {@link
-         *  Writable.Format#HTML}
-         *  @return this link formatted as wikitext or HTML
-         *  @throws UnsupportedOperationException if other formats are supplied
-         */
-        @Override
-        public String format(Writable.Format format)
-        {
-            return switch (format)
-            {
-                case HTML -> "<a href=\"" + wiki.getPageUrl(title) + "\">" + (text == null ? title : text) + "</a>";
-                case WIKITEXT -> "[[" + title + (text == null ? "" : "|" + text) + "]]";
-                default -> throw new UnsupportedOperationException("Cannot format a link as this format");
-            };
-        }
     }
     
     /**
