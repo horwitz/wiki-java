@@ -106,27 +106,23 @@ public class Pages
      *  * [[Link|with description]]
      *  </pre>
      *
-     *  in which case <samp>{ "Main Page", "Wikipedia:Featured picture
-     *  candidates", "File:Example.png", "Cape Town#Economy", "Link" }</samp> is
-     *  the return value. Numbered lists are allowed. Nested lists are 
-     *  flattened. Link descriptions are removed.
+     *  Numbered lists are allowed. Nested lists are flattened.
      *
      *  @param wikitext a wikitext list of pages as described above
      *  @see #toWikitextList(Iterable, Function, boolean)
-     *  @return a list of parsed titles
+     *  @return a list of parsed wikilinks
      *  @since Wiki.java 0.11
      */
-    public List<String> parseWikitextList(String wikitext)
+    public List<WikitextUtils.WikiLink> parseWikitextList(String wikitext)
     {
-        String[] lines = wikitext.split("\n");
-        List<String> titles = new ArrayList<>();
-        for (String line : lines)
+        List<WikitextUtils.WikiLink> titles = new ArrayList<>();
+        for (String line : wikitext.split("\n"))
         {
             int wikilinkstart = line.indexOf("[[");
             int wikilinkend = line.indexOf("]]");
             if (wikilinkstart < 0 || wikilinkend < 0)
                 continue;
-            titles.add(WikitextUtils.parseWikiLink(wiki, line.substring(wikilinkstart, wikilinkend + 2)).title());
+            titles.add(WikitextUtils.parseWikiLink(wiki, line.substring(wikilinkstart, wikilinkend + 2)));
         }
         return titles;
     }

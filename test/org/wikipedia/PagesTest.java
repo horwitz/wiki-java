@@ -88,15 +88,23 @@ public class PagesTest
             *[[Link|Description]]
             *[[Invalid wiki markup instance #1
             *Not a link]]""";
-        List<String> expected = List.of("File:Example.png", "Main Page",
-            "*-algebra", "Cape Town#Economy", "Nested list", "Link");
+        List<WikitextUtils.WikiLink> expected = List.of(
+            new WikitextUtils.WikiLink(testWiki, "File:Example.png", null),
+            new WikitextUtils.WikiLink(testWiki, "Main Page", null),
+            new WikitextUtils.WikiLink(testWiki, "*-algebra", null),
+            new WikitextUtils.WikiLink(testWiki, "Cape Town#Economy", null),
+            new WikitextUtils.WikiLink(testWiki, "Nested list", null),
+            new WikitextUtils.WikiLink(testWiki, "Link", "Description"));
         assertEquals(expected, testWikiPages.parseWikitextList(list), "unnumbered list");
 
         list = """
             #[[:File:Example.png]]
             #[[*-algebra]]
             #[[Cape Town#Economy]]""";
-        expected = List.of("File:Example.png", "*-algebra", "Cape Town#Economy");
+        expected = List.of(
+            new WikitextUtils.WikiLink(testWiki, "File:Example.png", null),
+            new WikitextUtils.WikiLink(testWiki, "*-algebra", null),
+            new WikitextUtils.WikiLink(testWiki, "Cape Town#Economy", null));
         assertEquals(expected, testWikiPages.parseWikitextList(list), "numbered list");
     }
 

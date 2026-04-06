@@ -231,9 +231,8 @@ public class CommandLineParser
     }
     
     /**
-     *  Returns the string that is printed to standard output when the user 
-     *  specifies <kbd>--version</kbd> on the command line.
-     *  @return (see above)
+     *  {@return the string that is printed to standard output when the user 
+     *  specifies <kbd>--version</kbd> on the command line}
      */
     public String buildVersionString()
     {
@@ -362,10 +361,10 @@ public class CommandLineParser
                 System.err.println("Ignoring --wikipage, page [[" + wikipage + "]] does not exist.");
             else
             {
-                List<String> list = Pages.parseWikitextList(text);
-                for (String temp : list)
-                    if (wiki.namespace(temp) == Wiki.USER_NAMESPACE)
-                        users.add(wiki.removeNamespace(temp));
+                List<WikitextUtils.WikiLink> list = Pages.of(wiki).parseWikitextList(text);
+                for (WikitextUtils.WikiLink temp : list)
+                    if (wiki.namespace(temp.title()) == Wiki.USER_NAMESPACE)
+                        users.add(wiki.removeNamespace(temp.title()));
             }
         }
         return users;
