@@ -1,6 +1,6 @@
 /**
- *  @(#)Formattable.java 0.01 31/01/2026
- *  Copyright (C) 2026-20XX MER-C
+ *  @(#)Writable.java 0.02 06/04/2026
+ *  Copyright (C) 2026-2026 MER-C
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
@@ -24,7 +24,7 @@ package org.wikipedia;
  *  Represents things that can be written out to at least wikitext and HTML for
  *  presentation to users. Other text output formats are occasionally supported.
  *  @author MER-C
- *  @version 0.01
+ *  @version 0.02
  */
 public interface Writable
 {
@@ -48,6 +48,25 @@ public interface Writable
          *  tabular data.
          */
         CSV;              
+    }
+    
+    /**
+     *  The trivial {@link Writable} that returns the given string independent 
+     *  of format.
+     *  @param str the string to write
+     *  @since 0.02
+     */
+    public record Identity(String str) implements Writable
+    {
+        /**
+         *  {@return the string supplied on construction}
+         *  @param format disregarded
+         */
+        @Override
+        public String format(Writable.Format format)
+        {
+            return str;
+        }
     }
     
     /**
