@@ -50,7 +50,7 @@ public class Revisions
      *  @see Wiki.Revision
      *  @since 0.02
      */
-    public record RevisionRecord(WikitextUtils.WikiLink diff, WikitextUtils.WikiLink revlink, String flag_new, String flag_minor, String flag_bot,
+    public record RevisionRecord(WikitextUtils.WikiLink diff, WikitextUtils.WikiLink revlink, WikitextUtils.Bold flag_new, WikitextUtils.Bold flag_minor, WikitextUtils.Bold flag_bot,
         WikitextUtils.WikiLink title, Users.ShortLinks user, int size, String sizediff, Events.Comment comment) { }
     
     private Revisions(Wiki wiki)
@@ -116,9 +116,8 @@ public class Revisions
      */
     public DataTable<RevisionRecord> toDataTable(Iterable<Wiki.Revision> revisions, String format)
     {
-        // TODO: the output of toWikitext and toDataTable isn't identical: there are
-        // edit summaries that can be rendered in wikitext and HTML
-        // also wiki format has class="wikitable sortable" already given
+        // TODO: the output of toWikitext and toDataTable isn't identical:
+        // wiki format has class="wikitable sortable" already given
         
         List<RevisionRecord> rows = new ArrayList<>();
         for (Wiki.Revision rev : revisions)
@@ -128,9 +127,9 @@ public class Revisions
             rows.add(new RevisionRecord(
                 new WikitextUtils.WikiLink(wiki, "Special:Diff/" + rev.getID(), "prev"), 
                 new WikitextUtils.WikiLink(wiki, "Special:Permanentlink/" + rev.getID(), DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(rev.getTimestamp())),
-                rev.isNew() ? (format.equals("html") ? "<b>N</b>" : "'''N'''") : "",
-                rev.isMinor() ? (format.equals("html") ? "<b>m</b>" : "'''m'''") : "",
-                rev.isBot() ? (format.equals("html") ? "<b>b</b>" : "'''b'''") : "",
+                rev.isNew() ? new WikitextUtils.Bold("N") : null,
+                rev.isMinor() ? new WikitextUtils.Bold("m") : null,
+                rev.isBot() ? new WikitextUtils.Bold("b") : null,
                 new WikitextUtils.WikiLink(wiki, rev.getTitle(), null),
                 new Users.ShortLinks(wiki, user == null || user.equals(Wiki.Event.USER_DELETED) ? null : user), 
                 rev.getSize(),

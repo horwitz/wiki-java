@@ -200,6 +200,33 @@ public class WikitextUtils
     }
     
     /**
+     *  Represents format-independent bold text.
+     *  @param text the text to bold
+     *  @since 0.03
+     */
+    public record Bold(String text) implements Writable
+    {
+        /**
+         *  Renders this bold text in wikitext or HTML. Other formats just render
+         *  the text without bolding. <strong>Inputs are not sanitized</strong>.
+         *  @param format any {@link Writable.Format}
+         *  @return the rendered text
+         */
+        @Override
+        public String format(Writable.Format fmt)
+        {
+            return switch(fmt)
+            {
+                case Writable.Format.WIKITEXT: yield "'''" + text + "'''";
+                case Writable.Format.HTML: yield "<b>" + text + "</b>";
+                case Writable.Format.CSV:
+                default:
+                    yield text;
+            };
+        }
+    }
+    
+    /**
      *  Represents an optionally paginated, format-independent textual list.
      *  @param list the constituents of the list
      *  @param numbered whether this is a numbered list

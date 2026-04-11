@@ -619,7 +619,7 @@ public class ContributionSurveyor
             // is this a new page?
             if (edit.isNew() && !newpage)
             {
-                out.append("'''N''' ");
+                out.append(new WikitextUtils.Bold("N").format(fmt));
                 newpage = true;
             }
             // generate the diff strings now to avoid a second iteration

@@ -100,6 +100,15 @@ public class WikitextUtilsTest
     }
     
     @Test
+    public void formatBold()
+    {
+        WikitextUtils.Bold b = new WikitextUtils.Bold("Test text");
+        assertEquals("'''Test text'''", b.format(Writable.Format.WIKITEXT), "wikitext");
+        assertEquals("<b>Test text</b>", b.format(Writable.Format.HTML), "HTML");
+        assertEquals("Test text", b.format(Writable.Format.CSV), "CSV");
+    }
+    
+    @Test
     public void formatPaginatedList()
     {
         BiFunction<Integer, Integer, Writable> paginator = (start, end) -> new WikitextUtils.Heading("Blah " 
