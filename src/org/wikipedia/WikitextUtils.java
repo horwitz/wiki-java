@@ -20,6 +20,7 @@
 package org.wikipedia;
 
 import java.util.*;
+import java.util.function.BiFunction;
 
 /**
  *  Utility methods for generating and parsing wikitext that don't belong in
@@ -46,6 +47,9 @@ public class WikitextUtils
          *  Writable.Format#HTML}
          *  @return this link formatted as wikitext or HTML
          *  @throws UnsupportedOperationException if other formats are supplied
+         *  @throws UncheckedIOException if format is {@link Writable.Format#WIKITEXT},
+         *  the wiki's namespace cache isn't populated, and there was a network
+         *  error populating it. File and Category links must be escaped.
          */
         @Override
         public String format(Writable.Format format)
@@ -53,7 +57,14 @@ public class WikitextUtils
             return switch (format)
             {
                 case HTML -> "<a href=\"" + wiki.getPageUrl(title) + "\">" + Objects.requireNonNullElse(text, title) + "</a>";
-                case WIKITEXT -> "[[" + title + (text == null ? "" : "|" + text) + "]]";
+                case WIKITEXT -> 
+                {
+                    int ns = wiki.namespace(title);
+                    String s = "[[";
+                    if (ns == Wiki.CATEGORY_NAMESPACE || ns == Wiki.FILE_NAMESPACE)
+                        s = "[[:";
+                    yield s + title + (text == null ? "" : "|" + text) + "]]";
+                }
                 default -> throw new UnsupportedOperationException("Cannot format a link as this format");
             };
         }
@@ -185,6 +196,83 @@ public class WikitextUtils
                 case WIKITEXT -> "=".repeat(level) + text + "=".repeat(level);
                 default -> throw new UnsupportedOperationException("Cannot format a heading as this format");    
             };
+        }
+    }
+    
+    /**
+     *  Represents an optionally paginated, format-independent textual list.
+     *  @param list the constituents of the list
+     *  @param numbered whether this is a numbered list
+     *  @param paginator the delimiter for each paginated segment, {@code null} 
+     *  disables pagination
+     *  @param itemspersegment the number of items per segment
+     *  @since 0.03
+     */
+    public record PaginatedList(List<Writable> list, boolean numbered, BiFunction<Integer, Integer, Writable> paginator,
+        int itemspersegment) implements Writable
+    {
+        public PaginatedList
+        {
+            if (itemspersegment < 1)
+                throw new IllegalArgumentException("There must be at least one page per section.");
+            itemspersegment = paginator == null ? Integer.MAX_VALUE : itemspersegment;
+        }
+        
+        /**
+         *  Formats this list in wikitext or HTML. CSV or other formats are 
+         *  not supported. <strong>Inputs are not sanitized</strong>.
+         *  @param format {@link Writable.Format#WIKITEXT} or {@link
+         *  Writable.Format#HTML}
+         *  @return this list formatted as wikitext or HTML
+         *  @throws UnsupportedOperationException if other formats are supplied
+         */
+        @Override
+        public String format(Writable.Format format)
+        {
+            if (list.isEmpty())
+                return "";
+            StringBuilder builder = new StringBuilder();
+            String delimiter = switch (format)
+            {
+                case Writable.Format.WIKITEXT:
+                    yield numbered ? "#" : "*";
+                case Writable.Format.HTML:
+                    yield "<li>";
+                default:
+                    yield "";
+            };
+            String start = "", end = "\n";
+            if (format.equals(Writable.Format.HTML))
+            {
+                start = numbered ? "<ol" : "<ul";
+                end   = numbered ? "</ol>\n\n" : "</ul>\n\n";
+            }
+            int max = list.size();
+            for (int i = 0; i < max; i++)
+            {
+                int sectionmax = Math.min(max, i + itemspersegment);
+                if (i % itemspersegment == 0)
+                {
+                    if (paginator != null)
+                    {
+                        builder.append(paginator.apply(i + 1, sectionmax).format(format));
+                        builder.append("\n");
+                    }
+                    builder.append(start);
+                    if (format.equals(Writable.Format.HTML))
+                    {
+                        if (numbered && i > 0)
+                            builder.append(" start=").append(i + 1);
+                        builder.append(">\n");
+                    }
+                }
+                builder.append(delimiter);
+                builder.append(list.get(i).format(format));
+                builder.append("\n");
+                if (i % itemspersegment == itemspersegment - 1 || i == max - 1)
+                    builder.append(end);
+            }
+            return builder.toString();
         }
     }
 }

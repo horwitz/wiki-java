@@ -47,28 +47,10 @@ public class PagesTest
     public void toWikitextList()
     {
         // Wiki-markup breaking titles should not make it to this method
-        List<String> articles = List.of("File:Example.png", "Main Page",
-            "Category:Example", "*-algebra");
-
-        String expected = """
-            *[[:File:Example.png]]
-            *[[:Main Page]]
-            *[[:Category:Example]]
-            *[[:*-algebra]]
-            """;
-        assertEquals(expected, Pages.toWikitextList(articles, Pages.LIST_OF_LINKS, false), "unnumbered list");
-        expected = """
-            #[[:File:Example.png]]
-            #[[:Main Page]]
-            #[[:Category:Example]]
-            #[[:*-algebra]]
-            """;
-        assertEquals(expected, Pages.toWikitextList(articles, Pages.LIST_OF_LINKS, true), "numbered list");
-
-        articles = List.of("example.com", "example.net");
-        expected = "*{{spamlink|1=example.com}}\n*{{spamlink|1=example.net}}\n";
+        List<String> articles = List.of("example.com", "example.net");
+        String expected = "*{{spamlink|1=example.com}}\n*{{spamlink|1=example.net}}\n\n";
         assertEquals(expected, Pages.toWikitextTemplateList(articles, "spamlink", false), "unnumbered list of templates");
-        expected = "#{{TEST|1=Hello world}}\n#{{TEST|1=Just testing}}\n";
+        expected = "#{{TEST|1=Hello world}}\n#{{TEST|1=Just testing}}\n\n";
         articles = List.of("Hello world", "Just testing");
         assertEquals(expected, Pages.toWikitextTemplateList(articles, "TEST", true), "numbered list of templates");
     }

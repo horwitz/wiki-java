@@ -172,14 +172,20 @@ public class FeaturedPictureCuration
         List<String> missingfps = new ArrayList(fpcanonical);
         missingfps.removeAll(fpcat);
         System.out.println("Images that should be tagged FP, but aren't:");
-        System.out.println(Pages.toWikitextList(missingfps, Pages.LIST_OF_LINKS, false));
+        List<Writable> out = new ArrayList<>();
+        for (String fp : missingfps)
+            out.add(new WikitextUtils.WikiLink(enWiki, fp, null));
+        System.out.println(new WikitextUtils.PaginatedList(out, false, null, Integer.MAX_VALUE).format(Writable.Format.WIKITEXT));
         
         // check for images tagged as FP, but aren't listed at [[WP:FP]]
         missingfps.clear();
         missingfps.addAll(fpcat);
         missingfps.removeAll(fpcanonical);
         System.out.println("Images that are tagged as FP, but aren't listed at [[WP:FP]]:");
-        System.out.println(Pages.toWikitextList(missingfps, Pages.LIST_OF_LINKS, false));   
+        out.clear();
+        for (String fp : missingfps)
+            out.add(new WikitextUtils.WikiLink(enWiki, fp, null));
+        System.out.println(new WikitextUtils.PaginatedList(out, false, null, Integer.MAX_VALUE).format(Writable.Format.WIKITEXT));
     }
     
     /**

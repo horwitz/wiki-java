@@ -39,7 +39,6 @@ public class Pages
      *  A function, when supplied to {@link #toWikitextList(Iterable, Function, 
      *  boolean)}, transforms a {@code List} of pages into a list of links in
      *  wikitext.
-     *  @see #toWikitextList(Iterable, Function, boolean)
      */
     public static final Function<String, String> LIST_OF_LINKS = title -> "[[:" + title + "]]";
     
@@ -109,7 +108,6 @@ public class Pages
      *  Numbered lists are allowed. Nested lists are flattened.
      *
      *  @param wikitext a wikitext list of pages as described above
-     *  @see #toWikitextList(Iterable, Function, boolean)
      *  @return a list of parsed wikilinks
      *  @since Wiki.java 0.11
      */
@@ -127,53 +125,6 @@ public class Pages
         return titles;
     }
 
-    /**
-     *  Exports a list of pages, say, generated from one of the query methods to
-     *  wikitext. When supplied with {@link #LIST_OF_LINKS}, this method does 
-     *  the exact opposite of {@link #parseWikitextList(String)}, i.e. {@code
-     *  { "Main Page", "Wikipedia:Featured picture candidates", "File:Example.png" }}
-     *  becomes the string:
-     *
-     *  <pre>
-     *  *[[:Main Page]]
-     *  *[[:Wikipedia:Featured picture candidates]]
-     *  *[[:File:Example.png]]
-     *  </pre>
-     * 
-     *  <p>
-     *  If a <var>numbered</var> list is desired, the output is:
-     * 
-     *  <pre>
-     *  #[[:Main Page]]
-     *  #[[:Wikipedia:Featured picture candidates]]
-     *  #[[:File:Example.png]]
-     *  </pre>
-     * 
-     *  <p>
-     *  The generator function may be used, for instance, to <a  
-     *  href="https://en.wikipedia.org/wiki/Category:Pagelinks_templates"> supply 
-     *  a different template depending on namespace</a>, to insert other 
-     *  template arguments or add custom wikilink descriptions.
-     *
-     *  @param pages a list of page titles
-     *  @param generator a generator of wikitext given a particular title
-     *  @param numbered whether this is a numbered list
-     *  @return the list, exported as wikitext
-     *  @see #parseWikitextList(String)
-     *  @since Wiki.java 0.14
-     */
-    public static String toWikitextList(Iterable<String> pages, Function<String, String> generator, boolean numbered)
-    {
-        StringBuilder buffer = new StringBuilder(10000);
-        for (String page : pages)
-        {
-            buffer.append(numbered ? "#" : "*");
-            buffer.append(generator.apply(page));
-            buffer.append("\n");
-        }
-        return buffer.toString();
-    }
-    
     /**
      *  Exports a list of pages, say, generated from one of the query methods to
      *  wikitext, where each page is the single argument of the given 
@@ -203,7 +154,10 @@ public class Pages
      */
     public static String toWikitextTemplateList(Iterable<String> pages, String template, boolean numbered)
     {
-        return toWikitextList(pages, page -> "{{" + template + "|1=" + page + "}}", numbered);
+        List<Writable> ret = new ArrayList<>();
+        for (String page : pages)
+            ret.add(new Writable.Identity("{{" + template + "|1=" + page + "}}"));
+        return new WikitextUtils.PaginatedList(ret, numbered, null, Integer.MAX_VALUE).format(Writable.Format.WIKITEXT);
     }
     
     /**
