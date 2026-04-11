@@ -597,46 +597,57 @@ public class ContributionSurveyor
         }
         return ret;
     }
-
+    
     /**
-     *  Generates a survey listing for a given article in a CCI.
+     *  A survey listing for a given article in a CCI.
+     *  @param wiki the wiki on which the survey was run
      *  @param user_survey a particular user's text contribution survey
      *  @param article the article to render
-     *  @return the survey listing for that article in wikitext
      *  @see #contributionSurvey(List, int...)
      *  @since 0.04
      */
-    public String outputNextPage(Map<String, List<Wiki.Revision>> user_survey, String article)
+    public record TextSurveyLine(Wiki wiki, Map<String, List<Wiki.Revision>> user_survey, String article) implements Writable
     {
-        StringBuilder out = new StringBuilder(10000);
-        List<Wiki.Revision> edits = user_survey.get(article);
-        Writable.Format fmt = Writable.Format.WIKITEXT;
+        /**
+         *  Renders this text contribution survey line in wikitext or HTML. In
+         *  wikitext, this looks like 
+         *  <samp>'''N''' [[Article]] (2 edits): [[Special:Diff/1|(+1234)]][[Special:Diff/2|(+567)]]</samp>
+         *  @param fmt {@link Writable.Format#WIKITEXT} or {@link Writable.Format#HTML}
+         *  @return the rendered survey listing for the article in this record
+         *  @throws UnsupportedOperationException if any other format is supplied
+         */
+        @Override
+        public String format(Writable.Format fmt)
+        {
+            StringBuilder out = new StringBuilder(10000);
+            List<Wiki.Revision> edits = user_survey.get(article);
 
-        StringBuilder temp = new StringBuilder();
-        boolean newpage = false;
-        for (Wiki.Revision edit : edits)
-        {
-            // is this a new page?
-            if (edit.isNew() && !newpage)
+            StringBuilder temp = new StringBuilder();
+            boolean newpage = false;
+            for (Wiki.Revision edit : edits)
             {
-                out.append(new WikitextUtils.Bold("N").format(fmt));
-                newpage = true;
+                // is this a new page?
+                if (edit.isNew() && !newpage)
+                {
+                    out.append(new WikitextUtils.Bold("N").format(fmt)).append(" ");
+                    newpage = true;
+                }
+                // generate the diff strings now to avoid a second iteration
+                temp.append(new WikitextUtils.WikiLink(wiki, "Special:Diff/" + edit.getID(), "(%+d)".formatted(edit.getSizeDiff())).format(fmt));
             }
-            // generate the diff strings now to avoid a second iteration
-            temp.append(new WikitextUtils.WikiLink(wiki, "Special:Diff/" + edit.getID(), "(%+d)".formatted(edit.getSizeDiff())).format(fmt));
+            int numedits = edits.size();
+            out.append(new WikitextUtils.WikiLink(wiki, article, null).format(fmt));
+            out.append(" (");
+            if (numedits == 1)
+                out.append("1 edit): ");
+            else
+            {
+                out.append(numedits);
+                out.append(" edits): ");
+            }
+            out.append(temp);
+            return out.toString();
         }
-        int numedits = edits.size();
-        out.append(new WikitextUtils.WikiLink(wiki, article, null).format(fmt));
-        out.append(" (");
-        if (numedits == 1)
-            out.append("1 edit): ");
-        else
-        {
-            out.append(numedits);
-            out.append(" edits): ");
-        }
-        out.append(temp);
-        return out.toString();
     }
 
     /**
@@ -691,7 +702,7 @@ public class ContributionSurveyor
             if (results != null)
             {
                 Map<String, List<Wiki.Revision>> user_survey = results.get(username);
-                sections.addAll(Pages.toWikitextPaginatedList(user_survey.keySet(), page -> outputNextPage(user_survey, page), 
+                sections.addAll(Pages.toWikitextPaginatedList(user_survey.keySet(), page -> new TextSurveyLine(wiki, user_survey, page).format(fmt), 
                     (start, end) -> new WikitextUtils.Heading(username_hdr + " Pages " + start + " to " + end, 3).format(fmt),
                     articlespersection, false));
             }
@@ -700,7 +711,7 @@ public class ContributionSurveyor
             if (delresults != null)
             {
                 Map<String, List<Wiki.Revision>> user_survey = delresults.get(username);
-                sections.addAll(Pages.toWikitextPaginatedList(user_survey.keySet(), page -> outputNextPage(user_survey, page), 
+                sections.addAll(Pages.toWikitextPaginatedList(user_survey.keySet(), page -> new TextSurveyLine(wiki, user_survey, page).format(fmt), 
                     (start, end) -> new WikitextUtils.Heading(username_hdr + " Deleted pages " + start + " to " + end, 3).format(fmt),
                     articlespersection, false));
             }

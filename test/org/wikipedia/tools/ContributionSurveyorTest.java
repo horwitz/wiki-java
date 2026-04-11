@@ -17,6 +17,7 @@
  */
 package org.wikipedia.tools;
 
+import java.time.OffsetDateTime;
 import java.util.*;
 import org.junit.jupiter.api.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -95,6 +96,30 @@ public class ContributionSurveyorTest
         assertTrue(results.get(users.get(0)).mediarepo().isEmpty(), "User with no uploads (commons)");
         assertTrue(results.get(users.get(1)).local().isEmpty(), "User with only commons uploads");
         assertEquals(List.of("File:Infinum logo.jpg"), results.get(users.get(1)).mediarepo());
+    }
+    
+    @Test
+    public void renderTextSurveyLine() throws Exception
+    {
+        Wiki.RequestHelper rh = enWiki.new RequestHelper().limitedTo(2)
+            .withinInterval(new Wiki.Interval(null, OffsetDateTime.parse("2026-04-07T00:25:07Z")));
+        List<Wiki.Revision> revisions = enWiki.contribs("RickyCourtney", rh);
+        Map<String, List<Wiki.Revision>> survey = Map.of("Artemis II", revisions);
+        ContributionSurveyor.TextSurveyLine tsl = new ContributionSurveyor.TextSurveyLine(enWiki, survey, "Artemis II");
+        assertEquals("[[Artemis II]] (2 edits): [[Special:Diff/1347482853|(+927)]][[Special:Diff/1347481236|(+421)]]", 
+            tsl.format(Writable.Format.WIKITEXT), "wikitext, two edits");
+        assertEquals("<a href=\"https://en.wikipedia.org/wiki/Artemis_II\">Artemis II</a> (2 edits): "
+            + "<a href=\"https://en.wikipedia.org/wiki/Special%3ADiff%2F1347482853\">(+927)</a>"
+            + "<a href=\"https://en.wikipedia.org/wiki/Special%3ADiff%2F1347481236\">(+421)</a>", tsl.format(Writable.Format.HTML), "html, two edits");
+        
+        rh = rh.limitedTo(1).withinInterval(new Wiki.Interval(null, OffsetDateTime.parse("2026-04-11T16:35:04Z")));
+        revisions = enWiki.contribs("Esculenta", rh);
+        survey = Map.of("Synarthonia psoromica", revisions);
+        tsl = new ContributionSurveyor.TextSurveyLine(enWiki, survey, "Synarthonia psoromica");
+        assertEquals("'''N''' [[Synarthonia psoromica]] (1 edit): [[Special:Diff/1348256309|(+4492)]]", 
+            tsl.format(Writable.Format.WIKITEXT), "wikitext, one edit, new");
+        assertEquals("<b>N</b> <a href=\"https://en.wikipedia.org/wiki/Synarthonia_psoromica\">Synarthonia psoromica</a> (1 edit): "
+            + "<a href=\"https://en.wikipedia.org/wiki/Special%3ADiff%2F1348256309\">(+4492)</a>", tsl.format(Writable.Format.HTML), "html, one edit new");
     }
     
     @Test
