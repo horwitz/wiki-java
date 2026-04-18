@@ -523,30 +523,32 @@ public class ContributionSurveyor
     
     /** 
      *  An image contribution survey for a user.
+     *  @param user the user that was surveyed
      *  @param local a list of images uploaded locally by the user
      *  @param mediarepo uploads on the foreign media repository wiki (default: 
      *  Wikimedia Commons) by the user
      *  @param transferred A list of images transferred to the foreign media 
      *  repository wiki (may be inaccurate depending on username or empty/{@code null} 
      *  if disabled).
-     *  @see #imageContributionSurvey(Iterable)
+     *  @see #imageContributionSurvey(SequencedCollection)
      *  @since 0.10
      */
-    public record ImageContributions(List<String> local, List<String> mediarepo, List<String> transferred) { }
+    public record ImageContributions(String user, List<String> local, List<String> mediarepo, List<String> transferred) { }
 
     /**
      *  Performs an image contribution survey on a list of users. (Date/time 
      *  limits do not apply to, nor do they make sense for transferred images.)
+     *  Results are returned in the same order as the user list.
      *  @param users a list of users on the wiki
      *  @return the survey results
      *  @throws IOException if a network error occurs
      */
-    public Map<String, ImageContributions> imageContributionSurvey(Iterable<String> users) throws IOException
+    public List<ImageContributions> imageContributionSurvey(SequencedCollection<String> users) throws IOException
     {
         Wiki repowiki = Wiki.newSession(mediarepo);
         repowiki.setUserAgent(WMFWikiFarm.TOOL_USER_AGENT);
         Wiki.RequestHelper rh = wiki.new RequestHelper().withinInterval(interval);
-        Map<String, ImageContributions> ret = new HashMap<>();
+        List<ImageContributions> ret = new ArrayList<>();
         
         for (String user : users)
         {
@@ -577,20 +579,20 @@ public class ContributionSurveyor
             if (comingle)
             {
                 if (ret.isEmpty())
-                    ret.put("", new ImageContributions(
+                    ret.add(new ImageContributions(user, 
                         new ArrayList<>(localuploads), 
                         new ArrayList<>(repouploads),
                         new ArrayList<>(repoTransfer)));
                 else
                 {
-                    ImageContributions comingled = ret.get("");
+                    ImageContributions comingled = ret.get(0);
                     comingled.local().addAll(localuploads);
                     comingled.mediarepo().addAll(repouploads);
                     comingled.transferred().addAll(repoTransfer);
                 }
             }
             else
-                ret.put(user, new ImageContributions(
+                ret.add(new ImageContributions(user,
                     new ArrayList<>(localuploads), 
                     new ArrayList<>(repouploads),
                     new ArrayList<>(repoTransfer)));
@@ -599,14 +601,13 @@ public class ContributionSurveyor
     }
     
     /**
-     *  A survey listing for a given article in a CCI.
-     *  @param wiki the wiki on which the survey was run
-     *  @param user_survey a particular user's text contribution survey
-     *  @param article the article to render
+     *  A survey listing for a given article in a CCI. It is assumed all edits
+     *  are to the same page on the same wiki.
+     *  @param edits a particular user's edits to the article
      *  @see #contributionSurvey(List, int...)
      *  @since 0.04
      */
-    public record TextSurveyLine(Wiki wiki, Map<String, List<Wiki.Revision>> user_survey, String article) implements Writable
+    public record TextSurveyLine(List<Wiki.Revision> edits) implements Writable
     {
         /**
          *  Renders this text contribution survey line in wikitext or HTML. In
@@ -620,10 +621,10 @@ public class ContributionSurveyor
         public String format(Writable.Format fmt)
         {
             StringBuilder out = new StringBuilder(10000);
-            List<Wiki.Revision> edits = user_survey.get(article);
-
             StringBuilder temp = new StringBuilder();
             boolean newpage = false;
+            String article = edits.get(0).getTitle();
+            Wiki wiki = edits.get(0).getWiki();
             for (Wiki.Revision edit : edits)
             {
                 // is this a new page?
@@ -670,7 +671,7 @@ public class ContributionSurveyor
         List<String> sections = new ArrayList<>();
         int sectionsperpage = articlesperpage / articlespersection;  
         Map<String, Map<String, List<Wiki.Revision>>> results = null, delresults = null;
-        Map<String, ImageContributions> imagesurvey = null;
+        List<ImageContributions> imagesurvey = null;
         Writable.Format fmt = Writable.Format.WIKITEXT;
         
         if (contribs)
@@ -693,42 +694,53 @@ public class ContributionSurveyor
             usernames = List.of("");
         int count = usernames.size();
         
-        for (String username : usernames)
+        for (int i = 0; i < count; i++)
         {
             // output text results
+            String username = usernames.get(i);
             int sizebefore = sections.size();
             String username_hdr = count == 1 ? "" : (username + ":");
 
             if (results != null)
             {
                 Map<String, List<Wiki.Revision>> user_survey = results.get(username);
-                sections.addAll(Pages.toWikitextPaginatedList(user_survey.keySet(), page -> new TextSurveyLine(wiki, user_survey, page).format(fmt), 
-                    (start, end) -> new WikitextUtils.Heading(username_hdr + " Pages " + start + " to " + end, 3).format(fmt),
-                    articlespersection, false));
+                List<Writable> wl = new ArrayList<>();
+                for (String page : user_survey.keySet())
+                    wl.add(new TextSurveyLine(user_survey.get(page)));
+                sections.addAll(new WikitextUtils.PaginatedList(wl, false, 
+                    (start, end) -> new WikitextUtils.Heading(username_hdr + " Pages " + start + " to " + end, 3), articlespersection).sections(fmt));
             }
             
             // output deleted results
             if (delresults != null)
             {
                 Map<String, List<Wiki.Revision>> user_survey = delresults.get(username);
-                sections.addAll(Pages.toWikitextPaginatedList(user_survey.keySet(), page -> new TextSurveyLine(wiki, user_survey, page).format(fmt), 
-                    (start, end) -> new WikitextUtils.Heading(username_hdr + " Deleted pages " + start + " to " + end, 3).format(fmt),
-                    articlespersection, false));
+                List<Writable> wl = new ArrayList<>();
+                for (String page : user_survey.keySet())
+                    wl.add(new TextSurveyLine(user_survey.get(page)));
+                sections.addAll(new WikitextUtils.PaginatedList(wl, false, 
+                    (start, end) -> new WikitextUtils.Heading(username_hdr + " Deleted pages " + start + " to " + end, 3), articlespersection).sections(fmt));
             }
             
             // output image contribution survey for this user
-            if (imagesurvey != null && imagesurvey.containsKey(username))
+            if (imagesurvey != null)
             {
-                ImageContributions imagesurvey2 = imagesurvey.get(username);
-                sections.addAll(Pages.toWikitextPaginatedList(imagesurvey2.local(), Pages.LIST_OF_LINKS, 
-                    (start, end) -> new WikitextUtils.Heading(username_hdr + " Local files " + start + " to " + end, 3).format(fmt), 
-                    articlespersection, false));
-                sections.addAll(Pages.toWikitextPaginatedList(imagesurvey2.mediarepo(), Pages.LIST_OF_LINKS, 
-                    (start, end) -> new WikitextUtils.Heading(username_hdr + " Foreign repo files " + start + " to " + end, 3).format(fmt),
-                    articlespersection, false));
-                sections.addAll(Pages.toWikitextPaginatedList(imagesurvey2.transferred(), Pages.LIST_OF_LINKS, 
-                    (start, end) -> new WikitextUtils.Heading(username_hdr + " Transferred files " + start + " to " + end, 3).format(fmt),
-                    articlespersection, false));
+                ImageContributions imagesurvey2 = imagesurvey.get(i);
+                List<Writable> wl = new ArrayList<>();
+                for (String page : imagesurvey2.local())
+                    wl.add(new WikitextUtils.WikiLink(wiki, page, null));
+                sections.addAll(new WikitextUtils.PaginatedList(wl, false, 
+                    (start, end) -> new WikitextUtils.Heading(username_hdr + " Local files " + start + " to " + end, 3), articlespersection).sections(fmt));
+                wl.clear();
+                for (String page : imagesurvey2.mediarepo())
+                    wl.add(new WikitextUtils.WikiLink(wiki, page, null));
+                sections.addAll(new WikitextUtils.PaginatedList(wl, false, 
+                    (start, end) -> new WikitextUtils.Heading(username_hdr + " Foreign repo files " + start + " to " + end, 3), articlespersection).sections(fmt));
+                wl.clear();
+                for (String page : imagesurvey2.transferred())
+                    wl.add(new WikitextUtils.WikiLink(wiki, page, null));
+                sections.addAll(new WikitextUtils.PaginatedList(wl, false, 
+                    (start, end) -> new WikitextUtils.Heading(username_hdr + " Transferred files " + start + " to " + end, 3), articlespersection).sections(fmt));
             }
             
             // insert header if there were results for this user and at the 
@@ -736,12 +748,12 @@ public class ContributionSurveyor
             String header = "";
             if (!comingle)
                 header = new WikitextUtils.Heading(username, 2).format(fmt) + "\n" + new Users.Links(wiki, username).format(fmt) + "\n";
-            for (int i = sizebefore; i < sections.size(); i++)
+            for (int j = sizebefore; j < sections.size(); j++)
             {
-                if (i == sizebefore || i % sectionsperpage == 0)
+                if (j == sizebefore || j % sectionsperpage == 0)
                 {
-                    String toreplace = sections.get(i);
-                    sections.set(i, header + toreplace);
+                    String toreplace = sections.get(j);
+                    sections.set(j, header + toreplace);
                 }
             }
         }

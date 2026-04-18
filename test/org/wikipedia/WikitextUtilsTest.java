@@ -128,28 +128,31 @@ public class WikitextUtilsTest
         items.add(new WikitextUtils.WikiLink(enWiki, "Category:Example", null));
         items.add(new WikitextUtils.WikiLink(enWiki, "*-algebra", null));
         
-        String expected = """
+        String expected1 = """
             ==Blah 1 to 4==
             #[[1]]
             #[[2]]
             #[[3]]
             #[[4]]
-            
+            """;
+        String expected2 = """
             ==Blah 5 to 8==
             #[[5]]
             #[[6]]
             #[[7]]
             #[[:File:Example.png]]
-            
+            """;
+        String expected3 = """
             ==Blah 9 to 10==
             #[[:Category:Example]]
             #[[*-algebra]]
-
             """;
-        String actual = new WikitextUtils.PaginatedList(items, true, paginator, 4).format(Writable.Format.WIKITEXT);
-        assertEquals(expected, actual);
+        WikitextUtils.PaginatedList pl = new WikitextUtils.PaginatedList(items, true, paginator, 4);
+        assertEquals(List.of(expected1, expected2, expected3), pl.sections(Writable.Format.WIKITEXT));
+        String expected = expected1 + "\n" + expected2 + "\n" + expected3 + "\n";
+        assertEquals(expected, pl.format(Writable.Format.WIKITEXT));
         expected = expected.replace("#", "*");
-        actual = new WikitextUtils.PaginatedList(items, false, paginator, 4).format(Writable.Format.WIKITEXT);
+        String actual = new WikitextUtils.PaginatedList(items, false, paginator, 4).format(Writable.Format.WIKITEXT);
         assertEquals(expected, actual);
         expected = """
             *[[1]]
@@ -167,7 +170,7 @@ public class WikitextUtilsTest
         actual = new WikitextUtils.PaginatedList(items, false, null, 4).format(Writable.Format.WIKITEXT);
         assertEquals(expected, actual, "Wikitext, null paginator");
         
-        expected = """
+        expected1 = """
             <h2>Blah 1 to 4</h2>
             <ol>
             <li><a href="https://en.wikipedia.org/wiki/1">1</a>
@@ -175,7 +178,8 @@ public class WikitextUtilsTest
             <li><a href="https://en.wikipedia.org/wiki/3">3</a>
             <li><a href="https://en.wikipedia.org/wiki/4">4</a>
             </ol>
-
+            """;
+        expected2 = """
             <h2>Blah 5 to 8</h2>
             <ol start=5>
             <li><a href="https://en.wikipedia.org/wiki/5">5</a>
@@ -183,16 +187,18 @@ public class WikitextUtilsTest
             <li><a href="https://en.wikipedia.org/wiki/7">7</a>
             <li><a href="https://en.wikipedia.org/wiki/File%3AExample.png">File:Example.png</a>
             </ol>
-
+            """;
+        expected3 = """
             <h2>Blah 9 to 10</h2>
             <ol start=9>
             <li><a href="https://en.wikipedia.org/wiki/Category%3AExample">Category:Example</a>
             <li><a href="https://en.wikipedia.org/wiki/*-algebra">*-algebra</a>
             </ol>
-
             """;
-        actual = new WikitextUtils.PaginatedList(items, true, paginator, 4).format(Writable.Format.HTML);
-        assertEquals(expected, actual);
+        pl = new WikitextUtils.PaginatedList(items, true, paginator, 4);
+        assertEquals(List.of(expected1, expected2, expected3), pl.sections(Writable.Format.HTML));
+        expected = expected1 + "\n" + expected2 + "\n" + expected3 + "\n";
+        assertEquals(expected, pl.format(Writable.Format.HTML));
         expected = """
             <h2>Blah 1 to 4</h2>
             <ul>

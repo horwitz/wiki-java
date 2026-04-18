@@ -246,19 +246,18 @@ public class WikitextUtils
         }
         
         /**
-         *  Formats this list in wikitext or HTML. CSV or other formats are 
-         *  not supported. <strong>Inputs are not sanitized</strong>.
+         *  Formats this list in wikitext or HTML, returning a list of rendered
+         *  sections. CSV or other formats are not supported. <strong>Inputs are
+         *  not sanitized</strong>.
          *  @param format {@link Writable.Format#WIKITEXT} or {@link
          *  Writable.Format#HTML}
-         *  @return this list formatted as wikitext or HTML
+         *  @return a list of rendered sections
          *  @throws UnsupportedOperationException if other formats are supplied
          */
-        @Override
-        public String format(Writable.Format format)
+        public List<String> sections(Writable.Format format)
         {
             if (list.isEmpty())
-                return "";
-            StringBuilder builder = new StringBuilder();
+                return Collections.EMPTY_LIST;
             String delimiter = switch (format)
             {
                 case Writable.Format.WIKITEXT:
@@ -268,13 +267,15 @@ public class WikitextUtils
                 default:
                     yield "";
             };
-            String start = "", end = "\n";
+            String start = "", end = "";
             if (format.equals(Writable.Format.HTML))
             {
                 start = numbered ? "<ol" : "<ul";
-                end   = numbered ? "</ol>\n\n" : "</ul>\n\n";
+                end   = numbered ? "</ol>\n" : "</ul>\n";
             }
             int max = list.size();
+            List<String> sections = new ArrayList<>();
+            StringBuilder builder = new StringBuilder();
             for (int i = 0; i < max; i++)
             {
                 int sectionmax = Math.min(max, i + itemspersegment);
@@ -297,8 +298,31 @@ public class WikitextUtils
                 builder.append(list.get(i).format(format));
                 builder.append("\n");
                 if (i % itemspersegment == itemspersegment - 1 || i == max - 1)
+                {
                     builder.append(end);
+                    sections.add(builder.toString());
+                    builder.delete(0, builder.length());
+                }
             }
+            return sections;
+        }
+        
+        /**
+         *  Formats this list in wikitext or HTML. CSV or other formats are 
+         *  not supported. <strong>Inputs are not sanitized</strong>.
+         *  @param format {@link Writable.Format#WIKITEXT} or {@link
+         *  Writable.Format#HTML}
+         *  @return this list formatted as wikitext or HTML
+         *  @throws UnsupportedOperationException if other formats are supplied
+         */
+        @Override
+        public String format(Writable.Format format)
+        {
+            if (list.isEmpty())
+                return "";
+            StringBuilder builder = new StringBuilder();
+            for (String section : sections(format))
+                builder.append(section).append("\n");
             return builder.toString();
         }
     }

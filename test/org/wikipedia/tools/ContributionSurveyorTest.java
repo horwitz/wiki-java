@@ -91,11 +91,11 @@ public class ContributionSurveyorTest
         // https://meta.wikimedia.org/wiki/Special:CentralAuth/Lozouhg - one image, PD text (so probably not going away)
         // note search for transferred uploads is not stable enough for testing
         List<String> users = List.of("Helga The Great Kyiv", "Lozouhg");
-        var results = surveyor.imageContributionSurvey(users);
-        assertTrue(results.get(users.get(0)).local().isEmpty(), "User with no uploads (local)");
-        assertTrue(results.get(users.get(0)).mediarepo().isEmpty(), "User with no uploads (commons)");
-        assertTrue(results.get(users.get(1)).local().isEmpty(), "User with only commons uploads");
-        assertEquals(List.of("File:Infinum logo.jpg"), results.get(users.get(1)).mediarepo());
+        List<ContributionSurveyor.ImageContributions> results = surveyor.imageContributionSurvey(users);
+        assertTrue(results.get(0).local().isEmpty(), "User with no uploads (local)");
+        assertTrue(results.get(0).mediarepo().isEmpty(), "User with no uploads (commons)");
+        assertTrue(results.get(1).local().isEmpty(), "User with only commons uploads");
+        assertEquals(List.of("File:Infinum logo.jpg"), results.get(1).mediarepo());
     }
     
     @Test
@@ -104,8 +104,7 @@ public class ContributionSurveyorTest
         Wiki.RequestHelper rh = enWiki.new RequestHelper().limitedTo(2)
             .withinInterval(new Wiki.Interval(null, OffsetDateTime.parse("2026-04-07T00:25:07Z")));
         List<Wiki.Revision> revisions = enWiki.contribs("RickyCourtney", rh);
-        Map<String, List<Wiki.Revision>> survey = Map.of("Artemis II", revisions);
-        ContributionSurveyor.TextSurveyLine tsl = new ContributionSurveyor.TextSurveyLine(enWiki, survey, "Artemis II");
+        ContributionSurveyor.TextSurveyLine tsl = new ContributionSurveyor.TextSurveyLine(revisions);
         assertEquals("[[Artemis II]] (2 edits): [[Special:Diff/1347482853|(+927)]][[Special:Diff/1347481236|(+421)]]", 
             tsl.format(Writable.Format.WIKITEXT), "wikitext, two edits");
         assertEquals("<a href=\"https://en.wikipedia.org/wiki/Artemis_II\">Artemis II</a> (2 edits): "
@@ -114,8 +113,7 @@ public class ContributionSurveyorTest
         
         rh = rh.limitedTo(1).withinInterval(new Wiki.Interval(null, OffsetDateTime.parse("2026-04-11T16:35:04Z")));
         revisions = enWiki.contribs("Esculenta", rh);
-        survey = Map.of("Synarthonia psoromica", revisions);
-        tsl = new ContributionSurveyor.TextSurveyLine(enWiki, survey, "Synarthonia psoromica");
+        tsl = new ContributionSurveyor.TextSurveyLine(revisions);
         assertEquals("'''N''' [[Synarthonia psoromica]] (1 edit): [[Special:Diff/1348256309|(+4492)]]", 
             tsl.format(Writable.Format.WIKITEXT), "wikitext, one edit, new");
         assertEquals("<b>N</b> <a href=\"https://en.wikipedia.org/wiki/Synarthonia_psoromica\">Synarthonia psoromica</a> (1 edit): "
@@ -147,7 +145,7 @@ public class ContributionSurveyorTest
         // images
         users = List.of("Lozouhg");
         var results2 = surveyor.imageContributionSurvey(users);
-        assertTrue(results2.get(users.get(0)).mediarepo().isEmpty(), "Check interval functionality (images)");
+        assertTrue(results2.get(0).mediarepo().isEmpty(), "Check interval functionality (images)");
     }
     
     @Test
@@ -282,12 +280,12 @@ public class ContributionSurveyorTest
         // is one of the cases where transferred files do not work well
         String un = "Pochta";
         List<String> users = List.of(un);
-        assertTrue(surveyor.imageContributionSurvey(users).get(un).transferred().isEmpty());
+        assertTrue(surveyor.imageContributionSurvey(users).get(0).transferred().isEmpty());
         
         surveyor.setSurveyingTransferredFiles(true);
         assertTrue(surveyor.isSurveyingTransferredFiles(), "verify get/set");
         
-        assertFalse(surveyor.imageContributionSurvey(users).get(un).transferred().isEmpty());
+        assertFalse(surveyor.imageContributionSurvey(users).get(0).transferred().isEmpty());
     }
     
     @Test
