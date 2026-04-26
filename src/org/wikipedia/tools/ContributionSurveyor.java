@@ -704,20 +704,16 @@ public class ContributionSurveyor
             if (results != null)
             {
                 Map<String, List<Wiki.Revision>> user_survey = results.get(username);
-                List<Writable> wl = new ArrayList<>();
-                for (String page : user_survey.keySet())
-                    wl.add(new TextSurveyLine(user_survey.get(page)));
+                List<Writable> wl = ArrayUtils.transform(user_survey.keySet(), ArrayList::new, page -> new TextSurveyLine(user_survey.get(page)));
                 sections.addAll(new WikitextUtils.PaginatedList(wl, false, 
                     (start, end) -> new WikitextUtils.Heading(username_hdr + " Pages " + start + " to " + end, 3), articlespersection).sections(fmt));
-            }
+            }   
             
             // output deleted results
             if (delresults != null)
             {
                 Map<String, List<Wiki.Revision>> user_survey = delresults.get(username);
-                List<Writable> wl = new ArrayList<>();
-                for (String page : user_survey.keySet())
-                    wl.add(new TextSurveyLine(user_survey.get(page)));
+                List<Writable> wl = ArrayUtils.transform(user_survey.keySet(), ArrayList::new, page -> new TextSurveyLine(user_survey.get(page)));
                 sections.addAll(new WikitextUtils.PaginatedList(wl, false, 
                     (start, end) -> new WikitextUtils.Heading(username_hdr + " Deleted pages " + start + " to " + end, 3), articlespersection).sections(fmt));
             }
@@ -726,19 +722,13 @@ public class ContributionSurveyor
             if (imagesurvey != null)
             {
                 ImageContributions imagesurvey2 = imagesurvey.get(i);
-                List<Writable> wl = new ArrayList<>();
-                for (String page : imagesurvey2.local())
-                    wl.add(new WikitextUtils.WikiLink(wiki, page, null));
+                List<Writable> wl = ArrayUtils.transform(imagesurvey2.local(), ArrayList::new, page -> new WikitextUtils.WikiLink(wiki, page, null));
                 sections.addAll(new WikitextUtils.PaginatedList(wl, false, 
                     (start, end) -> new WikitextUtils.Heading(username_hdr + " Local files " + start + " to " + end, 3), articlespersection).sections(fmt));
-                wl.clear();
-                for (String page : imagesurvey2.mediarepo())
-                    wl.add(new WikitextUtils.WikiLink(wiki, page, null));
+                wl = ArrayUtils.transform(imagesurvey2.mediarepo(), ArrayList::new, page -> new WikitextUtils.WikiLink(wiki, page, null));
                 sections.addAll(new WikitextUtils.PaginatedList(wl, false, 
                     (start, end) -> new WikitextUtils.Heading(username_hdr + " Foreign repo files " + start + " to " + end, 3), articlespersection).sections(fmt));
-                wl.clear();
-                for (String page : imagesurvey2.transferred())
-                    wl.add(new WikitextUtils.WikiLink(wiki, page, null));
+                wl = ArrayUtils.transform(imagesurvey2.transferred(), ArrayList::new, page -> new WikitextUtils.WikiLink(wiki, page, null));
                 sections.addAll(new WikitextUtils.PaginatedList(wl, false, 
                     (start, end) -> new WikitextUtils.Heading(username_hdr + " Transferred files " + start + " to " + end, 3), articlespersection).sections(fmt));
             }

@@ -119,12 +119,11 @@ public class Revisions
         // TODO: the output of toWikitext and toDataTable isn't identical:
         // wiki format has class="wikitable sortable" already given
         
-        List<RevisionRecord> rows = new ArrayList<>();
-        for (Wiki.Revision rev : revisions)
+        List<RevisionRecord> rows = ArrayUtils.transform(revisions, ArrayList::new, rev ->
         {
             String user = rev.getUser();
             int sizediff = rev.getSizeDiff();
-            rows.add(new RevisionRecord(
+            return new RevisionRecord(
                 new WikitextUtils.WikiLink(wiki, "Special:Diff/" + rev.getID(), "prev"), 
                 new WikitextUtils.WikiLink(wiki, "Special:Permanentlink/" + rev.getID(), DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(rev.getTimestamp())),
                 rev.isNew() ? new WikitextUtils.Bold("N") : null,
@@ -134,8 +133,8 @@ public class Revisions
                 new Users.ShortLinks(wiki, user == null || user.equals(Wiki.Event.USER_DELETED) ? null : user), 
                 rev.getSize(),
                 "<span class=\"" + (sizediff > 0 ? "sizeincreased" : "sizedecreased") + "\">" + sizediff + "</span>",
-                new Events.Comment(rev)));
-        }
+                new Events.Comment(rev));
+        });
         DataTable dt = DataTable.create(rows, null);
         dt.setTableClass(format.equals("html") ? "wikitable revisions" : "revisions");
         dt.setRowClasses((rr, i) -> "revision");

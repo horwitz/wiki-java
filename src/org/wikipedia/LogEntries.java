@@ -55,13 +55,12 @@ public class LogEntries
      */
     public static DataTable<LogRecord> toDataTable(Iterable<Wiki.LogEntry> logs)
     {
-        List<LogRecord> rows = new ArrayList<>();
-        for (Wiki.LogEntry log : logs)
+        List<LogRecord> rows = ArrayUtils.transform(logs, ArrayList::new, log ->
         {
             String user = log.getUser();
             Wiki wiki = log.getWiki();
             Map details = log.getDetails();
-            rows.add(new LogRecord(
+            return new LogRecord(
                 wiki.getDomain(),
                 log.getTimestamp(),
                 new Users.ShortLinks(wiki, user == null || user.equals(Wiki.Event.USER_DELETED) ? null : user), 
@@ -69,8 +68,8 @@ public class LogEntries
                 log.getAction(),
                 new WikitextUtils.WikiLink(wiki, log.getTitle(), null),
                 new Events.Comment(log),
-                (details == null || details.isEmpty()) ? "" : details.toString()));
-        }
+                (details == null || details.isEmpty()) ? "" : details.toString());
+        });
         DataTable dt = DataTable.create(rows, null);
         dt.setHeaders(List.of("Domain", "Timestamp", "User", "Log", "Action", "Target", "Comment", "Details"));
         dt.setColumnClasses(List.of("", "date", "user", "", "", "title", "comment", ""));

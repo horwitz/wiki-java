@@ -197,10 +197,7 @@ public class ServletUtils
         
         StringBuilder paramstr = new StringBuilder();
         for (String param : params)
-        {
-            String value = req.getParameter(param);
-            paramstr.append(value == null ? "" : value);
-        }
+            paramstr.append(Objects.requireNonNullElse(req.getParameter(param), ""));
         String challenge = sanitizeForAttribute(paramstr.toString());
         // String snonce = (String)req.getAttribute("servernonce");
         String tohash = nonce + timestamp + challenge;
@@ -532,14 +529,9 @@ public class ServletUtils
     {
         if (values.size() < 2)
             throw new IllegalArgumentException("At least two values must be supplied to have a valid radio button set.");
-        String selected = request.getParameter(param);
-        if (selected == null)
-            selected = values.get(0);
-        List<String> ret = new ArrayList<>();
-        for (String value : values)
-            ret.add("<input type=radio name=%s id=\"radio_%s_%s\" value=%s%s>"
+        String selected = Objects.requireNonNullElse(request.getParameter(param), values.get(0));
+        return ArrayUtils.transform(values, ArrayList::new, value -> "<input type=radio name=%s id=\"radio_%s_%s\" value=%s%s>"
                 .formatted(param, param, value, value, value.equals(selected) ? " checked" : ""));
-        return ret;
     }
     
     /**

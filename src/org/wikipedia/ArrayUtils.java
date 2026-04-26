@@ -21,6 +21,7 @@
 package org.wikipedia;
 
 import java.util.*;
+import java.util.function.*;
 
 /**
  *  Convenience methods for dealing with collections of pages and revisions.
@@ -110,5 +111,54 @@ public class ArrayUtils
             result.put(entry.getKey(), entry.getValue());
 
         return result;
+    }
+    
+    /**
+     *  Transforms every element in an {@code Iterable} using the given function 
+     *  and places the result into the supplied {@code Collection} in order. The
+     *  source {@code Iterable} is left unchanged. Crudely analogous to 
+     *  {@code std::transform} in C++.
+     *  @param <C> the type of the output {@code Collection}
+     *  @param <X> the type of objects in the input {@code Iterable}
+     *  @param <Y> the type of objects in the output {@code Collection}
+     *  @param input the {@code Iterable} whose elements are to be transformed
+     *  @param dest something that outputs the destination {@code Collection}
+     *  @param transformer a mapping from {@code <X>} to {@code <Y>}
+     *  @return the transformed elements
+     *  @since 0.02
+     */
+    public static <C extends Collection<Y>, X, Y> C transform(Iterable<X> input, Supplier<C> dest, Function<X, Y> transformer)
+    {
+        // why is this not in the JDK?
+        C ret = dest.get();
+        for (X val : input)
+            ret.add(transformer.apply(val));
+        return ret;
+    }
+    
+    /**
+     *  Transforms each element that meets a {@code Predicate} in an 
+     *  {@code Iterable} using the given function and places the result into the 
+     *  supplied {@code Collection} in order. The source {@code Iterable} is 
+     *  left unchanged. 
+     *  @param <C> the type of the output {@code Collection}
+     *  @param <X> the type of objects in the input {@code Iterable}
+     *  @param <Y> the type of objects in the output {@code Collection}
+     *  @param input the {@code Iterable} whose elements are to be transformed
+     *  @param dest something that outputs the destination {@code Collection}
+     *  @param transformer a mapping from {@code <X>} to {@code <Y>}
+     *  @param filter a {@code Predicate} indicating which elements to transform
+     *  or (if false) leave out
+     *  @return the transformed elements
+     *  @since 0.02
+     */
+    public static <C extends Collection<Y>, X, Y> C transformIf(Iterable<X> input, Supplier<C> dest, Function<X, Y> transformer, Predicate<X> filter)
+    {
+        // why is this not in the JDK?
+        C ret = dest.get();
+        for (X val : input)
+            if (filter.test(val))
+                ret.add(transformer.apply(val));
+        return ret;
     }
 }

@@ -159,9 +159,7 @@ public class Users
         List<Wiki.Revision> temp = new ArrayList<>();
         for (List<Wiki.Revision> rev : contribs)
             temp.addAll(rev);
-        List<String> pages = new ArrayList<>();
-        for (Wiki.Revision revision : temp)
-            pages.add(revision.getTitle());
+        List<String> pages = ArrayUtils.transform(temp, ArrayList::new, r -> r.getTitle());
         List<String> pagetexts = wiki.getPageText(pages);
         Map<Wiki.Revision, String> ret = new HashMap<>();
         for (int i = 0; i < temp.size(); i++)

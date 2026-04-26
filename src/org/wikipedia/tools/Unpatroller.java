@@ -59,9 +59,7 @@ public class Unpatroller
         Wiki.RequestHelper rh = enWiki.new RequestHelper()
             .byUser(username);
         List<Wiki.LogEntry> logs = enWiki.getLogEntries("pagetriage-curation", "reviewed", rh);
-        Set<String> titles = new LinkedHashSet<>();
-        for (Wiki.LogEntry log : logs)
-            titles.add(log.getTitle());
+        Set<String> titles = ArrayUtils.transform(logs, LinkedHashSet::new, log -> log.getTitle());
                 
         // add all articles they created or moved into mainspace
         // (check for autopatrolled occurs later, cannot rely on user permissions)

@@ -83,9 +83,7 @@ public class AllWikiLinksearch
             "ro", "uz", "la", "eo", "cy", "ms", "az", "ml", "kk", "nn", "bn", 
             "lv", "hr", "af");
         
-        List<WMFWiki> wikilist = new ArrayList<>();
-        for (String lang : temp)
-            wikilist.add(sessions.sharedSession(lang + ".wikipedia.org"));
+        List<WMFWiki> wikilist = ArrayUtils.transform(temp, ArrayList::new, lang -> sessions.sharedSession(lang + ".wikipedia.org"));
         TOP50 = Collections.unmodifiableList(wikilist);
         TOP25 = TOP50.subList(0, 25);
 

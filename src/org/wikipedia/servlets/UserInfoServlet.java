@@ -69,9 +69,7 @@ public class UserInfoServlet extends BaseServlet
             {
                 try
                 {
-                    List<String> usernames2 = new ArrayList<>();
-                    for (String t : usernames)
-                        usernames2.add(wiki.removeNamespace(t.trim(), Wiki.USER_NAMESPACE));
+                    List<String> usernames2 = ArrayUtils.transform(usernames, ArrayList::new, t -> wiki.removeNamespace(t.trim(), Wiki.USER_NAMESPACE));
                     dt = UserInfo.userInfoTable(wiki, usernames2, Writable.Format.HTML);
                 }
                 catch (IllegalArgumentException ex)

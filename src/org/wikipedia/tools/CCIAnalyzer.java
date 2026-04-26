@@ -486,9 +486,7 @@ public class CCIAnalyzer
                 Matcher m = headerptn.matcher(header);
                 m.find();
                 final int start = Integer.parseInt(m.group(1)) - 1;
-                List<Writable> tl = new ArrayList<>();
-                for (String x : cleaned_temp)
-                    tl.add(new Writable.Identity(x.substring(1)));
+                List<Writable> tl = ArrayUtils.transform(cleaned_temp, ArrayList::new, x -> new Writable.Identity(x.substring(1)));
                 String header2 = new StringBuilder(header).replace(m.start(2), m.end(2), "%d").replace(m.start(1), m.end(1), "%d").toString();
                 out.append(new WikitextUtils.PaginatedList(tl, false, 
                     (s, e) -> new Writable.Identity(header2.formatted(s + start, e + start)), 20).format(Writable.Format.WIKITEXT));
@@ -524,9 +522,7 @@ public class CCIAnalyzer
             Matcher m = headerptn.matcher(header);
             m.find();
             final int start = Integer.parseInt(m.group(1)) - 1;
-            List<Writable> tl = new ArrayList<>();
-            for (String x : cleaned_temp)
-                tl.add(new Writable.Identity(x.substring(1)));
+            List<Writable> tl = ArrayUtils.transform(cleaned_temp, ArrayList::new, x -> new Writable.Identity(x.substring(1)));
             String header2 = new StringBuilder(header).replace(m.start(2), m.end(2), "%d").replace(m.start(1), m.end(1), "%d").toString();
             out.append(new WikitextUtils.PaginatedList(tl, false, 
                 (s, e) -> new Writable.Identity(header2.formatted(s + start, e + start)), 20).format(Writable.Format.WIKITEXT));

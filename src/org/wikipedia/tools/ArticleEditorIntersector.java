@@ -23,6 +23,7 @@ package org.wikipedia.tools;
 import java.io.*;
 import java.nio.file.*;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.*;
 import org.wikipedia.*;
 
@@ -177,8 +178,7 @@ public class ArticleEditorIntersector
     }
     
     /**
-     *  Returns the wiki that this intersector fetches data from.
-     *  @return (see above)
+     *  {@return the wiki that this intersector fetches data from}
      */
     public Wiki getWiki()
     {
@@ -197,8 +197,7 @@ public class ArticleEditorIntersector
     }
     
     /**
-     *  Checks whether fetching of deleted material is attempted.
-     *  @return whether fetching of deleted material is attempted
+     *  {@return {@code true} if fetching of deleted material is to be attempted}
      *  @see #setUsingAdminPrivileges(boolean) 
      */
     public boolean isUsingAdminPrivileges()
@@ -217,8 +216,7 @@ public class ArticleEditorIntersector
     }
        
     /**
-     *  Checks whether minor edits are ignored.
-     *  @return whether minor edits are ignored
+     *  {@return {@code true} if minor edits are ignored}
      *  @see #setIgnoringMinorEdits(boolean) 
      */
     public boolean isIgnoringMinorEdits()
@@ -227,9 +225,8 @@ public class ArticleEditorIntersector
     }
     
     /**
-     *  Checks whether reverts are ignored (a revert is defined as a revision
-     *  that has a SHA-1 equal to a previous revision on the same page).
-     *  @return whether reverts are ignored
+     *  {@return {@code true} if reverts are ignored} A revert is defined as a revision
+     *  that has a SHA-1 equal to a previous revision on the same page.
      *  @see #setIgnoringReverts(boolean) 
      *  @see Revisions#removeReverts(List)
      *  @since 0.02
@@ -265,9 +262,8 @@ public class ArticleEditorIntersector
     }
     
     /**
-     *  Sets the dates/times at which surveys start and finish; no edits will be 
-     *  returned outside this interval. 
-     *  @return (see above)
+     *  {@return the dates/times at which surveys start and finish} No edits 
+     *  will be returned outside this interval. 
      *  @see #setInterval(Wiki.Interval)  
      *  @since 0.02
      */
@@ -300,11 +296,8 @@ public class ArticleEditorIntersector
     {
         Wiki.RequestHelper rh = wiki.new RequestHelper().withinInterval(interval);
                 
-        // remove duplicates and fail quickly if less than two pages
-        Set<String> pageset = new HashSet<>();
-        for (String article : articles)
-            if (wiki.namespace(article) >= 0) // remove Special: and Media: pages
-                pageset.add(article);
+        // remove duplicates and Special: and Media: pages; fail quickly if less than two pages
+        Set<String> pageset = ArrayUtils.transformIf(articles, HashSet::new, Function.identity(), page -> wiki.namespace(page) >= 0);
         if (pageset.size() < 2)
             throw new IllegalArgumentException("At least two articles are needed to derive a meaningful intersection.");
         

@@ -67,4 +67,26 @@ public class ArrayUtilsTest
             }
         }
     }
+    
+    @Test
+    public void transform()
+    {
+        List<Class> input = List.of(Object.class, int.class, Wiki.class);
+        HashSet<String> actual = ArrayUtils.transform(input, HashSet::new, c -> c.getName());
+        assertEquals(3, actual.size());
+        assertTrue(actual.contains("java.lang.Object"));
+        assertTrue(actual.contains("int"));
+        assertTrue(actual.contains("org.wikipedia.Wiki"));
+    }
+    
+    @Test
+    public void transformIf()
+    {
+        List<Class> input = List.of(Object.class, int.class, Wiki.class);
+        HashSet<String> actual = ArrayUtils.transformIf(input, HashSet::new, c -> c.getName(), c -> c.isPrimitive());
+        assertEquals(1, actual.size());
+        assertFalse(actual.contains("java.lang.Object"));
+        assertTrue(actual.contains("int"));
+        assertFalse(actual.contains("org.wikipedia.Wiki"));
+    }
 }

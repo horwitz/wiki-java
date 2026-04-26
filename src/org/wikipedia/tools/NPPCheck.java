@@ -22,7 +22,7 @@ package org.wikipedia.tools;
 import java.io.*;
 import java.time.*;
 import java.util.*;
-import java.util.regex.*;
+import java.util.function.*;
 import javax.security.auth.login.FailedLoginException;
 import org.wikipedia.*;
 
@@ -30,7 +30,7 @@ import org.wikipedia.*;
  *  Provides a listing of NPP article patrols and AFC acceptances for a given
  *  user with metadata.
  *  @author MER-C
- *  @version 0.01
+ *  @version 0.02
  */
 public class NPPCheck
 {
@@ -89,8 +89,7 @@ public class NPPCheck
         }
         
         /**
-         *  Returns true if this mode deals with drafts.
-         *  @return (see above)
+         *  {@return {@code true} if this mode deals with drafts}
          */
         public boolean requiresDrafts()
         {
@@ -98,8 +97,7 @@ public class NPPCheck
         }
         
         /**
-         *  Returns true if this mode deals with reviewed pages.
-         *  @return (see above)
+         *  {@return {@code true} if this mode deals with reviewed pages}
          */
         public boolean requiresReviews()
         {
@@ -331,9 +329,8 @@ public class NPPCheck
     }
     
     /**
-     *  Returns the user for which we are examining actions by, or null if we
-     *  are looking at all users.
-     *  @return (see above)
+     *  {@return the user for which we are examining actions by, or {@code null} 
+     *  if we are looking at all users}
      */
     public String getUser()
     {
@@ -387,14 +384,8 @@ public class NPPCheck
                 return wiki.getAbuseLogEntries(new int[] { 342 }, rh);
                 
         }
-        List<Wiki.LogEntry> ret = new ArrayList<>();
-        for (Wiki.LogEntry log : le)
-        {
-            String newtitle = log.getDetails().get("target_title");
-            if (wiki.namespace(newtitle) == Wiki.MAIN_NAMESPACE)
-                ret.add(log);
-        }
-        return ret;
+        return ArrayUtils.transformIf(le, ArrayList::new, Function.identity(), 
+            log -> wiki.namespace(log.getDetails().get("target_title")) == Wiki.MAIN_NAMESPACE);
     }
 
     /**
@@ -407,15 +398,11 @@ public class NPPCheck
      */
     public List<String> fetchSnippets(List<? extends Wiki.Event> events) throws IOException
     {
-        List<String> pages = new ArrayList<>();
-        for (Wiki.Event event : events)
+        List<String> pages = ArrayUtils.transform(events, ArrayList::new, event -> switch(event)
         {
-            pages.add(switch(event)
-            {
-                case Wiki.LogEntry log when log.getType().equals(Wiki.MOVE_LOG) -> log.getDetails().get("target_title");
-                default -> event.getTitle();
-            });
-        }
+            case Wiki.LogEntry log when log.getType().equals(Wiki.MOVE_LOG) -> log.getDetails().get("target_title");
+            default -> event.getTitle();
+        });
         
         // account for pages subsequently moved in namespace
         wiki.setResolveRedirects(true);
@@ -436,15 +423,11 @@ public class NPPCheck
     {
         // TODO: filter out pages that were redirects when patrolled
         
-        List<String> pages = new ArrayList<>();
-        for (Wiki.Event event : events)
+        List<String> pages = ArrayUtils.transform(events, ArrayList::new, event -> switch(event)
         {
-            pages.add(switch(event)
-            {
-                case Wiki.LogEntry log when log.getType().equals(Wiki.MOVE_LOG) -> log.getDetails().get("target_title");
-                default -> event.getTitle();
-            });
-        }
+            case Wiki.LogEntry log when log.getType().equals(Wiki.MOVE_LOG) -> log.getDetails().get("target_title");
+            default -> event.getTitle();
+        });
         
         // account for pages subsequently moved in namespace
         wiki.setResolveRedirects(true);
@@ -503,9 +486,7 @@ public class NPPCheck
     {
         if (reviewer != null)
             return Collections.emptyList();
-        List<String> usernames = new ArrayList<>();
-        for (Wiki.Event event : events)
-            usernames.add(event.getUser());
+        List<String> usernames = ArrayUtils.transform(events, ArrayList::new, event -> event.getUser());
         return wiki.getUsers(usernames);
     }
     

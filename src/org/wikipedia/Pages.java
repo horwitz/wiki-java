@@ -23,7 +23,6 @@ import java.io.*;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.function.*;
 import java.util.regex.*;
 
 /**
@@ -34,13 +33,6 @@ import java.util.regex.*;
 public class Pages 
 {
     private final Wiki wiki;
-    
-    /**
-     *  A function, when supplied to {@link #toWikitextList(Iterable, Function, 
-     *  boolean)}, transforms a {@code List} of pages into a list of links in
-     *  wikitext.
-     */
-    public static final Function<String, String> LIST_OF_LINKS = title -> "[[:" + title + "]]";
     
     private Pages(Wiki wiki)
     {
@@ -154,9 +146,7 @@ public class Pages
      */
     public static String toWikitextTemplateList(Iterable<String> pages, String template, boolean numbered)
     {
-        List<Writable> ret = new ArrayList<>();
-        for (String page : pages)
-            ret.add(new Writable.Identity("{{" + template + "|1=" + page + "}}"));
+        List<Writable> ret = ArrayUtils.transform(pages, ArrayList::new, page -> new Writable.Identity("{{" + template + "|1=" + page + "}}"));
         return new WikitextUtils.PaginatedList(ret, numbered, null, Integer.MAX_VALUE).format(Writable.Format.WIKITEXT);
     }
 

@@ -750,17 +750,14 @@ public class AdminStats
      */
     public static void export(Map<String, Long> hist, String filename) throws IOException
     {
-        List<HistEntry> list = new ArrayList();
-        for (var entry : hist.entrySet())
-            list.add(new HistEntry(entry.getKey(), entry.getValue()));
+        List<HistEntry> list = ArrayUtils.transform(hist.entrySet(), ArrayList::new, entry -> new HistEntry(entry.getKey(), entry.getValue()));
         DataTable dt = DataTable.create(list, List.of("Reason", "Count"));
         System.out.println(dt.format(Writable.Format.WIKITEXT));
         Files.writeString(Paths.get(filename), dt.format(Writable.Format.CSV));
     }
        
     /**
-     *  Fetches the list of block log entries used to compute statistics.
-     *  @return (see above)
+     *  {@return the list of block log entries used to compute statistics}
      */
     public List<Wiki.LogEntry> getBlockLogEntries()
     {
@@ -768,8 +765,7 @@ public class AdminStats
     }
     
     /**
-     *  Fetches the list of deletion log entries used to compute statistics.
-     *  @return (see above)
+     *  {@return the list of deletion log entries used to compute statistics}
      */
     public List<Wiki.LogEntry> getDeleteLogEntries()
     {
@@ -777,8 +773,8 @@ public class AdminStats
     }
     
     /**
-     *  Fetches the list of global account log entries used to compute statistics.
-     *  @return (see above)
+     *  {@return the list of global account log entries used to compute 
+     *  statistics}
      */
     public List<Wiki.LogEntry> getLockLogEntries()
     {
@@ -786,8 +782,7 @@ public class AdminStats
     }
     
     /**
-     *  Fetches the list of protection log entries used to compute statistics.
-     *  @return (see above)
+     *  {@return the list of protection log entries used to compute statistics}
      */
     public List<Wiki.LogEntry> getProtectLogEntries()
     {
@@ -795,8 +790,8 @@ public class AdminStats
     }
     
     /**
-     *  Fetches the list of global block log entries used to compute statistics.
-     *  @return (see above)
+     *  {@return the list of global block log entries used to compute 
+     *  statistics}
      *  @since 0.02
      */
     public List<Wiki.LogEntry> getGlobalBlockLogEntries()
