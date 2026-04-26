@@ -95,7 +95,10 @@ public class ContributionSurveyorTest
         assertTrue(results.get(0).local().isEmpty(), "User with no uploads (local)");
         assertTrue(results.get(0).mediarepo().isEmpty(), "User with no uploads (commons)");
         assertTrue(results.get(1).local().isEmpty(), "User with only commons uploads");
-        assertEquals(List.of("File:Infinum logo.jpg"), results.get(1).mediarepo());
+        List<Wiki.LogEntry> expected = results.get(1).mediarepo();
+        assertEquals(1, expected.size());
+        assertEquals("File:Infinum logo.jpg", expected.get(0).getTitle());
+        assertEquals(OffsetDateTime.parse("2022-05-09T13:36:31Z"), expected.get(0).getTimestamp());
     }
     
     @Test

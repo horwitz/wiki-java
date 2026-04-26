@@ -533,7 +533,7 @@ public class ContributionSurveyor
      *  @see #imageContributionSurvey(SequencedCollection)
      *  @since 0.10
      */
-    public record ImageContributions(String user, List<String> local, List<String> mediarepo, List<String> transferred) { }
+    public record ImageContributions(String user, List<Wiki.LogEntry> local, List<Wiki.LogEntry> mediarepo, List<String> transferred) { }
 
     /**
      *  Performs an image contribution survey on a list of users. (Date/time 
@@ -552,30 +552,37 @@ public class ContributionSurveyor
         
         for (String user : users)
         {
-            // fetch local uploads
-            HashSet<String> localuploads = new HashSet<>(10000);
-            for (Wiki.LogEntry upload : wiki.getUploads(user, rh))
-                localuploads.add(upload.getTitle());
-
             // fetch image repository uploads
-            HashSet<String> repouploads = new HashSet<>(10000);
-            for (Wiki.LogEntry upload : repowiki.getUploads(user, rh))
-                repouploads.add(upload.getTitle());
+            List<Wiki.LogEntry> repouploads = repowiki.getUploads(user, rh);
+            HashSet<String> listed = ArrayUtils.transform(repouploads, HashSet::new, le -> le.getTitle());
 
             // fetch uploads transferred to image repo
-            HashSet<String> repoTransfer = new HashSet<>(10000);
+            List<String> repoTransfer = new ArrayList<>(10000);
             if (transferredfiles)
             {
-                List<Wiki.SearchResult> temp = repowiki.search("\"" + user + "\"", Wiki.FILE_NAMESPACE);
-                for (Wiki.SearchResult x : temp)
-                    repoTransfer.add(x.title());
+                for (Wiki.SearchResult x : repowiki.search("\"" + user + "\"", Wiki.FILE_NAMESPACE))
+                {
+                    String title = x.title();
+                    if (!listed.contains(title))
+                    {
+                        repoTransfer.add(title);
+                        listed.add(title);
+                    }
+                }
+            }
+            
+            // fetch local uploads
+            List<Wiki.LogEntry> localuploads = new ArrayList<>();
+            for (Wiki.LogEntry upload : wiki.getUploads(user, rh))
+            {
+                String title = upload.getTitle();
+                if (!listed.contains(title))
+                {
+                    localuploads.add(upload);
+                    listed.add(title);
+                }
             }
 
-            // remove all files that have been reuploaded to the foreign repository
-            localuploads.removeAll(repouploads);
-            localuploads.removeAll(repoTransfer);
-            repoTransfer.removeAll(repouploads);
-            
             if (comingle)
             {
                 if (ret.isEmpty())
@@ -722,10 +729,10 @@ public class ContributionSurveyor
             if (imagesurvey != null)
             {
                 ImageContributions imagesurvey2 = imagesurvey.get(i);
-                List<Writable> wl = ArrayUtils.transform(imagesurvey2.local(), ArrayList::new, page -> new WikitextUtils.WikiLink(wiki, page, null));
+                List<Writable> wl = ArrayUtils.transform(imagesurvey2.local(), ArrayList::new, log -> new WikitextUtils.WikiLink(wiki, log.getTitle(), null));
                 sections.addAll(new WikitextUtils.PaginatedList(wl, false, 
                     (start, end) -> new WikitextUtils.Heading(username_hdr + " Local files " + start + " to " + end, 3), articlespersection).sections(fmt));
-                wl = ArrayUtils.transform(imagesurvey2.mediarepo(), ArrayList::new, page -> new WikitextUtils.WikiLink(wiki, page, null));
+                wl = ArrayUtils.transform(imagesurvey2.mediarepo(), ArrayList::new, log -> new WikitextUtils.WikiLink(wiki, log.getTitle(), null));
                 sections.addAll(new WikitextUtils.PaginatedList(wl, false, 
                     (start, end) -> new WikitextUtils.Heading(username_hdr + " Foreign repo files " + start + " to " + end, 3), articlespersection).sections(fmt));
                 wl = ArrayUtils.transform(imagesurvey2.transferred(), ArrayList::new, page -> new WikitextUtils.WikiLink(wiki, page, null));
