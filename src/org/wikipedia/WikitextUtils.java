@@ -235,7 +235,7 @@ public class WikitextUtils
      *  @param itemspersegment the number of items per segment
      *  @since 0.03
      */
-    public record PaginatedList(List<Writable> list, boolean numbered, BiFunction<Integer, Integer, Writable> paginator,
+    public record PaginatedList(List<? extends Writable> list, boolean numbered, BiFunction<Integer, Integer, Writable> paginator,
         int itemspersegment) implements Writable
     {
         public PaginatedList

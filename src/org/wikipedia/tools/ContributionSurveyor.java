@@ -1,6 +1,6 @@
 /**
- *  @(#)ContributionSurveyor.java 0.09 21/12/2025
- *  Copyright (C) 2011-2025 MER-C
+ *  @(#)ContributionSurveyor.java 0.10 02/05/2026
+ *  Copyright (C) 2011-2026 MER-C
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -40,7 +40,7 @@ import org.wikipedia.*;
  *  contribution surveyor (online version)</a>
  *  @see <a href="https://en.wikipedia.org/wiki/WP:CCI">Contributor Copyright
  *  Investigations</a>
- *  @version 0.09
+ *  @version 0.10
  */
 public class ContributionSurveyor
 {
@@ -51,7 +51,6 @@ public class ContributionSurveyor
     // * reload and carry forward results via POST
     // * continue Wiki.java partially fetched objects to speed load time (no need to load e.g. edit summaries)
     // * configurable pagination
-    // * more structure of outputs (e.g. records)
     // * consolidate user inputs in servlets
     // * uploads that are overwrites?
     
@@ -62,9 +61,7 @@ public class ContributionSurveyor
     private boolean comingle;
     private boolean transferredfiles;
     private int minsizediff = 150;
-    private final int articlesperpage = 1000;
-    private final int articlespersection = 20;
-
+    
     /**
      *  The domain name of the foreign media repository to use for {@link
      *  #imageContributionSurvey(java.lang.Iterable)}. Defaults to Wikimedia
@@ -140,8 +137,9 @@ public class ContributionSurveyor
         homewiki.setMaxLag(-1);
         surveyor.setFooter("Command line: <kbd>" + clp.commandString(args) + "</kbd>");
        
-        List<String> output = surveyor.outputContributionSurvey(users, !parsedargs.containsKey("--skiplive"),
+        List<Survey> surveys = surveyor.runSurvey(users, !parsedargs.containsKey("--skiplive"),
             parsedargs.containsKey("--deleted"), parsedargs.containsKey("--images"), ns);
+        List<String> output = surveyor.pages(surveys, 50, 20, Writable.Format.WIKITEXT);
 
         String outfile = parsedargs.get("--outfile");
         Path path = CommandLineParser.parseFileOption(parsedargs, "--outfile", "Select output file", 
@@ -657,9 +655,23 @@ public class ContributionSurveyor
             return out.toString();
         }
     }
+    
+    /**
+     *  A format-independent record holding a contribution survey of a user.
+     *  @param user the user that was surveyed
+     *  @param contribs their text contribution survey, if that was populated 
+     *  or {@code null} if it wasn't
+     *  @param deleted their deleted text contribution surveyor, if that was 
+     *  populated or {@code null} if it wasn't
+     *  @param images their image contribution survey, if that was populated or 
+     *  {@code null} if it wasn't
+     *  @since 0.10
+     */
+    public record Survey(String user, List<TextSurveyLine> contribs, List<TextSurveyLine> deleted, ImageContributions images) { }
 
     /**
-     *  Performs a mass contribution survey and returns wikitext output.
+     *  Performs a mass contribution survey and returns intermediate 
+     *  representation output.
      *  @param usernames the users to survey
      *  @param ns the namespaces to survey
      *  @param contribs include live edits
@@ -672,14 +684,11 @@ public class ContributionSurveyor
      *  privileges 
      *  @since 0.02
      */
-    public List<String> outputContributionSurvey(List<String> usernames, boolean contribs, 
+    public List<Survey> runSurvey(List<String> usernames, boolean contribs, 
         boolean deleted, boolean images, int... ns) throws IOException, SecurityException
     {
-        List<String> sections = new ArrayList<>();
-        int sectionsperpage = articlesperpage / articlespersection;  
         Map<String, Map<String, List<Wiki.Revision>>> results = null, delresults = null;
         List<ImageContributions> imagesurvey = null;
-        Writable.Format fmt = Writable.Format.WIKITEXT;
         
         if (contribs)
             results = contributionSurvey(usernames, ns);
@@ -699,43 +708,61 @@ public class ContributionSurveyor
         
         if (comingle)
             usernames = List.of("");
-        int count = usernames.size();
+        
+        List<Survey> ret = new ArrayList<>();
+        for (int i = 0; i < usernames.size(); i++)
+        {
+            String user = usernames.get(i);
+            List<TextSurveyLine> t1 = results == null ? null : ArrayUtils.transform(results.get(user).values(), ArrayList::new, lr -> new TextSurveyLine(lr));
+            List<TextSurveyLine> t2 = delresults == null ? null : ArrayUtils.transform(delresults.get(user).values(), ArrayList::new, lr -> new TextSurveyLine(lr));
+            ImageContributions t3 = imagesurvey == null ? null : imagesurvey.get(i);
+            ret.add(new Survey(user, t1, t2, t3));
+        }
+        return ret;
+    }
+    
+    /**
+     *  Formats a list of surveys into a paginated listing.
+     *  @param surveys the list of surveys to format
+     *  @param sectionsperpage the sections to include in a survey page
+     *  @param articlespersection the number of items listed per section
+     *  @param fmt either {@link Writable.Format.HTML} or 
+     *  {@link Writable.Format.WIKITEXT}
+     *  @return the survey listing, paginated and formatted in the given format
+     *  @since 0.10
+     */
+    public List<String> pages(List<Survey> surveys, int sectionsperpage, int articlespersection, Writable.Format fmt)
+    {
+        List<String> sections = new ArrayList<>();
+        int count = surveys.size();
         
         for (int i = 0; i < count; i++)
         {
             // output text results
-            String username = usernames.get(i);
+            Survey survey = surveys.get(i);
+            String username = survey.user();
             int sizebefore = sections.size();
             String username_hdr = count == 1 ? "" : (username + ":");
 
-            if (results != null)
-            {
-                Map<String, List<Wiki.Revision>> user_survey = results.get(username);
-                List<Writable> wl = ArrayUtils.transform(user_survey.keySet(), ArrayList::new, page -> new TextSurveyLine(user_survey.get(page)));
-                sections.addAll(new WikitextUtils.PaginatedList(wl, false, 
+            if (survey.contribs() != null)
+                sections.addAll(new WikitextUtils.PaginatedList(survey.contribs(), false, 
                     (start, end) -> new WikitextUtils.Heading(username_hdr + " Pages " + start + " to " + end, 3), articlespersection).sections(fmt));
-            }   
             
             // output deleted results
-            if (delresults != null)
-            {
-                Map<String, List<Wiki.Revision>> user_survey = delresults.get(username);
-                List<Writable> wl = ArrayUtils.transform(user_survey.keySet(), ArrayList::new, page -> new TextSurveyLine(user_survey.get(page)));
-                sections.addAll(new WikitextUtils.PaginatedList(wl, false, 
+            if (survey.deleted() != null)
+                sections.addAll(new WikitextUtils.PaginatedList(survey.deleted(), false, 
                     (start, end) -> new WikitextUtils.Heading(username_hdr + " Deleted pages " + start + " to " + end, 3), articlespersection).sections(fmt));
-            }
             
             // output image contribution survey for this user
-            if (imagesurvey != null)
+            if (survey.images() != null)
             {
-                ImageContributions imagesurvey2 = imagesurvey.get(i);
-                List<Writable> wl = ArrayUtils.transform(imagesurvey2.local(), ArrayList::new, log -> new WikitextUtils.WikiLink(wiki, log.getTitle(), null));
+                List<Writable> wl = ArrayUtils.transform(survey.images().local(), ArrayList::new, log -> new WikitextUtils.WikiLink(wiki, log.getTitle(), null));
                 sections.addAll(new WikitextUtils.PaginatedList(wl, false, 
                     (start, end) -> new WikitextUtils.Heading(username_hdr + " Local files " + start + " to " + end, 3), articlespersection).sections(fmt));
-                wl = ArrayUtils.transform(imagesurvey2.mediarepo(), ArrayList::new, log -> new WikitextUtils.WikiLink(wiki, log.getTitle(), null));
+                wl = ArrayUtils.transform(survey.images().mediarepo(), ArrayList::new, log -> new WikitextUtils.WikiLink(wiki, log.getTitle(), null));
                 sections.addAll(new WikitextUtils.PaginatedList(wl, false, 
                     (start, end) -> new WikitextUtils.Heading(username_hdr + " Foreign repo files " + start + " to " + end, 3), articlespersection).sections(fmt));
-                wl = ArrayUtils.transform(imagesurvey2.transferred(), ArrayList::new, page -> new WikitextUtils.WikiLink(wiki, page, null));
+                wl = ArrayUtils.transform(survey.images().transferred(), ArrayList::new, page -> new WikitextUtils.WikiLink(wiki, page, null));
                 sections.addAll(new WikitextUtils.PaginatedList(wl, false, 
                     (start, end) -> new WikitextUtils.Heading(username_hdr + " Transferred files " + start + " to " + end, 3), articlespersection).sections(fmt));
             }
@@ -744,7 +771,7 @@ public class ContributionSurveyor
             // start of every new page
             String header = "";
             if (!comingle)
-                header = new WikitextUtils.Heading(username, 2).format(fmt) + "\n" + new Users.Links(wiki, username).format(fmt) + "\n";
+                header = new WikitextUtils.Heading(username, 2).format(fmt) + "\n" + new Users.Links(wiki, username).format(fmt) + "\n\n";
             for (int j = sizebefore; j < sections.size(); j++)
             {
                 if (j == sizebefore || j % sectionsperpage == 0)
@@ -760,7 +787,7 @@ public class ContributionSurveyor
         List<String> ret = new ArrayList<>();
         for (int i = 0; i < sections.size(); i++)
         {
-            out.append(sections.get(i));
+            out.append(sections.get(i)).append("\n");
             if (i == sections.size() - 1 || i % sectionsperpage == sectionsperpage - 1)
             {
                 out.append(generateFooter(fmt));

@@ -1,5 +1,5 @@
 /**
- *  @(#)ContributionSurveyorServlet.java 0.03 04/01/2026
+ *  @(#)ContributionSurveyorServlet.java 0.04 02/05/2026
  *  Copyright (C) 2011 - 2026 MER-C
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -37,7 +37,7 @@ import org.wikipedia.tools.ContributionSurveyor;
  *  {@link org.wikipedia.tools.ContributionSurveyor}.
  *  @see <a href="https://wikipediatools.appspot.com/contributionsurveyor.jsp">Official instance</a>
  *  @author MER-C
- *  @version 0.03
+ *  @version 0.04
  */
 @WebServlet(name = "ContributionSurveyor", urlPatterns = {"/contributionsurveyor.jsp"})
 public class ContributionSurveyorServlet extends BaseServlet
@@ -112,10 +112,10 @@ public class ContributionSurveyorServlet extends BaseServlet
         }
 
         // 2. Perform business logic if form submitted (defining parameter: user list)
-        List<String> survey = null;
+        List<ContributionSurveyor.Survey> survey = null;
+        ContributionSurveyor surveyor = new ContributionSurveyor(wiki);
         if (request.getAttribute("error") == null && !users.isEmpty())
         {
-            ContributionSurveyor surveyor = new ContributionSurveyor(wiki);
             surveyor.setIgnoringMinorEdits(nominor);
             surveyor.setIgnoringReverts(noreverts);
             surveyor.setNewOnly(newonly);
@@ -126,7 +126,7 @@ public class ContributionSurveyorServlet extends BaseServlet
 
             // ns 118 = draft namespace on en.wikipedia
             int[] ns = nodrafts ? new int[] { Wiki.MAIN_NAMESPACE } : new int[] { Wiki.MAIN_NAMESPACE, Wiki.USER_NAMESPACE, 118 };
-            survey = surveyor.outputContributionSurvey(users, true, false, false, ns);
+            survey = surveyor.runSurvey(users, true, false, false, ns);
             
             if (survey.isEmpty())
             {
@@ -141,6 +141,7 @@ public class ContributionSurveyorServlet extends BaseServlet
         {
             String output = request.getParameter("format");
             String fname = un == null ? category : un;
+            List<String> sl = surveyor.pages(survey, 50, 20, Writable.Format.WIKITEXT);
             switch (output)
             {
                 // TODO: this is common to CCI servlets but could be applicable to other tools?
@@ -151,7 +152,7 @@ public class ContributionSurveyorServlet extends BaseServlet
                         + URLEncoder.encode(fname, StandardCharsets.UTF_8) + ".txt");
                     try (PrintWriter out = response.getWriter())
                     {
-                        out.print(String.join("\n", survey));
+                        out.print(String.join("\n", sl));
                     }
                     return;
                 case "zip":
@@ -159,8 +160,8 @@ public class ContributionSurveyorServlet extends BaseServlet
                     response.setHeader("Content-Disposition", "attachment; filename=" 
                         + URLEncoder.encode(fname, StandardCharsets.UTF_8) + ".zip");
                     Map<String, byte[]> zip = new LinkedHashMap<>();
-                    for (int i = 0; i < survey.size(); i++)
-                        zip.put(fname + ".txt" + (i == 0 ? "" : ".%03d".formatted(i)), survey.get(i).getBytes());
+                    for (int i = 0; i < sl.size(); i++)
+                        zip.put(fname + ".txt" + (i == 0 ? "" : ".%03d".formatted(i)), sl.get(i).getBytes());
                     try (ZipOutputStream zout = new ZipOutputStream(response.getOutputStream()))
                     {
                         ContributionSurveyor.outputZipFile(zout, zip);

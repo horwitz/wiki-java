@@ -1,6 +1,6 @@
 /**
- *  @(#)ContributionSurveyorUnitTest.java 0.04 25/01/2018
- *  Copyright (C) 2011-20xx MER-C
+ *  @(#)ContributionSurveyorUnitTest.java 0.10 02/05/2026
+ *  Copyright (C) 2011-2026 MER-C
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -124,12 +124,34 @@ public class ContributionSurveyorTest
     }
     
     @Test
-    public void outputContributionSurvey() throws Exception
+    public void runSurvey() throws Exception
     {
-        // same use case as above: all three users have no surveyable edits
         List<String> users = List.of("HilStev", "OfficialPankajPatidar", "Rt11642");
-        List<String> results = surveyor.outputContributionSurvey(users, true, false, false, Wiki.MAIN_NAMESPACE);
-        assertTrue(results.isEmpty());
+        List<ContributionSurveyor.Survey> results = surveyor.runSurvey(users, false, false, false, Wiki.MAIN_NAMESPACE);
+        List<ContributionSurveyor.Survey> expected = List.of(
+            new ContributionSurveyor.Survey("HilStev", null, null, null),
+            new ContributionSurveyor.Survey("OfficialPankajPatidar", null, null, null),
+            new ContributionSurveyor.Survey("Rt11642", null, null, null));
+        assertEquals(expected, results, "null survey components if not populated");
+        
+        results = surveyor.runSurvey(users, true, false, false, Wiki.MAIN_NAMESPACE);
+        expected = List.of(
+            new ContributionSurveyor.Survey("HilStev", Collections.EMPTY_LIST, null, null),
+            new ContributionSurveyor.Survey("OfficialPankajPatidar", Collections.EMPTY_LIST, null, null),
+            new ContributionSurveyor.Survey("Rt11642", Collections.EMPTY_LIST, null, null));
+        assertEquals(expected, results, "three users, no surveyable edits");
+    }
+    
+    @Test
+    public void pages() throws Exception
+    {
+        List<String> users = List.of("HilStev", "OfficialPankajPatidar", "Rt11642");
+        List<ContributionSurveyor.Survey> results = surveyor.runSurvey(users, false, false, false, Wiki.MAIN_NAMESPACE);
+        List<String> outputs = surveyor.pages(results, 50, 20, Writable.Format.WIKITEXT);
+        assertTrue(outputs.isEmpty(), "no survey pages if not populated");
+        
+        results = surveyor.runSurvey(users, true, false, false, Wiki.MAIN_NAMESPACE);
+        assertTrue(outputs.isEmpty(), "no survey pages if no surveyable edits");
     }
     
     @Test

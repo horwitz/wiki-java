@@ -1,6 +1,6 @@
 /**
- *  @(#)XWikiContributionSurveyor.java 0.01 21/08/2021
- *  Copyright (C) 2021-20XX MER-C and contributors
+ *  @(#)XWikiContributionSurveyor.java 0.02 02/05/2026
+ *  Copyright (C) 2021-2026 MER-C and contributors
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
@@ -32,7 +32,7 @@ import org.wikipedia.*;
  * 
  *  @see ContributionSurveyor
  *  @author MER-C
- *  @version 0.01
+ *  @version 0.02
  */
 public class XWikiContributionSurveyor
 {
@@ -115,8 +115,8 @@ public class XWikiContributionSurveyor
                 cs.setFooter(footer);
                 
                 String prefix = iwmap.get(wiki);
-                List<String> pages = cs.outputContributionSurvey(users, true, false, 
-                    wiki.equals("commons.wikimedia.org"), ns);
+                List<ContributionSurveyor.Survey> surveys = cs.runSurvey(users, true, false, wiki.equals("commons.wikimedia.org"), ns);
+                List<String> pages = cs.pages(surveys, 50, 20, Writable.Format.WIKITEXT);
                                 
                 if (!pages.isEmpty())
                 {

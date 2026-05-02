@@ -1,5 +1,5 @@
 /**
- *  @(#)ImageCCI.java 0.04 02/01/2026
+ *  @(#)ImageCCI.java 0.05 02/05/2026
  *  Copyright (C) 2011 - 2026 MER-C
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -36,7 +36,7 @@ import org.wikipedia.tools.ContributionSurveyor;
  *  {@link org.wikipedia.tools.ContributionSurveyor}.
  *  @see <a href="https://wikipediatools.appspot.com/imagecci.jsp">Official instance</a>
  *  @author MER-C
- *  @version 0.04
+ *  @version 0.05
  */
 @WebServlet(name = "ImageCCI", urlPatterns = {"/imagecci.jsp"})
 public class ImageCCI extends BaseServlet
@@ -92,15 +92,15 @@ public class ImageCCI extends BaseServlet
         }
     
         // 2. Perform business logic if form submitted (defining parameter: user list)
-        List<String> survey = null;
+        List<ContributionSurveyor.Survey> survey = null;
+        ContributionSurveyor surveyor = new ContributionSurveyor(wiki);
         if (request.getAttribute("error") == null && !users.isEmpty())
         {
-            ContributionSurveyor surveyor = new ContributionSurveyor(wiki);
             surveyor.setInterval(interval);
             surveyor.setComingled(comingled);
             surveyor.setFooter("Survey URL: " + ServletUtils.getRequestURL(request));
             surveyor.setSurveyingTransferredFiles(transferred);
-            survey = surveyor.outputContributionSurvey(users, false, false, true);
+            survey = surveyor.runSurvey(users, false, false, true);
             
             if (survey.isEmpty())
             {
@@ -115,6 +115,7 @@ public class ImageCCI extends BaseServlet
         {
             String output = request.getParameter("format");
             String fname = user == null ? category : user;
+            List<String> sl = surveyor.pages(survey, 50, 20, Writable.Format.WIKITEXT);
             switch (output)
             {
                 // TODO: this is common to CCI servlets but could be applicable to other tools?
@@ -125,7 +126,7 @@ public class ImageCCI extends BaseServlet
                         + URLEncoder.encode(fname, StandardCharsets.UTF_8) + ".txt");
                     try (PrintWriter out = response.getWriter())
                     {
-                        out.print(String.join("\n", survey));
+                        out.print(String.join("\n", sl));
                     }
                     return;
                 case "zip":
@@ -134,7 +135,7 @@ public class ImageCCI extends BaseServlet
                         + URLEncoder.encode(fname, StandardCharsets.UTF_8) + ".zip");
                     Map<String, byte[]> zip = new LinkedHashMap<>();
                     for (int i = 0; i < survey.size(); i++)
-                        zip.put(fname + ".txt" + (i == 0 ? "" : ".%03d".formatted(i)), survey.get(i).getBytes());
+                        zip.put(fname + ".txt" + (i == 0 ? "" : ".%03d".formatted(i)), sl.get(i).getBytes());
                     try (ZipOutputStream zout = new ZipOutputStream(response.getOutputStream()))
                     {
                         ContributionSurveyor.outputZipFile(zout, zip);
