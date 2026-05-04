@@ -115,33 +115,30 @@ public class ImageCCI extends BaseServlet
         {
             String output = request.getParameter("format");
             String fname = user == null ? category : user;
-            List<String> sl = surveyor.pages(survey, 50, 20, Writable.Format.WIKITEXT);
+            List<String> sl;
             switch (output)
             {
                 // TODO: this is common to CCI servlets but could be applicable to other tools?
                 case null:
                 case "text":
-                    response.setContentType("text/plain;charset=UTF-8");
-                    response.setHeader("Content-Disposition", "attachment; filename=" 
-                        + URLEncoder.encode(fname, StandardCharsets.UTF_8) + ".txt");
+                    ServletUtils.setOutputContentType(response, ServletUtils.ContentType.WIKITEXT, fname);
+                    sl = surveyor.pages(survey, Integer.MAX_VALUE, 20, Writable.Format.WIKITEXT);
                     try (PrintWriter out = response.getWriter())
                     {
-                        out.print(String.join("\n", sl));
+                        out.print(sl.get(0));
                     }
                     return;
                 case "zip":
-                    response.setContentType("application/zip");
-                    response.setHeader("Content-Disposition", "attachment; filename=" 
-                        + URLEncoder.encode(fname, StandardCharsets.UTF_8) + ".zip");
+                    ServletUtils.setOutputContentType(response, ServletUtils.ContentType.ZIP, null);
+                    sl = surveyor.pages(survey, 50, 20, Writable.Format.WIKITEXT);
                     Map<String, byte[]> zip = new LinkedHashMap<>();
                     for (int i = 0; i < survey.size(); i++)
                         zip.put(fname + ".txt" + (i == 0 ? "" : ".%03d".formatted(i)), sl.get(i).getBytes());
-                    try (ZipOutputStream zout = new ZipOutputStream(response.getOutputStream()))
-                    {
-                        ContributionSurveyor.outputZipFile(zout, zip);
-                    }
+                    ContributionSurveyor.outputZipFile(response.getOutputStream(), zip);
                     return;
-                case "html": // plain list of images (to be made default)
+                case "html": // plain list of images
+                    surveyhtml = surveyor.pages(survey, Integer.MAX_VALUE, 20, Writable.Format.HTML).get(0);
+                    break;
                 case "gallery": // thumbnails
                 case "json":
                 default:
@@ -149,10 +146,11 @@ public class ImageCCI extends BaseServlet
             }
         }
         
-        response.setContentType("text/html;charset=UTF-8");
+        ServletUtils.setOutputContentType(response, ServletUtils.ContentType.HTML, null);
         try (PrintWriter out = response.getWriter())
         {
             ServletUtils.renderHeader(request, response, out);
+            List<String> formats = ServletUtils.generateRadioButtons("format", List.of("text", "zip", "html"), request);
             out.printf("""
                 <p>
                 This tool generates a listing of a user's image uploads for use at <a
@@ -183,8 +181,9 @@ public class ImageCCI extends BaseServlet
                     <td>%s-->
                 <tr>
                     <td>Output format:
-                    <td><input type=radio name=format id=format_text value=text checked><label for=format_text>Text</label>
-                        <input type=radio name=format id=format_zip value=zip><label for=format_zip>Zip</label>
+                    <td>%s<label for=radio_format_text>Text</label>
+                        %s<label for=radio_format_zip>Zip</label>
+                        %s<label for=radio_format_html>HTML preview</label>
                 </table>
                 <br>
                 <input type=submit value="Survey user">
@@ -195,9 +194,13 @@ public class ImageCCI extends BaseServlet
                     ServletUtils.addIntervalInputs(request, null, null),
                     ServletUtils.addCheckbox("transferred", transferred, 
                         "Include transferred files (may be inaccurate depending on username)"),
-                    ServletUtils.addCheckbox("comingle", comingled, "comingled (for sockfarms where each user has few edits)"));
+                    ServletUtils.addCheckbox("comingle", comingled, "comingled (for sockfarms where each user has few edits)"),
+                    formats.get(0), formats.get(1), formats.get(2));
             if (surveyhtml != null)
+            {
+                out.println("<hr>");
                 out.print(surveyhtml);
+            }
             ServletUtils.renderFooter(request, out);
         }
     }

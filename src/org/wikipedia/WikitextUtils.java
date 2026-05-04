@@ -19,6 +19,7 @@
  */
 package org.wikipedia;
 
+import java.io.UncheckedIOException;
 import java.util.*;
 import java.util.function.BiFunction;
 
@@ -209,7 +210,7 @@ public class WikitextUtils
         /**
          *  Renders this bold text in wikitext or HTML. Other formats just render
          *  the text without bolding. <strong>Inputs are not sanitized</strong>.
-         *  @param format any {@link Writable.Format}
+         *  @param fmt any {@link Writable.Format}
          *  @return the rendered text
          */
         @Override

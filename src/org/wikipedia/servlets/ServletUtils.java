@@ -1,6 +1,6 @@
 /**
- *  @(#)ServletUtils.java 0.03 23/11/2025
- *  Copyright (C) 2011 - 2025 MER-C
+ *  @(#)ServletUtils.java 0.04 04/05/2026
+ *  Copyright (C) 2011 - 2026 MER-C
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -34,7 +34,7 @@ import org.wikipedia.*;
 /**
  *  Common servlet code so that I can maintain it easier.
  *  @author MER-C
- *  @since 0.03
+ *  @since 0.04
  */
 public class ServletUtils
 {
@@ -560,5 +560,57 @@ public class ServletUtils
             "style-src 'self'"); // allow only stylesheets from this domain
         // disable the Referer header
         response.setHeader("Referrer-Policy", "no-referrer");
+    }
+    
+    /**
+     *  Enum representing implemented MIME types for servlet output.
+     *  @since 0.04
+     */
+    public enum ContentType
+    {
+        /**
+         *  HTML output (the default).
+         */
+        HTML,
+        
+        /**
+         *  ZIP file output. Opens a download prompt, and therefore a filename is
+         *  soft required.
+         */
+        ZIP,
+        
+        /**
+         *  Wikitext file output. Opens a download prompt, and therefore a 
+         *  filename is soft required.
+         */
+        WIKITEXT;
+    }
+    
+    /**
+     *  Sets the MIME type of the servlet response.
+     *  @param response the response to set the MIME type for
+     *  @param ctype the content type of the servlet output
+     *  @param fname the filename of any download prompt to be presented to the
+     *  user, ignored otherwise
+     *  @since 0.04
+     */
+    public static void setOutputContentType(HttpServletResponse response, ContentType ctype, String fname)
+    {
+        switch(ctype)
+        {
+            case HTML:
+                response.setContentType("text/html;charset=UTF-8");
+                break;
+            case ZIP:
+                response.setContentType("application/zip");
+                response.setHeader("Content-Disposition", "attachment; filename=" 
+                    + URLEncoder.encode(fname, StandardCharsets.UTF_8) + ".zip");
+                break;
+            case WIKITEXT:
+                response.setContentType("text/plain;charset=UTF-8");
+                response.setHeader("Content-Disposition", "attachment; filename=" 
+                    + URLEncoder.encode(fname, StandardCharsets.UTF_8) + ".txt");
+                break;
+        }
     }
 }
