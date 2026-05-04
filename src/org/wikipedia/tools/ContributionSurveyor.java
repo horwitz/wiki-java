@@ -45,12 +45,12 @@ import org.wikipedia.*;
 public class ContributionSurveyor
 {
     // TODO:
-    // * make output format independent
+    // * make output format independent (servlets only)
     // * gallery output
-    // * show HTML output on servlet pages or via command line
+    // * show HTML output on servlet pages
     // * reload and carry forward results via POST
     // * continue Wiki.java partially fetched objects to speed load time (no need to load e.g. edit summaries)
-    // * configurable pagination
+    // * configurable pagination (servlets only?)
     // * consolidate user inputs in servlets
     // * uploads that are overwrites?
     
@@ -83,22 +83,21 @@ public class ContributionSurveyor
         CommandLineParser clp = new CommandLineParser("org.wikipedia.tools.ContributionSurveyor")
             .synopsis("[options]")
             .description("Survey the contributions of a large number of wiki editors.")
-            .addVersion("ContributionSurveyor v0.09\n" + CommandLineParser.GPL_VERSION_STRING)
-            .addSingleArgumentFlag("--outfile", "file", "Save results to file(s). "
-                + "Shows a filechooser if not specified. If multiple files output, use this as a prefix.")
-            .addBooleanFlag("--zip", "Write a zip file instead of individual file(s).")
+            .addVersion("ContributionSurveyor v0.10\n" + CommandLineParser.GPL_VERSION_STRING)
             .addSection("Users to scan:")
             .addSingleArgumentFlag("--wiki", "example.org", "Use example.org as the home wiki (default: en.wikipedia.org).")
             .addBooleanFlag("--login", "Shows a CLI login prompt (use for high limits).")
             .addSingleArgumentFlag("--sourcewiki", "example.com", "Use a different wiki than --wiki as a source of users.")
             .addSingleArgumentFlag("--blockedafter", "date", "Only survey unblocked users or those blocked on the target wiki after a certain date.");
-        clp = addSharedOptions(clp);
-        Map<String, String> parsedargs = clp
+        clp = addSharedOptions(clp)
             .addBooleanFlag("--images", "Survey images both on the home wiki and the foreign media repository.")
             .addBooleanFlag("--notransfer", "Do not include transferred files to the foreign media repository.")
             .addBooleanFlag("--deleted", "Survey deleted edits (requires admin privileges)")
-            .addBooleanFlag("--skiplive", "Don't survey live edits (for image/deleted only surveys)")
-            .parse(args);
+            .addBooleanFlag("--skiplive", "Don't survey live edits (for image/deleted only surveys)");
+        clp = addOutputOptions(clp)
+            .addSingleArgumentFlag("--sectionsperpage", "n", "Output n sections per page (default 50)")
+            .addBooleanFlag("--zip", "Write a zip file instead of individual file(s).");
+        Map<String, String> parsedargs = clp.parse(args);
 
         Wiki homewiki = Wiki.newSession(parsedargs.getOrDefault("--wiki", "en.wikipedia.org"));
         homewiki.setUserAgent(WMFWikiFarm.TOOL_USER_AGENT);
@@ -139,7 +138,10 @@ public class ContributionSurveyor
        
         List<Survey> surveys = surveyor.runSurvey(users, !parsedargs.containsKey("--skiplive"),
             parsedargs.containsKey("--deleted"), parsedargs.containsKey("--images"), ns);
-        List<String> output = surveyor.pages(surveys, 50, 20, Writable.Format.WIKITEXT);
+        List<String> output = surveyor.pages(surveys, 
+            Integer.parseInt(parsedargs.getOrDefault("--sectionsperpage", "50")), 
+            Integer.parseInt(parsedargs.getOrDefault("--itemspersection", "20")),
+            Writable.Format.valueOf(parsedargs.getOrDefault("--format", "wikitext").toUpperCase()));
 
         String outfile = parsedargs.get("--outfile");
         Path path = CommandLineParser.parseFileOption(parsedargs, "--outfile", "Select output file", 
@@ -193,6 +195,23 @@ public class ContributionSurveyor
             .addSingleArgumentFlag("--editsafter", "date", "Include edits made after this date (ISO format).")
             .addSingleArgumentFlag("--editsbefore", "date", "Include edits made before this date (ISO format).")
             .addBooleanFlag("--userspace", "Survey userspace as well.");
+    }
+    
+    /**
+     *  Returns output-related command line arguments that can be shared with 
+     *  other tools.
+     *  @param parser a CommandLineParser
+     *  @return the CommandLineParser with options added
+     *  @see org.wikipedia.tools.CommandLineParser
+     *  @since 0.10
+     */
+    static CommandLineParser addOutputOptions(CommandLineParser parser)
+    {
+        return parser.addSection("Output options")
+            .addSingleArgumentFlag("--outfile", "file", "Save results to file(s). "
+                + "Shows a filechooser if not specified. If multiple files output, use this as a prefix.")
+            .addSingleArgumentFlag("--format", "format", "Save in the given format, accepts wikitext and html.")
+            .addSingleArgumentFlag("--itemspersection", "n", "Output n items per section (default 20)");
     }
     
     /**
@@ -729,10 +748,13 @@ public class ContributionSurveyor
      *  @param fmt either {@link Writable.Format.HTML} or 
      *  {@link Writable.Format.WIKITEXT}
      *  @return the survey listing, paginated and formatted in the given format
+     *  @throws IllegalArgumentException if {@code sectionsperpage < 1}
      *  @since 0.10
      */
     public List<String> pages(List<Survey> surveys, int sectionsperpage, int articlespersection, Writable.Format fmt)
     {
+        if (sectionsperpage < 1)
+            throw new IllegalArgumentException("There must be at least one section per page.");
         List<String> sections = new ArrayList<>();
         int count = surveys.size();
         

@@ -51,14 +51,18 @@ public class XWikiContributionSurveyor
         CommandLineParser clp = new CommandLineParser("org.wikipedia.tools.XWikiContributionSurveyor")
             .synopsis("[options]")
             .description("Survey the contributions of a large number of wiki editors across all wikis.")
-            .addVersion("XWikiContributionSurveyor v0.01\n" + CommandLineParser.GPL_VERSION_STRING)
-            .addSingleArgumentFlag("--outfile", "file", "Save results to file(s).")
+            .addVersion("XWikiContributionSurveyor v0.02\n" + CommandLineParser.GPL_VERSION_STRING);
+        clp = ContributionSurveyor.addSharedOptions(clp)
             .addSingleArgumentFlag("--lockedafter", "date", "Only survey unlocked users or those locked after a certain date.")
             .addSingleArgumentFlag("--wikipage", "'Main Page'", "Fetch a list of users from the en.wp page [[Main Page]].");
-        Map<String, String> parsedargs = ContributionSurveyor.addSharedOptions(clp).parse(args);
+        clp = ContributionSurveyor.addOutputOptions(clp);
+        // sections per page doesn't make too much sense here as all pages are concatenated for the output
+        Map<String, String> parsedargs = clp.parse(args);
         List<String> users = CommandLineParser.parseUserOptions(parsedargs, enWiki);
         String lockedafterstring = parsedargs.get("--lockedafter");
         OffsetDateTime lockedafter = (lockedafterstring == null) ? null : OffsetDateTime.parse(lockedafterstring);
+        int itemspersection = Integer.parseInt(parsedargs.getOrDefault("--itemspersection", "20"));
+        Writable.Format format = Writable.Format.valueOf(parsedargs.getOrDefault("--format", "wikitext").toUpperCase());
         
         Set<String> wikis = new HashSet<>();
         wikis.add("en.wikipedia.org");
@@ -116,15 +120,19 @@ public class XWikiContributionSurveyor
                 
                 String prefix = iwmap.get(wiki);
                 List<ContributionSurveyor.Survey> surveys = cs.runSurvey(users, true, false, wiki.equals("commons.wikimedia.org"), ns);
-                List<String> pages = cs.pages(surveys, 50, 20, Writable.Format.WIKITEXT);
+                List<String> pages = cs.pages(surveys, 50, itemspersection, format);
                                 
                 if (!pages.isEmpty())
                 {
-                    outwriter.write("=" + wiki + "=\n\n");
+                    outwriter.write(new WikitextUtils.Heading(wiki, 1).format(format));
+                    outwriter.write("\n");
                     for (String page : pages)
-                    {    
-                        page = page.replace("[[:", "[[:" + prefix + ":");
-                        page = page.replace("[[Special", "[[:" + prefix + ":Special");
+                    {
+                        if (format.equals(Writable.Format.WIKITEXT))
+                        {
+                            page = page.replace("[[:", "[[:" + prefix + ":");
+                            page = page.replace("[[Special", "[[:" + prefix + ":Special");
+                        }
                         outwriter.write(page);
                         outwriter.write("\n\n");
                     }

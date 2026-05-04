@@ -150,7 +150,10 @@ public class ContributionSurveyorTest
         List<String> outputs = surveyor.pages(results, 50, 20, Writable.Format.WIKITEXT);
         assertTrue(outputs.isEmpty(), "no survey pages if not populated");
         
-        results = surveyor.runSurvey(users, true, false, false, Wiki.MAIN_NAMESPACE);
+        assertThrows(IllegalArgumentException.class, () -> surveyor.pages(results, -1, 20, Writable.Format.WIKITEXT), "negative sections per page");
+        
+        List<ContributionSurveyor.Survey> results2 = surveyor.runSurvey(users, true, false, false, Wiki.MAIN_NAMESPACE);
+        outputs = surveyor.pages(results2, 50, 20, Writable.Format.WIKITEXT);
         assertTrue(outputs.isEmpty(), "no survey pages if no surveyable edits");
     }
     
