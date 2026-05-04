@@ -133,6 +133,17 @@ public class WikitextUtils
     }
     
     /**
+     *  Removes {@code <nowiki>} text from the supplied string.
+     *  @param delta the string to remove nowiki text from
+     *  @return the string minus nowiki text
+     *  @since 0.03
+     */
+    public static String removeNowiki(String delta)
+    {
+        return delta.replaceAll("(?s)<\\s*nowiki\\s*>.*?<\\s*/nowiki\\s*>", "");
+    }
+    
+    /**
      *  Represents an external link.
      *  @param url the URL to link to
      *  @param text the text to display for the link (can be null)
@@ -239,6 +250,16 @@ public class WikitextUtils
     public record PaginatedList(List<? extends Writable> list, boolean numbered, BiFunction<Integer, Integer, Writable> paginator,
         int itemspersegment) implements Writable
     {
+        /**
+         *  Constructs a new paginated list.
+         *  @param list the constituents of the list
+         *  @param numbered whether this is a numbered list
+         *  @param paginator the delimiter for each paginated segment, {@code null} 
+         *  disables pagination
+         *  @param itemspersegment the number of items per segment, must be a 
+         *  positive integer
+         *  @throws IllegalArgumentException if {@code itemspersegment < 1}
+         */
         public PaginatedList
         {
             if (itemspersegment < 1)

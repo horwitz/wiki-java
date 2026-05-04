@@ -73,6 +73,7 @@ public class CCIAnalyzer
             .addBooleanFlag("--targs", "Remove short template arguments")
             .addBooleanFlag("--comments", "Remove all HTML comments (aggressive)")
             .addBooleanFlag("--listpages", "Removes all list pages (aggressive)")
+            .addBooleanFlag("--nowiki", "Removes all nowiki text (aggressive)")
             .addBooleanFlag("--single", "Only cull the supplied page")
             .addSingleArgumentFlag("--numwords", "int", "Strings with more than this number of consecutive words are major edits.")
             .addSingleArgumentFlag("--infile", "example.txt", "Read in the CCI from a file.")
@@ -133,6 +134,8 @@ public class CCIAnalyzer
             filterfn = filterfn.andThen(CCIAnalyzer::removeExternalLinks);
         if (parsedargs.containsKey("--comments"))
             filterfn = filterfn.andThen(WikitextUtils::removeComments);
+        if (parsedargs.containsKey("--nowiki"))
+            filterfn = filterfn.andThen(WikitextUtils::removeNowiki);
         analyzer.setFilteringFunction(filterfn);
 
         Predicate<String> titlefn = CCIAnalyzer::removeDisambiguationPages;

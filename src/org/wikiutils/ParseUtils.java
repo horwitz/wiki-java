@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.wikipedia.Wiki;
+import org.wikipedia.*;
 
 /**
  * Useful parsing methods for MediaWiki syntax.
@@ -257,7 +257,9 @@ public class ParseUtils
                 for (i = 0; i < f.size(); i++)
                 {
                         String s = f.get(i);
-                        String test = removeCommentsAndNoWikiText(s); //we use another variable to not change the template content
+                        //we use another variable to not change the template content
+                        String test = WikitextUtils.removeComments(s);
+                        test = WikitextUtils.removeNowiki(test);
                         if ((countOccurrences(test, "{{") != countOccurrences(test, "}}") || countOccurrences(
                              test, "[[") != countOccurrences(test, "]]")) && i != f.size() - 1)
                         {
@@ -389,19 +391,6 @@ public class ParseUtils
         }
         
         /**
-         *  Removes comments and &lt;nowiki&gt; text from the given wikitext.
-         *  @param text the wikitext
-         *  @return the new wikitext
-         */
-        public static String removeCommentsAndNoWikiText(String text)
-        {
-                if (text == null)
-                        return null;
-                text = text.replaceAll("(?s)<\\s*nowiki\\s*>.*?<\\s*/nowiki\\s*>", "");
-                return text.replaceAll("(?s)<!--.*?-->", "");
-        }
-
-        /**
          *  Checks if the given position must be ignored. Useful to not change text
          *  between noWiki tags or comments text
          *
@@ -476,7 +465,8 @@ public class ParseUtils
         public static ArrayList<String> getInternalLinks(String text)
         {
                 ArrayList<String> al = new ArrayList<String>();
-                text = removeCommentsAndNoWikiText(text);
+                text = WikitextUtils.removeComments(text);
+                text = WikitextUtils.removeNowiki(text);
                 Pattern p = Pattern.compile("\\[\\[.*?\\]\\]");
                 Matcher m = p.matcher(text);
                 while (m.find())

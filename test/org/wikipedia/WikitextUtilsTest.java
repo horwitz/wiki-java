@@ -53,6 +53,15 @@ public class WikitextUtilsTest
     }
     
     @Test
+    public void removeNowiki()
+    {
+        assertEquals("AC", WikitextUtils.removeNowiki("A<nowiki>B</nowiki>C"));
+        assertEquals("AC", WikitextUtils.removeNowiki("A< nowiki >B< /nowiki >C"), "spaces");
+        assertEquals("AD", WikitextUtils.removeNowiki("A<nowiki>B<nowiki>C</nowiki>D"));
+        assertEquals("AC</nowiki>D", WikitextUtils.removeNowiki("A<nowiki>B</nowiki>C</nowiki>D"));
+    }
+    
+    @Test
     public void formatWikiLink()
     {
         WikitextUtils.WikiLink wl = new WikitextUtils.WikiLink(enWiki, "Test1", "Test2");
