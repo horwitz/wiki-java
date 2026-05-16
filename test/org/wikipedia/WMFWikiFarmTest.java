@@ -109,6 +109,32 @@ public class WMFWikiFarmTest
         luserinfo = (Map)((Map)guserinfo.get("wikis")).get("testwiki");
         assertEquals(7, luserinfo.get("editcount"));
     }
+    
+    @Test
+    public void getQuickGlobalUserInfo() throws Exception
+    {
+        List<String> users = List.of("Uruguymma", "Jimbo Wales", "Jimbo_Wales", "Jimbo Wal3s", "127.0.0.1", "~2025-39100");
+        List<WMFWikiFarm.QuickGlobalUserInfo> qgui = sessions.getQuickGlobalUserInfo(users);
+        WMFWikiFarm.QuickGlobalUserInfo expected = new WMFWikiFarm.QuickGlobalUserInfo(users.get(0), 
+            OffsetDateTime.parse("2016-09-21T13:59:30Z"), 38, true, Collections.EMPTY_MAP);
+        assertEquals(expected, qgui.get(0));
+        
+        WMFWikiFarm.QuickGlobalUserInfo jimbo = qgui.get(1);
+        assertEquals(users.get(1), jimbo.username());
+        assertEquals(OffsetDateTime.parse("2008-04-12T16:22:49Z"), jimbo.registration());
+        // edit count is dynamic, of course
+        assertFalse(jimbo.locked());
+        assertTrue(jimbo.groups().containsKey("founder"));
+        assertNull(jimbo.groups().get("founder"));
+        
+        assertEquals(jimbo, qgui.get(2), "normalised username");
+        assertNull(qgui.get(3), "user doesn't exist -> null");
+        assertNull(qgui.get(4), "IP address -> null");
+        
+        expected = new WMFWikiFarm.QuickGlobalUserInfo(users.get(5), 
+            OffsetDateTime.parse("2025-03-31T22:52:09Z"), 7, false, Collections.EMPTY_MAP);
+        assertEquals(expected, qgui.get(5), "temporary account");
+    }
 
     @Test
     public void sharedSession()

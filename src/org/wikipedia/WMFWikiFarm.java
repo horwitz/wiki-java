@@ -58,7 +58,7 @@ public class WMFWikiFarm
     /**
      *  Computes the domain name (to use in {@link WMFWiki#newSession}) the 
      *  WMF wiki that has the given database name (e.g. "enwiki" for the English 
-     *  Wikipedia, "nlwikisource"  for the Dutch Wikisource and "wikidatawiki" 
+     *  Wikipedia, "nlwikisource" for the Dutch Wikisource and "wikidatawiki" 
      *  for Wikidata).
      * 
      *  @param dbname a WMF wiki DB name
@@ -128,9 +128,8 @@ public class WMFWikiFarm
     }
     
     /**
-     *  Returns a shared session manager. Note that multiple instances - i.e.
+     *  {@return a shared session manager} Note that multiple instances - i.e.
      *  multiple groups of sessions - are still permitted.
-     *  @return a shared session manager
      */        
     public static WMFWikiFarm instance()
     {
@@ -138,10 +137,9 @@ public class WMFWikiFarm
     }
     
     /**
-     *  Returns the shared session for a given domain. If a session doesn't 
+     *  {@return the shared session for a given domain} If a session doesn't 
      *  exist, create it.
      *  @param domain a wiki domain
-     *  @return the shared wiki session for that domain
      */
     public WMFWiki sharedSession(String domain)
     {
@@ -156,8 +154,7 @@ public class WMFWikiFarm
     }
     
     /**
-     *  Returns all shared sessions stored in this session manager.
-     *  @return (see above)
+     *  {@return all shared sessions stored in this session manager}
      */
     public Collection<WMFWiki> getAllSharedSessions()
     {
@@ -186,7 +183,8 @@ public class WMFWikiFarm
     }
     
     /**
-     *  Fetches global user info. Returns:
+     *  Fetches global user info. {@link #getQuickGlobalUserInfo(SequencedCollection)}
+     *  is a vectorized method but returns less information. This method returns:
      *  <ul>
      *  <li>home - (String) a String identifying the home wiki (e.g. "enwiki" 
      *      for the English Wikipedia)
@@ -219,12 +217,13 @@ public class WMFWikiFarm
      *  not exist. IPs are not allowed.
      *  @return user info as described above
      *  @throws IOException if a network error occurs
+     *  @warning <a href="https://phabricator.wikimedia.org/T331237">lock reasons 
+     *  are not available</a>
      *  @since WMFWiki 0.01
      */
     public Map<String, Object> getGlobalUserInfo(String username) throws IOException
     {
         // FIXME: throws UnknownError ("invaliduser" if user is an IP or is otherwise invalid
-        // note: lock reason is not available, see https://phabricator.wikimedia.org/T331237
         WMFWiki wiki = sharedSession("meta.wikimedia.org");
         wiki.requiresExtension("CentralAuth");
         Map<String, String> getparams = new HashMap<>();
@@ -318,9 +317,89 @@ public class WMFWikiFarm
     }
     
     /**
-     *  Returns the list of publicly readable and editable wikis operated by the
-     *  Wikimedia Foundation.
-     *  @return (see above)
+     *  Represents quick global user information.
+     *  @param username this user's username
+     *  @param registration when the global account was created
+     *  @param editcount the total global edit count of this user
+     *  @param locked whether this user account has been locked
+     *  @param groups this user is a member of these global groups, mapped to
+     *  the expiry date of their membership. {@code null} means permanent membership.
+     *  @since 0.02
+     */
+    public record QuickGlobalUserInfo(String username, OffsetDateTime registration, int editcount, boolean locked, Map<String, OffsetDateTime> groups) { }
+    
+    /**
+     *  Fetches global user info. Vectorized but not as detailed as {@link #getGlobalUserInfo(String)}.
+     * 
+     *  @see #dbNameToDomainName
+     *  @param usernames usernames to look up
+     *  @return User info as described above, in the same order as the input.
+     *  Listings corresponding to temporary accounts or IP addresses will be
+     *  {@code null}.
+     *  @throws IOException if a network error occurs
+     *  @warning <a href="https://phabricator.wikimedia.org/T331237">lock reasons 
+     *  are not available</a>
+     *  @since 0.02
+     */
+    public List<QuickGlobalUserInfo> getQuickGlobalUserInfo(SequencedCollection<String> usernames) throws IOException
+    {
+        WMFWiki wiki = sharedSession("meta.wikimedia.org");
+        wiki.requiresExtension("CentralAuth");
+        Map<String, String> getparams = new HashMap<>();
+        getparams.put("action", "query");
+        getparams.put("list", "globalusers");
+        getparams.put("gusprop", "locked|registration|editcount|groupmemberships");
+        
+        BiConsumer<String, List<QuickGlobalUserInfo>> parser = (temp, results) ->
+        {
+            for (int a = temp.indexOf("<globaluser "); a > 0; a = temp.indexOf("<globaluser ", ++a))
+            {
+                int end = temp.indexOf("<globaluser ", a + 1);
+                String line;
+                if (end > 0)
+                    line = temp.substring(a + 1, end);
+                else
+                    line = temp.substring(a + 1);
+                
+                if (line.contains("missing=\"\"") || line.contains("invalid=\"\""))
+                    continue;
+                
+                Map<String, OffsetDateTime> groupmembership = new HashMap<>();
+                if (line.contains("<groupmembership "))
+                {
+                    for (int b = line.indexOf("<groupmembership "); b > 0; b = line.indexOf("<groupmembership ", ++b))
+                    {
+                        String expiry = wiki.parseAttribute(line, "expiry", b);
+                        groupmembership.put(wiki.parseAttribute(line, "group", b), expiry.equals("infinity") ? null : OffsetDateTime.parse(expiry));
+                    }
+                }            
+
+                results.add(new QuickGlobalUserInfo(
+                    wiki.parseAttribute(line, "name", 0),
+                    OffsetDateTime.parse(wiki.parseAttribute(line, "registration", 0)),
+                    Integer.parseInt(wiki.parseAttribute(line, "editcount", 0)),
+                    line.contains("locked=\"\""),
+                    groupmembership));
+            }
+        };
+        
+        // This would have been a normal vectorized query except that this API 
+        // call is vectorized over gususers instead of titles
+        Map<String, QuickGlobalUserInfo> tempmap = new HashMap<>();
+        for (String gususers : wiki.constructTitleString(usernames))
+        {
+            getparams.put("gususers", gususers);
+            for (QuickGlobalUserInfo qgui : wiki.makeListQuery("gus", getparams, null, "WMFWiki.getGlobalUserInfo", -1, parser))
+                tempmap.put(qgui.username(), qgui);
+        }
+        ArrayList<QuickGlobalUserInfo> retlist = ArrayUtils.transform(usernames, ArrayList::new, user -> tempmap.get(wiki.normalize(user)));
+        wiki.log(Level.INFO, "getGlobalUserInfo", "Successfully retrieved global user info for " + usernames.size() + " users.");
+        return retlist;
+    }
+    
+    /**
+     *  {@return the list of publicly readable and editable wikis operated by
+     *  the Wikimedia Foundation}
      *  @throws IOException if a network error occurs
      *  @since WMFWiki 0.01
      */
@@ -355,11 +434,11 @@ public class WMFWikiFarm
     }
     
     /**
-     *  Returns the Wikidata items corresponding to the given titles.
+     *  {@return the Wikidata items corresponding to the given titles or 
+     *  {@code null} if either the Wikidata item or the local article doesn't
+     *  exist}
      *  @param wiki the wiki where the titles are hosted
      *  @param titles a list of page names
-     *  @return the corresponding Wikidata items, or null if either the Wikidata
-     *  item or the local article doesn't exist
      *  @throws IOException if a network error occurs
      */
     public List<String> getWikidataItems(WMFWiki wiki, SequencedCollection<String> titles) throws IOException

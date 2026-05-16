@@ -321,7 +321,7 @@ public class ContributionSurveyorTest
     {
         String f = "Test123";
         surveyor.setFooter(f);
-        assertTrue(surveyor.generateFooter(Writable.Format.HTML).endsWith(f));
-        assertTrue(surveyor.generateFooter(Writable.Format.WIKITEXT).endsWith(f));
+        assertTrue(surveyor.generateFooter(Writable.Format.HTML).endsWith(f + "\n"));
+        assertTrue(surveyor.generateFooter(Writable.Format.WIKITEXT).endsWith(f + "\n"));
     }
 }

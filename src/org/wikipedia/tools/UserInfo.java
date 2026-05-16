@@ -50,12 +50,13 @@ public class UserInfo
      *  @param blockexpiry when the block expires
      *  @param blockts when the user was blocked
      *  @param blockcomment why the user was blocked
+     *  @param locked whether the user is locked (yes/no, not true/false)
      *  @see UserInfo#userInfoTable(Wiki, List, Writable.Format)
      *  @since 0.02
      */
     public record UserInfoRecord(String user, String actions, OffsetDateTime regts, OffsetDateTime firstedit,
         OffsetDateTime lastedit, String editcount, int articles, String groups, String blocked, String blockexpiry,
-        OffsetDateTime blockts, String blockcomment) {}
+        OffsetDateTime blockts, String blockcomment, String locked) {}
     
     /**
      *  Runs this program.
@@ -104,9 +105,10 @@ public class UserInfo
         List<List<Wiki.Revision>> contribs = wiki.contribs(usernames, null, null);
         List<String> boring_groups = List.of("*", "user", "autoconfirmed");
         Wiki.LogEntry earliestblock = null;
+        List<WMFWikiFarm.QuickGlobalUserInfo> qgui = sessions.getQuickGlobalUserInfo(usernames);
         
         List<String> headers = List.of("User", "Actions", "Reg. date", "First edit", "Last edit", 
-            "Edit count", "Articles", "Groups", "Blocked?", "B. Expiry", "B. Timestamp", "B. Reason");
+            "Edit count", "Articles", "Groups", "Blocked?", "B. Expiry", "B. Timestamp", "B. Reason", "Locked?");
         List<UserInfoRecord> rows = new ArrayList<>();
         
         for (int i = 0; i < usernames.size(); i++)
@@ -115,7 +117,7 @@ public class UserInfo
             if (user == null)
             {
                 rows.add(new UserInfoRecord(usernames.get(i), "", null, null,
-                    null, "0", 0, "unregistered", "", "", null, null));
+                    null, "0", 0, "unregistered", "", "", null, null, null));
                 continue;
             }
             
@@ -169,13 +171,15 @@ public class UserInfo
                 // force wikitext because parsedcomment is absent, see warning at Wiki.User.getBlockDetails()
                 bcomment = new Events.Comment(blockinfo).format(Writable.Format.WIKITEXT);
             }
-            rows.add(new UserInfoRecord(usercell, actioncell, user.getRegistrationDate(), firstedit, lastedit, 
-                editcount, articles, groupcell, blocked, bexpiry, blockts, bcomment));
             
-            // TODO: add locks, lock timestamp and lock reason - not possible currently due to:
-            // 1. T261752
-            // 2. The API call behind WMFWiki.getGlobalUserInfo doesn't return when the lock occurred
-            // 3. Wiki.getLogEntries("globalauth", null, null) doesn't return the details because it
+            WMFWikiFarm.QuickGlobalUserInfo qi = qgui.get(i);
+            String locked = qi == null ? null : (qi.locked() ? "Yes" : "No");
+            rows.add(new UserInfoRecord(usercell, actioncell, user.getRegistrationDate(), firstedit, lastedit, 
+                editcount, articles, groupcell, blocked, bexpiry, blockts, bcomment, locked));
+            
+            // TODO: add lock timestamp and lock reason - not possible currently due to:
+            // 1.The API call behind WMFWiki.getQuickGlobalUserInfo doesn't return when the lock occurred
+            // 2. Wiki.getLogEntries("globalauth", null, null) doesn't return the details because it
             //    is not a native Wiki log type
             // Any will result in this bug being fixed.
             // Also the way formatting is handled leaves something to be desired
@@ -188,19 +192,12 @@ public class UserInfo
     
     public static void lockFinder(List<String> socks) throws Exception
     {
-        WMFWiki meta = sessions.sharedSession("meta.wikimedia.org");
         System.out.println("Not locked:");
         System.out.println("*{{MultiLock");
-        for (String sock : socks)
-        {
-            // TODO: this is an inefficient way of determining whether an account
-            // is locked - there is an additional API call that is still one user = one call
-            // but less data transfer. Also, as usual, the W?F can't be arsed doing this
-            // properly: https://phabricator.wikimedia.org/T261752
-            Map<String, Object> ginfo = sessions.getGlobalUserInfo(sock);
-            if (ginfo != null && !(Boolean)ginfo.get("locked"))
-                System.out.print("|" + meta.removeNamespace(sock));
-        }
+        List<WMFWikiFarm.QuickGlobalUserInfo> qgui = sessions.getQuickGlobalUserInfo(socks);
+        for (WMFWikiFarm.QuickGlobalUserInfo info : qgui)
+            if (info != null && info.locked())
+                System.out.print("|" + info.username());
         System.out.println("}}\n\n");
     }
     
