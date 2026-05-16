@@ -6005,12 +6005,14 @@ public class Wiki implements Comparable<Wiki>
      *  <li>{@link Wiki.RequestHelper#limitedTo(int) local query limit}
      *  </ul>
      * 
-     *  @param users a list of users that might have been blocked. Use null to
-     *  not specify one. May be an IP (e.g. "127.0.0.1") or a CIDR range (e.g.
-     *  "127.0.0.0/16") but not an autoblock (e.g. "#123456").
+     *  @param users a list of users that might have been blocked. Use 
+     *  {@code null} to not specify one. May be an IP (e.g. "127.0.0.1") or a 
+     *  CIDR range (e.g. "127.0.0.0/16") but not an autoblock (e.g. "#123456").
      *  @param helper a {@link Wiki.RequestHelper} (optional, use null to not
      *  provide any of the optional parameters noted above)
-     *  @return a list of the blocks
+     *  @return a list of the blocks. If {@code users} is specified, returns
+     *  blocks in the same order as the input with {@code null} for unblocked
+     *  users.
      *  @warning Cannot tell whether a particular IP is autoblocked as this is 
      *  non-public data (see [[wmf:Privacy policy]]).
      *  <p>The <var>id</var> and <var>parsedcomment</var> properties are not 
@@ -6063,12 +6065,15 @@ public class Wiki implements Comparable<Wiki>
         {
             // This would have been a normal vectorized query except that 
             // this API call is vectorized over bkusers instead of titles
-            // TODO: the return order should be the input order with null interspersed accordingly.
+            Map<String, LogEntry> tempmap = new HashMap<>();
             for (String bkusers : constructTitleString(users))
             {
                 getparams.put("bkusers", bkusers);
-                entries.addAll(makeListQuery("bk", getparams, null, "getBlockList", limit, parser));
+                for (Wiki.LogEntry le : makeListQuery("bk", getparams, null, "getBlockList", limit, parser))
+                    tempmap.put(removeNamespace(le.getTitle()), le);
             }
+            for (String user : users)
+                entries.add(tempmap.get(normalize(user)));
         }
         log(Level.INFO, "getBlockList", "Successfully fetched block list " + entries.size() + " entries)");
         return entries;

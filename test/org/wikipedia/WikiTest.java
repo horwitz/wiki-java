@@ -652,16 +652,13 @@ public class WikiTest
     public void getBlockList() throws Exception
     {
         // Must specify users in unit tests because otherwise it is a dynamic list.
-        List<String> users = List.of("Nimimaan", "Jimbo Wales", "Bodiadub");
+        List<String> users = List.of("0.0.0.0", "Nimimaan", "Jimbo Wales", "Bodiadub");
         List<Wiki.LogEntry> le = enWiki.getBlockList(users, null);
-        assertEquals(2, le.size());
+        assertEquals(4, le.size());
         
-        assertEquals("2019-05-22T03:28:04Z", le.get(0).getTimestamp().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
-        assertEquals("TonyBallioni", le.get(0).getUser());
-        assertEquals("User:Bodiadub", le.get(0).getTitle());
-        assertEquals("{{checkuserblock-account}}", le.get(0).getComment());
-        assertEquals("infinity", le.get(0).getDetails().get("expiry"), "block parameters");
-        assertEquals("true", le.get(0).getDetails().get("nocreate"), "block parameters");
+        // Reserved IPs should never be blocked
+        assertNull(le.get(0), "unblocked IP");
+        assertNull(le.get(2), "unblocked user");
         
         // https://en.wikipedia.org/wiki/Special:Blocklist/Nimimaan
         // see also getLogEntries() below
@@ -678,9 +675,12 @@ public class WikiTest
         assertEquals("true", le.get(1).getDetails().get("nousertalk"), "block parameters");
         // remaining details: anononly = false, noautoblock = false
         
-        // What happens if there are no blocked users in the list? 
-        le = enWiki.getBlockList(List.of("0.0.0.0"), null); // Reserved IPs should never be blocked. 
-        assertTrue(le.isEmpty());
+        assertEquals("2019-05-22T03:28:04Z", le.get(3).getTimestamp().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+        assertEquals("TonyBallioni", le.get(3).getUser());
+        assertEquals("User:Bodiadub", le.get(3).getTitle());
+        assertEquals("{{checkuserblock-account}}", le.get(3).getComment());
+        assertEquals("infinity", le.get(3).getDetails().get("expiry"), "block parameters");
+        assertEquals("true", le.get(3).getDetails().get("nocreate"), "block parameters");
     }
 
     @Test
